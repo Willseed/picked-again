@@ -9,6 +9,7 @@ import {
 describe('抽籤資料工具', () => {
   const sampleData = {
     臺北市蘭州非營利幼兒園: {
+      搜尋關鍵字: ['大同區', '臺北市大同區'],
       '5歲': { 正取: 1, 備取: 3 },
       '4歲': { 正取: 9, 備取: 2 },
       '3歲': { 正取: 24, 備取: 22 },
@@ -26,6 +27,7 @@ describe('抽籤資料工具', () => {
       '3歲',
       '2歲專班',
     ]);
+    expect(school?.searchKeywords).toEqual(['大同區', '臺北市大同區']);
 
     const ratesByAge = new Map(school?.ageGroups.map((group) => [group.ageGroup, group]));
 
@@ -48,6 +50,21 @@ describe('抽籤資料工具', () => {
     expect(match?.matchScore).toBeGreaterThan(0);
   });
 
+  it('應把資料檔中的行政區搜尋關鍵字納入模糊搜尋', () => {
+    const schools = buildSchoolLotteryRates(sampleData);
+    const [match] = searchSchoolLotteryRates(schools, '大同區');
+
+    expect(match?.schoolName).toBe('臺北市蘭州非營利幼兒園');
+    expect(match?.matchScore).toBe(1);
+    expect(match?.searchKeywords[0]).toBe('大同區');
+    expect(match?.ageGroups.map((group) => group.ageGroup)).toEqual([
+      '5歲',
+      '4歲',
+      '3歲',
+      '2歲專班',
+    ]);
+  });
+
   it('不相關關鍵字應回傳空結果', () => {
     const schools = buildSchoolLotteryRates(sampleData);
 
@@ -57,6 +74,7 @@ describe('抽籤資料工具', () => {
   it('應回傳多筆模糊符合結果且排除無關幼兒園', () => {
     const schools = buildSchoolLotteryRates({
       臺北市蘭州非營利幼兒園: {
+        搜尋關鍵字: ['大同區'],
         '3歲': { 正取: 1, 備取: 1 },
       },
       台北市蘭雅國民小學附設幼兒園: {

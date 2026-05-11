@@ -242,6 +242,7 @@ app-lottery-dashboard {
   }
 
   .summary-chips,
+  .district-chips,
   .issue-chips {
     display: flex;
     flex-wrap: wrap;
@@ -249,12 +250,30 @@ app-lottery-dashboard {
   }
 
   .summary-chips mat-chip,
+  .district-chips mat-chip,
   .issue-chips mat-chip {
     --mat-chip-label-text-color: var(--pa-on-dark-mute);
 
     border: 1px solid var(--pa-hairline);
     background: var(--pa-surface-elevated);
     color: var(--pa-on-dark-mute);
+  }
+
+  .school-card mat-card-header {
+    gap: 12px;
+  }
+
+  .district-chips {
+    margin-left: auto;
+    align-self: flex-start;
+  }
+
+  .district-chips mat-chip {
+    --mat-chip-label-text-size: 12px;
+
+    min-height: 28px;
+    background: var(--pa-surface-card);
+    color: var(--pa-ink);
   }
 
   .issue-chips mat-chip {
@@ -385,6 +404,11 @@ app-lottery-dashboard {
     .school-card mat-card-header,
     .state-card mat-card-header {
       padding: 16px;
+    }
+
+    .district-chips {
+      width: 100%;
+      margin-left: 48px;
     }
 
     .hero-card mat-card-content,

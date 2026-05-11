@@ -8,6 +8,7 @@ import { buildSchoolLotteryRates, searchSchoolLotteryRates } from './lottery/lot
 
 const sampleSchools = buildSchoolLotteryRates({
   臺北市蘭州非營利幼兒園: {
+    搜尋關鍵字: ['大同區'],
     '5歲': { 正取: 1, 備取: 3 },
   },
 } satisfies RawLotteryData);

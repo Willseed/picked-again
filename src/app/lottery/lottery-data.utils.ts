@@ -1,6 +1,7 @@
 import {
   ESTIMATED_LOTTERY_RATE_FORMULA,
   ESTIMATED_LOTTERY_RATE_LABEL,
+  SEARCH_KEYWORDS_FIELD,
   type LotteryCountField,
   type LotteryDataIssue,
   type LotteryRateRecord,
@@ -22,11 +23,12 @@ export function buildLotteryRateRecords(data: unknown): readonly LotteryRateReco
 }
 
 export function buildSchoolLotteryRates(data: unknown): readonly SchoolLotteryRates[] {
-  return groupLotteryRateRecords(buildLotteryRateRecords(data));
+  return groupLotteryRateRecords(buildLotteryRateRecords(data), buildSearchAliasesBySchool(data));
 }
 
 export function groupLotteryRateRecords(
   records: readonly LotteryRateRecord[],
+  searchAliasesBySchool: ReadonlyMap<string, readonly string[]> = new Map(),
 ): readonly SchoolLotteryRates[] {
   const schools = new Map<string, LotteryRateRecord[]>();
 
@@ -41,13 +43,19 @@ export function groupLotteryRateRecords(
   }
 
   return Array.from(schools.entries())
-    .map(([schoolName, ageGroups]) => ({
-      schoolName,
-      normalizedSchoolName: normalizeSearchText(schoolName),
-      ageGroups: [...ageGroups].sort((left, right) =>
-        compareAgeGroupLabels(left.ageGroup, right.ageGroup),
-      ),
-    }))
+    .map(([schoolName, ageGroups]) => {
+      const searchKeywords = searchAliasesBySchool.get(schoolName) ?? [];
+
+      return {
+        schoolName,
+        normalizedSchoolName: normalizeSearchText(schoolName),
+        searchKeywords,
+        normalizedSearchKeywords: buildNormalizedSearchKeywords(schoolName, searchKeywords),
+        ageGroups: [...ageGroups].sort((left, right) =>
+          compareAgeGroupLabels(left.ageGroup, right.ageGroup),
+        ),
+      };
+    })
     .sort((left, right) => compareSchoolNames(left.schoolName, right.schoolName));
 }
 
@@ -64,7 +72,7 @@ export function searchSchoolLotteryRates(
   return schools
     .map((school) => ({
       school,
-      matchScore: getFuzzyMatchScore(normalizedKeyword, school.normalizedSchoolName),
+      matchScore: getBestFuzzyMatchScore(normalizedKeyword, school.normalizedSearchKeywords),
     }))
     .filter((match) => match.matchScore > 0)
     .sort(
@@ -142,8 +150,60 @@ function buildSchoolRecords(schoolName: string, ageGroups: unknown): readonly Lo
     return [];
   }
 
-  return Object.entries(ageGroups).map(([ageGroup, counts]) =>
-    buildLotteryRateRecord(schoolName, ageGroup, counts),
+  return Object.entries(ageGroups).flatMap(([ageGroup, counts]) =>
+    ageGroup === SEARCH_KEYWORDS_FIELD
+      ? []
+      : [buildLotteryRateRecord(schoolName, ageGroup, counts)],
+  );
+}
+
+function buildSearchAliasesBySchool(data: unknown): ReadonlyMap<string, readonly string[]> {
+  const aliasesBySchool = new Map<string, readonly string[]>();
+
+  if (!isRecord(data)) {
+    return aliasesBySchool;
+  }
+
+  for (const [schoolName, ageGroups] of Object.entries(data)) {
+    if (!isRecord(ageGroups)) {
+      continue;
+    }
+
+    const searchAliases = readSearchAliases(ageGroups[SEARCH_KEYWORDS_FIELD]);
+
+    if (searchAliases.length > 0) {
+      aliasesBySchool.set(schoolName, searchAliases);
+    }
+  }
+
+  return aliasesBySchool;
+}
+
+function readSearchAliases(value: unknown): readonly string[] {
+  const rawAliases = Array.isArray(value) ? value : typeof value === 'string' ? [value] : [];
+  const aliases = rawAliases
+    .filter((alias): alias is string => typeof alias === 'string')
+    .map((alias) => alias.trim())
+    .filter((alias) => alias.length > 0);
+
+  return Array.from(new Set(aliases));
+}
+
+function buildNormalizedSearchKeywords(
+  schoolName: string,
+  searchAliases: readonly string[],
+): readonly string[] {
+  const normalizedKeywords = [schoolName, ...searchAliases]
+    .map((keyword) => normalizeSearchText(keyword))
+    .filter((keyword) => keyword.length > 0);
+
+  return Array.from(new Set(normalizedKeywords));
+}
+
+function getBestFuzzyMatchScore(keyword: string, candidates: readonly string[]): number {
+  return candidates.reduce(
+    (bestScore, candidate) => Math.max(bestScore, getFuzzyMatchScore(keyword, candidate)),
+    0,
   );
 }
 

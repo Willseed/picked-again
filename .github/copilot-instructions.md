@@ -40,7 +40,7 @@ Use `DESIGN.md` as the source of truth for visual work. The target is a Raycast-
 
 - Use standalone components and import Angular Material modules directly in each component `imports` array; there are no NgModules.
 - Keep lottery math and fuzzy search in `lottery-data.utils.ts`. Components should call `LotteryDataService` instead of duplicating rate or matching logic.
-- The source data shape is `Record<schoolName, Record<ageGroup, { 正取, 備取 }>>`. The displayed estimated rate is `正取 / (正取 + 備取)` because true applicant counts are not present.
+- The source data shape is `Record<schoolName, Record<ageGroup, { 正取, 備取 }> & { 搜尋關鍵字?: string[] }>`; `搜尋關鍵字` is school-level metadata for district aliases and must not be treated as an age group. The displayed estimated rate is `正取 / (正取 + 備取)` because true applicant counts are not present.
 - Search normalization is deliberate: NFKC normalization, `zh-Hant` lowercase, `臺` to `台`, and removal of whitespace/punctuation/symbols. Fuzzy matching supports exact, substring, and ordered-subsequence matches with scores.
 - Invalid, missing, negative, non-integer, or non-numeric counts should become `dataQualityIssues`; derived counts fall back to `0`, and zero denominators produce `estimatedLotteryRate: null` rather than `NaN`.
 - Age groups sort by numeric age descending (`5歲`, `4歲`, `3歲`, `2歲專班`), with non-age labels sorted by `zh-Hant` locale.

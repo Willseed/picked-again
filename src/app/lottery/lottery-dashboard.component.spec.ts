@@ -8,6 +8,7 @@ import { buildSchoolLotteryRates, searchSchoolLotteryRates } from './lottery-dat
 
 const sampleData = {
   臺北市蘭州非營利幼兒園: {
+    搜尋關鍵字: ['大同區', '臺北市大同區'],
     '5歲': { 正取: 1, 備取: 3 },
     '4歲': { 正取: 9, 備取: 2 },
     '3歲': { 正取: 24, 備取: 22 },
@@ -79,6 +80,25 @@ describe('LotteryDashboardComponent', () => {
     expect(text).toContain('正取');
     expect(text).toContain('備取');
     expect(text).toContain('班齡戰場');
+    expect(fixture.nativeElement.querySelector('.district-chips')?.textContent).toContain(
+      '大同區',
+    );
+  });
+
+  it('可用行政區關鍵字搜尋幼兒園', async () => {
+    const fixture = await renderDashboard();
+    const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
+
+    input.value = '大同區';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('臺北市蘭州非營利幼兒園');
+    expect(fixture.nativeElement.querySelector('.district-chips')?.textContent).toContain(
+      '大同區',
+    );
   });
 
   it('資料服務失敗時應顯示錯誤狀態', async () => {

@@ -16,7 +16,7 @@
             matInput
             type="search"
             autocomplete="off"
-            placeholder="搜尋幼兒園，例如：蘭州、台北蘭"
+            placeholder="搜尋幼兒園，例如：蘭州、大同區"
             aria-label="輸入幼兒園關鍵字搜尋中籤率"
             [formControl]="searchControl"
           />
@@ -31,7 +31,7 @@
               <mat-icon aria-hidden="true">close</mat-icon>
             </button>
           }
-          <mat-hint>支援模糊搜尋與臺/台正規化；手抖也算，像抽籤前一天一樣。</mat-hint>
+          <mat-hint>支援園名、行政區、模糊搜尋與臺/台正規化；手抖也算，像抽籤前一天一樣。</mat-hint>
         </mat-form-field>
       </form>
 
@@ -104,6 +104,11 @@
               {{ result.ageGroups.length }} 個班齡戰場 · 模糊命中
               {{ formatMatchScore(result.matchScore) }}
             </mat-card-subtitle>
+            @if (result.searchKeywords[0]; as districtName) {
+              <mat-chip-set class="district-chips" aria-label="行政區">
+                <mat-chip>{{ districtName }}</mat-chip>
+              </mat-chip-set>
+            }
           </mat-card-header>
 
           <mat-card-content>
