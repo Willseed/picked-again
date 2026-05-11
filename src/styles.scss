@@ -18,20 +18,20 @@ html {
 
 :root {
   --pa-canvas: #07080a;
-  --pa-surface: #0d0d0d;
-  --pa-surface-elevated: #101111;
-  --pa-surface-card: #121212;
-  --pa-button-fg: #18191a;
-  --pa-hairline: #242728;
-  --pa-hairline-soft: rgba(255, 255, 255, 0.08);
-  --pa-hairline-strong: rgba(255, 255, 255, 0.18);
-  --pa-ink: #f4f4f6;
-  --pa-charcoal: #d3d3d4;
+  --pa-surface: #111214;
+  --pa-surface-elevated: #17191b;
+  --pa-surface-card: #1f2124;
+  --pa-button-fg: #24272b;
+  --pa-hairline: #34383d;
+  --pa-hairline-soft: rgba(255, 255, 255, 0.12);
+  --pa-hairline-strong: rgba(255, 255, 255, 0.32);
+  --pa-ink: #ffffff;
+  --pa-charcoal: #e8e8ea;
   --pa-on-dark: #ffffff;
-  --pa-on-dark-mute: rgba(255, 255, 255, 0.72);
-  --pa-body: #cdcdcd;
-  --pa-muted: #9c9c9d;
-  --pa-ash: #6a6b6c;
+  --pa-on-dark-mute: rgba(255, 255, 255, 0.84);
+  --pa-body: #e0e0e3;
+  --pa-muted: #b9b9be;
+  --pa-ash: #92949a;
   --pa-cta: #ffffff;
   --pa-on-cta: #07080a;
   --pa-error: #ff6161;
@@ -76,7 +76,7 @@ html {
   --mat-sys-surface-container-low: var(--pa-surface);
   --mat-sys-surface-container: var(--pa-surface-elevated);
   --mat-sys-surface-container-high: var(--pa-surface-card);
-  --mat-sys-surface-container-highest: #171819;
+  --mat-sys-surface-container-highest: #24272b;
   --mat-sys-inverse-surface: var(--pa-cta);
   --mat-sys-inverse-on-surface: var(--pa-on-cta);
   --mat-sys-inverse-primary: var(--pa-on-cta);
@@ -179,11 +179,13 @@ app-lottery-dashboard {
     padding-bottom: 20px;
   }
 
-  mat-card-title {
+  mat-card-title,
+  .mat-mdc-card-title {
     color: var(--pa-ink);
   }
 
-  mat-card-subtitle {
+  mat-card-subtitle,
+  .mat-mdc-card-subtitle {
     color: var(--pa-muted);
     font-size: 13px;
   }
@@ -366,6 +368,7 @@ app-lottery-dashboard {
   }
 
   mat-card-title,
+  .mat-mdc-card-title,
   .metric-card strong,
   .rate-row strong,
   .count-grid dd {
