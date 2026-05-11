@@ -1,6 +1,8 @@
 {
-  "name": "Picked Again",
-  "short_name": "Picked Again",
+  "name": "台北幼兒園抽籤焦慮儀表板",
+  "short_name": "抽籤焦慮表",
+  "description": "整理台北市非營利幼兒園抽籤參考資料；陪家長用數字面對正取、備取與又一次沒抽到的苦笑。",
+  "lang": "zh-TW",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",

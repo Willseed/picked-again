@@ -27,19 +27,19 @@ describe('App', () => {
     }).compileComponents();
   });
 
-  it('should create the app', () => {
+  it('應建立應用程式', () => {
     const fixture = TestBed.createComponent(App);
     const app = fixture.componentInstance;
     expect(app).toBeTruthy();
   });
 
-  it('should render title', async () => {
+  it('應渲染標題與首頁提示', async () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('Picked Again');
-    expect(compiled.textContent).toContain('Lottery success rates dashboard');
-    expect(compiled.textContent).toContain('輸入關鍵字開始搜尋');
+    expect(compiled.textContent).toContain('又沒抽到？');
+    expect(compiled.textContent).toContain('台北幼兒園抽籤焦慮儀表板');
+    expect(compiled.textContent).toContain('輸入關鍵字，開始查榜前深呼吸');
   });
 });

@@ -81,7 +81,7 @@ export class LotteryDashboardComponent {
   }
 
   protected formatPercent(value: number | null): string {
-    return value === null ? '無法估算' : `${this.percentFormatter.format(value)}%`;
+    return value === null ? '無法估算，命運連公式都不想接' : `${this.percentFormatter.format(value)}%`;
   }
 
   protected formatMatchScore(value: number): string {
@@ -114,7 +114,9 @@ export class LotteryDashboardComponent {
         },
         error: () => {
           this.schools.set([]);
-          this.errorMessage.set(`無法載入 ${this.dataUrl}。請確認資料檔存在且格式正確。`);
+          this.errorMessage.set(
+            `無法載入 ${this.dataUrl}。請確認資料檔存在且格式正確；不是每個崩潰都能怪抽籤。`,
+          );
           this.loading.set(false);
         },
       });

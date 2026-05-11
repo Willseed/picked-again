@@ -43,25 +43,25 @@ async function renderDashboard(loadSchoolRates = () => of(sampleSchools)) {
 describe('LotteryDashboardComponent', () => {
   afterEach(() => TestBed.resetTestingModule());
 
-  it('shows a loading state while data is pending', async () => {
+  it('資料等待時應顯示載入狀態', async () => {
     const pendingSchools = new Subject<readonly SchoolLotteryRates[]>();
     const fixture = await renderDashboard(() => pendingSchools.asObservable());
 
-    expect(fixture.nativeElement.textContent).toContain('載入資料中');
+    expect(fixture.nativeElement.textContent).toContain('載入抽籤宇宙中');
 
     pendingSchools.complete();
   });
 
-  it('prompts for a keyword after data loads', async () => {
+  it('資料載入後應提示輸入關鍵字', async () => {
     const fixture = await renderDashboard();
     const text = fixture.nativeElement.textContent as string;
 
-    expect(text).toContain('輸入關鍵字開始搜尋');
-    expect(text).toContain('1 間學校');
-    expect(text).toContain('4 個班齡組別');
+    expect(text).toContain('輸入關鍵字，開始查榜前深呼吸');
+    expect(text).toContain('1 間幼兒園待命');
+    expect(text).toContain('4 個班齡戰場');
   });
 
-  it('renders matched schools with rates and 正取/備取 counts', async () => {
+  it('應顯示符合幼兒園的中籤率與正取／備取人數', async () => {
     const fixture = await renderDashboard();
     const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
 
@@ -78,13 +78,13 @@ describe('LotteryDashboardComponent', () => {
     expect(text).toContain('25.0%');
     expect(text).toContain('正取');
     expect(text).toContain('備取');
-    expect(text).toContain('班齡組別');
+    expect(text).toContain('班齡戰場');
   });
 
-  it('shows an error state when the data service fails', async () => {
+  it('資料服務失敗時應顯示錯誤狀態', async () => {
     const fixture = await renderDashboard(() => throwError(() => new Error('boom')));
 
-    expect(fixture.nativeElement.textContent).toContain('資料載入失敗');
+    expect(fixture.nativeElement.textContent).toContain('資料載入失敗，焦慮先別加碼');
     expect(fixture.nativeElement.textContent).toContain('無法載入 /assets/data.json');
   });
 });

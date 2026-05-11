@@ -6,7 +6,7 @@ import {
   searchSchoolLotteryRates,
 } from './lottery-data.utils';
 
-describe('lottery data utilities', () => {
+describe('抽籤資料工具', () => {
   const sampleData = {
     臺北市蘭州非營利幼兒園: {
       '5歲': { 正取: 1, 備取: 3 },
@@ -16,7 +16,7 @@ describe('lottery data utilities', () => {
     },
   } satisfies RawLotteryData;
 
-  it('derives estimated lottery rates and keeps sensible age sorting', () => {
+  it('應推導估算中籤率並維持合理班齡排序', () => {
     const [school] = buildSchoolLotteryRates(sampleData);
 
     expect(school?.schoolName).toBe('臺北市蘭州非營利幼兒園');
@@ -38,7 +38,7 @@ describe('lottery data utilities', () => {
     );
   });
 
-  it('normalizes 臺/台 variants and punctuation for search', () => {
+  it('搜尋時應正規化臺／台異體字與標點', () => {
     expect(normalizeSearchText(' 臺 北・蘭州 ')).toBe('台北蘭州');
 
     const schools = buildSchoolLotteryRates(sampleData);
@@ -48,13 +48,13 @@ describe('lottery data utilities', () => {
     expect(match?.matchScore).toBeGreaterThan(0);
   });
 
-  it('returns no matches for unrelated keywords', () => {
+  it('不相關關鍵字應回傳空結果', () => {
     const schools = buildSchoolLotteryRates(sampleData);
 
     expect(searchSchoolLotteryRates(schools, '不存在')).toEqual([]);
   });
 
-  it('returns multiple fuzzy matches without unrelated schools', () => {
+  it('應回傳多筆模糊符合結果且排除無關幼兒園', () => {
     const schools = buildSchoolLotteryRates({
       臺北市蘭州非營利幼兒園: {
         '3歲': { 正取: 1, 備取: 1 },
@@ -76,7 +76,7 @@ describe('lottery data utilities', () => {
     expect(matches[0]?.matchScore).toBeGreaterThanOrEqual(matches[1]?.matchScore ?? 0);
   });
 
-  it('handles zero denominators and invalid counts without producing NaN rates', () => {
+  it('應處理零分母與無效人數且不產生 NaN 比率', () => {
     const records = buildLotteryRateRecords({
       測試幼兒園: {
         '5歲': { 正取: 0, 備取: 0 },

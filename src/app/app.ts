@@ -11,5 +11,5 @@ import { LotteryDashboardComponent } from './lottery/lottery-dashboard.component
   styleUrl: './app.scss',
 })
 export class App {
-  protected readonly title = 'Picked Again';
+  protected readonly title = '又沒抽到？';
 }
