@@ -1,0 +1,181 @@
+<section class="dashboard-shell" aria-label="抽籤率搜尋 dashboard">
+  <mat-card appearance="outlined" class="hero-card">
+    <mat-card-header>
+      <mat-icon mat-card-avatar aria-hidden="true">query_stats</mat-icon>
+      <mat-card-title>Lottery success rates dashboard</mat-card-title>
+      <mat-card-subtitle>
+        Estimated rate: {{ rateFormula }}. True applicant counts are unavailable in the source data.
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form class="search-form" role="search" (submit)="$event.preventDefault()">
+        <mat-form-field appearance="outline" class="search-field" subscriptSizing="dynamic">
+          <mat-icon matPrefix class="search-prefix" aria-hidden="true">search</mat-icon>
+          <input
+            matInput
+            type="search"
+            autocomplete="off"
+            placeholder="搜尋學校，例如：蘭州、台北蘭"
+            aria-label="搜尋學校關鍵字"
+            [formControl]="searchControl"
+          />
+          @if (keyword().length > 0) {
+            <button
+              mat-icon-button
+              matSuffix
+              type="button"
+              aria-label="清除搜尋"
+              (click)="clearSearch()"
+            >
+              <mat-icon aria-hidden="true">close</mat-icon>
+            </button>
+          }
+          <mat-hint>支援模糊搜尋與臺/台正規化</mat-hint>
+        </mat-form-field>
+      </form>
+
+      <mat-chip-set aria-label="資料摘要" class="summary-chips">
+        <mat-chip>{{ schools().length }} 間學校</mat-chip>
+        <mat-chip>{{ totalAgeGroups() }} 個班齡組別</mat-chip>
+        @if (keyword().length > 0 && !loading() && !errorMessage()) {
+          <mat-chip>{{ searchResults().length }} 筆符合「{{ keyword() }}」</mat-chip>
+        }
+      </mat-chip-set>
+    </mat-card-content>
+  </mat-card>
+
+  @if (loading()) {
+    <mat-card appearance="outlined" class="state-card" aria-live="polite">
+      <mat-card-header>
+        <mat-icon mat-card-avatar aria-hidden="true">sync</mat-icon>
+        <mat-card-title>載入資料中</mat-card-title>
+        <mat-card-subtitle>正在讀取 {{ dataUrl }}</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <mat-progress-bar mode="indeterminate" aria-label="資料載入中"></mat-progress-bar>
+      </mat-card-content>
+    </mat-card>
+  } @else if (errorMessage(); as message) {
+    <mat-card appearance="outlined" class="state-card error-card" aria-live="polite">
+      <mat-card-header>
+        <mat-icon mat-card-avatar aria-hidden="true">error</mat-icon>
+        <mat-card-title>資料載入失敗</mat-card-title>
+        <mat-card-subtitle>{{ message }}</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-actions align="end">
+        <button mat-flat-button class="retry-button" type="button" (click)="retryLoad()">
+          重新載入
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  } @else if (schools().length === 0) {
+    <mat-card appearance="outlined" class="state-card" aria-live="polite">
+      <mat-card-header>
+        <mat-icon mat-card-avatar aria-hidden="true">database_off</mat-icon>
+        <mat-card-title>沒有可顯示的資料</mat-card-title>
+        <mat-card-subtitle>資料檔沒有有效的學校或班齡組別。</mat-card-subtitle>
+      </mat-card-header>
+    </mat-card>
+  } @else if (keyword().length === 0) {
+    <mat-card appearance="outlined" class="state-card" aria-live="polite">
+      <mat-card-header>
+        <mat-icon mat-card-avatar aria-hidden="true">search</mat-icon>
+        <mat-card-title>輸入關鍵字開始搜尋</mat-card-title>
+        <mat-card-subtitle>例如輸入「蘭州」即可查看符合學校各班齡的估算抽籤率。</mat-card-subtitle>
+      </mat-card-header>
+    </mat-card>
+  } @else if (searchResults().length === 0) {
+    <mat-card appearance="outlined" class="state-card" aria-live="polite">
+      <mat-card-header>
+        <mat-icon mat-card-avatar aria-hidden="true">travel_explore</mat-icon>
+        <mat-card-title>找不到符合「{{ keyword() }}」的學校</mat-card-title>
+        <mat-card-subtitle>請嘗試更短的關鍵字，或改用臺/台的另一種寫法。</mat-card-subtitle>
+      </mat-card-header>
+    </mat-card>
+  } @else {
+    <section class="results-stack" aria-label="搜尋結果" aria-live="polite">
+      @for (result of searchResults(); track result.schoolName) {
+        <mat-card appearance="outlined" class="school-card">
+          <mat-card-header>
+            <mat-icon mat-card-avatar aria-hidden="true">school</mat-icon>
+            <mat-card-title>{{ result.schoolName }}</mat-card-title>
+            <mat-card-subtitle>
+              {{ result.ageGroups.length }} 個班齡組別 · fuzzy match
+              {{ formatMatchScore(result.matchScore) }}
+            </mat-card-subtitle>
+          </mat-card-header>
+
+          <mat-card-content>
+            <div class="metric-grid" aria-label="學校總計">
+              <mat-card appearance="outlined" class="metric-card">
+                <mat-card-content>
+                  <span>正取總數</span>
+                  <strong>{{ acceptedTotal(result) }}</strong>
+                </mat-card-content>
+              </mat-card>
+              <mat-card appearance="outlined" class="metric-card">
+                <mat-card-content>
+                  <span>備取總數</span>
+                  <strong>{{ waitlistedTotal(result) }}</strong>
+                </mat-card-content>
+              </mat-card>
+              <mat-card appearance="outlined" class="metric-card">
+                <mat-card-content>
+                  <span>班齡組別</span>
+                  <strong>{{ result.ageGroups.length }}</strong>
+                </mat-card-content>
+              </mat-card>
+            </div>
+
+            <div class="age-grid" aria-label="各班齡抽籤率">
+              @for (record of result.ageGroups; track record.ageGroup) {
+                <mat-card appearance="outlined" class="age-card">
+                  <mat-card-header>
+                    <mat-card-title>{{ record.ageGroup }}</mat-card-title>
+                    <mat-card-subtitle>{{ record.estimatedLotteryRateLabel }}</mat-card-subtitle>
+                  </mat-card-header>
+
+                  <mat-card-content>
+                    <div class="rate-row">
+                      <span>估算率</span>
+                      <strong>{{ formatPercent(record.estimatedLotteryRatePercent) }}</strong>
+                    </div>
+                    <mat-progress-bar
+                      mode="determinate"
+                      [value]="rateProgressValue(record)"
+                      [attr.aria-label]="record.ageGroup + ' estimated lottery rate'"
+                    ></mat-progress-bar>
+
+                    <dl class="count-grid">
+                      <div>
+                        <dt>正取</dt>
+                        <dd>{{ record.acceptedCount }}</dd>
+                      </div>
+                      <div>
+                        <dt>備取</dt>
+                        <dd>{{ record.waitlistedCount }}</dd>
+                      </div>
+                      <div>
+                        <dt>估算分母</dt>
+                        <dd>{{ record.totalCount }}</dd>
+                      </div>
+                    </dl>
+
+                    @if (record.dataQualityIssues.length > 0) {
+                      <mat-chip-set aria-label="資料品質提醒" class="issue-chips">
+                        @for (issue of record.dataQualityIssues; track issue.code + issue.message) {
+                          <mat-chip>{{ issue.message }}</mat-chip>
+                        }
+                      </mat-chip-set>
+                    }
+                  </mat-card-content>
+                </mat-card>
+              }
+            </div>
+          </mat-card-content>
+        </mat-card>
+      }
+    </section>
+  }
+</section>

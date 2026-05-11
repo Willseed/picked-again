@@ -1,0 +1,399 @@
+@use '@angular/material' as mat;
+@import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&display=swap');
+
+html {
+  height: 100%;
+  @include mat.theme(
+    (
+      color: (
+        theme-type: dark,
+        primary: mat.$azure-palette,
+        tertiary: mat.$blue-palette,
+      ),
+      typography: 'Inter',
+      density: 0,
+    )
+  );
+}
+
+:root {
+  --pa-canvas: #07080a;
+  --pa-surface: #0d0d0d;
+  --pa-surface-elevated: #101111;
+  --pa-surface-card: #121212;
+  --pa-button-fg: #18191a;
+  --pa-hairline: #242728;
+  --pa-hairline-soft: rgba(255, 255, 255, 0.08);
+  --pa-hairline-strong: rgba(255, 255, 255, 0.18);
+  --pa-ink: #f4f4f6;
+  --pa-charcoal: #d3d3d4;
+  --pa-on-dark: #ffffff;
+  --pa-on-dark-mute: rgba(255, 255, 255, 0.72);
+  --pa-body: #cdcdcd;
+  --pa-muted: #9c9c9d;
+  --pa-ash: #6a6b6c;
+  --pa-cta: #ffffff;
+  --pa-on-cta: #07080a;
+  --pa-error: #ff6161;
+  --pa-error-soft: rgba(255, 97, 97, 0.15);
+  --pa-accent-yellow: #ffc533;
+  --pa-accent-yellow-soft: rgba(255, 197, 51, 0.15);
+  --pa-font-sans:
+    'Inter', 'Inter Fallback', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --pa-font-features: 'calt', 'kern', 'liga', 'ss03';
+  --pa-content-max: 1240px;
+  --pa-section-spacing: 96px;
+  --pa-radius-sm: 6px;
+  --pa-radius-md: 8px;
+  --pa-radius-lg: 10px;
+  --pa-radius-xl: 16px;
+
+  --mat-sys-primary: var(--pa-cta);
+  --mat-sys-on-primary: var(--pa-on-cta);
+  --mat-sys-primary-container: var(--pa-surface-elevated);
+  --mat-sys-on-primary-container: var(--pa-on-dark);
+  --mat-sys-secondary: var(--pa-on-dark-mute);
+  --mat-sys-on-secondary: var(--pa-on-cta);
+  --mat-sys-secondary-container: var(--pa-surface-elevated);
+  --mat-sys-on-secondary-container: var(--pa-on-dark);
+  --mat-sys-tertiary: var(--pa-on-dark-mute);
+  --mat-sys-on-tertiary: var(--pa-on-cta);
+  --mat-sys-tertiary-container: var(--pa-surface-card);
+  --mat-sys-on-tertiary-container: var(--pa-on-dark);
+  --mat-sys-error: var(--pa-error);
+  --mat-sys-on-error: var(--pa-on-cta);
+  --mat-sys-error-container: #2a1414;
+  --mat-sys-on-error-container: #ffd7d7;
+  --mat-sys-surface: var(--pa-canvas);
+  --mat-sys-on-surface: var(--pa-on-dark);
+  --mat-sys-surface-variant: var(--pa-surface-elevated);
+  --mat-sys-on-surface-variant: var(--pa-on-dark-mute);
+  --mat-sys-outline: var(--pa-hairline);
+  --mat-sys-outline-variant: var(--pa-hairline-soft);
+  --mat-sys-surface-dim: var(--pa-canvas);
+  --mat-sys-surface-bright: var(--pa-surface-card);
+  --mat-sys-surface-container-lowest: var(--pa-canvas);
+  --mat-sys-surface-container-low: var(--pa-surface);
+  --mat-sys-surface-container: var(--pa-surface-elevated);
+  --mat-sys-surface-container-high: var(--pa-surface-card);
+  --mat-sys-surface-container-highest: #171819;
+  --mat-sys-inverse-surface: var(--pa-cta);
+  --mat-sys-inverse-on-surface: var(--pa-on-cta);
+  --mat-sys-inverse-primary: var(--pa-on-cta);
+  --mat-sys-scrim: rgba(0, 0, 0, 0.72);
+  --mat-sys-shadow: transparent;
+  --mat-sys-surface-tint: transparent;
+  --mat-sys-level0: none;
+  --mat-sys-level1: none;
+  --mat-sys-level2: none;
+  --mat-sys-level3: none;
+  --mat-sys-level4: none;
+  --mat-sys-level5: none;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--pa-canvas);
+  color: var(--pa-body);
+  color-scheme: dark;
+  font: var(--mat-sys-body-medium);
+  font-family: var(--pa-font-sans);
+  font-feature-settings: var(--pa-font-features);
+  font-optical-sizing: auto;
+  letter-spacing: 0.1px;
+  text-rendering: geometricPrecision;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: var(--pa-cta);
+  color: var(--pa-on-cta);
+}
+
+app-lottery-dashboard {
+  display: block;
+  min-height: 100dvh;
+  background: var(--pa-canvas);
+  font-family: var(--pa-font-sans);
+  font-feature-settings: var(--pa-font-features);
+
+  .dashboard-shell {
+    display: grid;
+    gap: 24px;
+    max-width: 1120px;
+    margin-inline: auto;
+    padding: 32px 24px 56px;
+  }
+
+  .hero-card,
+  .school-card,
+  .state-card,
+  .metric-card,
+  .age-card {
+    overflow: hidden;
+    border: 1px solid var(--pa-hairline);
+    border-radius: var(--pa-radius-lg);
+    background: var(--pa-surface);
+    color: var(--pa-body);
+  }
+
+  .hero-card {
+    border-radius: var(--pa-radius-xl);
+  }
+
+  .metric-card,
+  .age-card {
+    background: var(--pa-surface-elevated);
+  }
+
+  .hero-card mat-card-header,
+  .school-card mat-card-header,
+  .state-card mat-card-header {
+    align-items: center;
+    border-bottom: 1px solid var(--pa-hairline-soft);
+    background: linear-gradient(180deg, var(--pa-surface-elevated), var(--pa-surface));
+    padding: 18px 20px;
+  }
+
+  .hero-card mat-card-content,
+  .school-card mat-card-content,
+  .age-card mat-card-content {
+    display: grid;
+    gap: 16px;
+    padding-top: 18px;
+  }
+
+  .hero-card mat-card-content,
+  .school-card > mat-card-content {
+    padding-inline: 20px;
+    padding-bottom: 20px;
+  }
+
+  mat-card-title {
+    color: var(--pa-ink);
+  }
+
+  mat-card-subtitle {
+    color: var(--pa-muted);
+    font-size: 13px;
+  }
+
+  mat-icon[mat-card-avatar] {
+    display: inline-grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--pa-hairline);
+    border-radius: var(--pa-radius-md);
+    background: linear-gradient(180deg, var(--pa-surface-card), var(--pa-surface));
+    color: var(--pa-on-dark-mute);
+  }
+
+  .search-form,
+  .search-field {
+    width: 100%;
+  }
+
+  .search-field {
+    --mat-form-field-container-height: 44px;
+    --mat-form-field-container-vertical-padding: 10px;
+    --mat-form-field-outlined-container-shape: var(--pa-radius-md);
+    --mat-form-field-outlined-outline-color: var(--pa-hairline);
+    --mat-form-field-outlined-hover-outline-color: var(--pa-hairline-strong);
+    --mat-form-field-outlined-focus-outline-color: var(--pa-hairline-strong);
+    --mat-form-field-outlined-input-text-color: var(--pa-on-dark);
+    --mat-form-field-outlined-input-text-placeholder-color: var(--pa-ash);
+
+    color: var(--pa-on-dark);
+  }
+
+  .search-field .mat-mdc-text-field-wrapper {
+    border-radius: var(--pa-radius-md);
+    background: var(--pa-surface-elevated);
+  }
+
+  .search-prefix,
+  .search-field mat-hint,
+  .metric-card span,
+  .rate-row span,
+  dt {
+    color: var(--pa-muted);
+  }
+
+  .search-field mat-hint,
+  .metric-card span,
+  .rate-row span,
+  dt,
+  .summary-chips mat-chip,
+  .issue-chips mat-chip {
+    font-size: 12px;
+  }
+
+  .summary-chips,
+  .issue-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .summary-chips mat-chip,
+  .issue-chips mat-chip {
+    --mat-chip-label-text-color: var(--pa-on-dark-mute);
+
+    border: 1px solid var(--pa-hairline);
+    background: var(--pa-surface-elevated);
+    color: var(--pa-on-dark-mute);
+  }
+
+  .issue-chips mat-chip {
+    border-color: rgba(255, 197, 51, 0.28);
+    background: var(--pa-accent-yellow-soft);
+    color: var(--pa-accent-yellow);
+  }
+
+  .state-card mat-card-content {
+    padding: 18px 20px 20px;
+  }
+
+  .error-card {
+    border-color: rgba(255, 97, 97, 0.34);
+
+    mat-icon[mat-card-avatar] {
+      border-color: rgba(255, 97, 97, 0.34);
+      background: var(--pa-error-soft);
+      color: var(--pa-error);
+    }
+
+    mat-card-actions {
+      padding: 0 20px 20px;
+    }
+  }
+
+  .retry-button {
+    border-radius: var(--pa-radius-md);
+    background: var(--pa-cta);
+    color: var(--pa-on-cta);
+  }
+
+  .results-stack {
+    display: grid;
+    gap: 18px;
+  }
+
+  .metric-grid,
+  .age-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+
+  .metric-card mat-card-content {
+    display: grid;
+    gap: 6px;
+    padding: 14px 16px;
+  }
+
+  .metric-card strong {
+    font-size: 24px;
+  }
+
+  .age-card mat-card-header {
+    padding: 16px 16px 0;
+  }
+
+  .age-card mat-card-content {
+    gap: 14px;
+    padding: 14px 16px 16px;
+  }
+
+  .rate-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .rate-row strong {
+    font-size: 22px;
+  }
+
+  mat-progress-bar {
+    --mat-progress-bar-active-indicator-color: var(--pa-ink);
+    --mat-progress-bar-active-indicator-height: 6px;
+    --mat-progress-bar-track-color: var(--pa-button-fg);
+    --mat-progress-bar-track-height: 6px;
+    --mat-progress-bar-track-shape: 999px;
+
+    overflow: hidden;
+    border: 1px solid var(--pa-hairline-soft);
+    border-radius: 999px;
+    background: var(--pa-button-fg);
+  }
+
+  .count-grid {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: repeat(3, 1fr);
+    margin: 0;
+
+    div {
+      border: 1px solid var(--pa-hairline);
+      border-radius: var(--pa-radius-md);
+      background: var(--pa-surface-card);
+      padding: 10px 12px;
+    }
+
+    dd {
+      margin: 4px 0 0;
+      font-size: 16px;
+    }
+  }
+
+  .metric-card strong,
+  .rate-row strong,
+  .count-grid dd {
+    color: var(--pa-ink);
+  }
+
+  mat-card-title,
+  .metric-card strong,
+  .rate-row strong,
+  .count-grid dd {
+    font-weight: 500;
+  }
+
+  @media (width <= 640px) {
+    .dashboard-shell {
+      gap: 18px;
+      padding: 18px 14px 40px;
+    }
+
+    .hero-card mat-card-header,
+    .school-card mat-card-header,
+    .state-card mat-card-header {
+      padding: 16px;
+    }
+
+    .hero-card mat-card-content,
+    .school-card > mat-card-content {
+      padding-inline: 16px;
+      padding-bottom: 16px;
+    }
+
+    .metric-grid,
+    .age-grid,
+    .count-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+}
