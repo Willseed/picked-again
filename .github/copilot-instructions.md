@@ -5,6 +5,7 @@
 - Install dependencies: `npm install`
 - Start the Angular dev server: `npm start`
 - Production build: `npm run build`
+- GitHub Pages custom-domain build: `npm run build:pages` (root `/` base href for `https://pick.pylot.space/`)
 - Development watch build: `npm run watch`
 - Full unit test suite: `npm test -- --watch=false`
 - Single spec file: `npm test -- --watch=false --include src/app/lottery/lottery-data.utils.spec.ts`
@@ -18,10 +19,10 @@ This project uses npm (`packageManager`: `npm@11.12.1`) and Angular CLI 21.
 - The lottery domain lives under `src/app/lottery/`:
   - `lottery-data.model.ts` defines the data URL, formula constants, raw data shape, derived records, grouped school results, and data-quality issue types.
   - `lottery-data.utils.ts` contains pure transformation/search logic: raw JSON validation, rate derivation, age sorting, school grouping, text normalization, and fuzzy match scoring.
-  - `lottery-data.service.ts` is the boundary between Angular and the pure logic. It loads `/assets/data.json` through `HttpClient` and delegates transformation/search to the utils.
+  - `lottery-data.service.ts` is the boundary between Angular and the pure logic. It loads `assets/data.json` through `HttpClient` and delegates transformation/search to the utils.
   - `lottery-dashboard.component.*` owns the Material UI: search form, loading/error/empty states, matched school cards, rate progress bars, and 正取/備取 summaries.
 - Runtime data is loaded from `public/assets/data.json` via `LOTTERY_DATA_URL`. The root `data.json` mirrors the same source data; keep both in sync unless a copy/sync step is added.
-- `angular.json` copies all files from `public/` as build assets and uses `@angular/build:unit-test` for Vitest-based unit tests.
+- `angular.json` copies all files from `public/` as build assets, including `public/CNAME` for GitHub Pages, and uses `@angular/build:unit-test` for Vitest-based unit tests.
 
 ## Visual style
 
