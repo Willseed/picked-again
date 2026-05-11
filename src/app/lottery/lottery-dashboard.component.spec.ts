@@ -101,6 +101,16 @@ describe('LotteryDashboardComponent', () => {
     );
   });
 
+  it('按下全域快搜快捷鍵時應聚焦搜尋欄', async () => {
+    const fixture = await renderDashboard();
+    const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
+
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
+    fixture.detectChanges();
+
+    expect(document.activeElement).toBe(input);
+  });
+
   it('資料服務失敗時應顯示錯誤狀態', async () => {
     const fixture = await renderDashboard(() => throwError(() => new Error('boom')));
 

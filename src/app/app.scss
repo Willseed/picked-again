@@ -10,39 +10,49 @@
 .app-shell {
   min-height: 100dvh;
   background: var(--pa-canvas);
+  padding: clamp(12px, 2vw, 24px) clamp(12px, 4vw, 48px) clamp(64px, 8vw, 96px);
+}
+
+.app-chrome {
+  position: sticky;
+  top: clamp(8px, 2vw, 16px);
+  z-index: 10;
+  overflow: hidden;
+  width: min(100%, var(--pa-content-max));
+  margin-inline: auto;
+  border: 1px solid var(--pa-hairline);
+  border-radius: var(--pa-radius-xl);
+  background: var(--pa-surface);
 }
 
 .app-toolbar {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  min-height: 64px;
-  padding: 0 clamp(16px, 4vw, 48px);
-  border-bottom: 1px solid var(--pa-hairline);
-  background: color-mix(in srgb, var(--pa-surface) 94%, transparent);
+  min-height: 56px;
+  padding: 0 clamp(12px, 2vw, 18px);
+  background: transparent;
   box-shadow: none;
   color: var(--pa-on-dark);
-  font: var(--mat-sys-title-medium);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.6;
   letter-spacing: 0.2px;
-  backdrop-filter: blur(18px);
 }
 
 .brand-lockup {
   display: flex;
   align-items: center;
   min-width: 0;
-  gap: 12px;
+  gap: 10px;
 }
 
 .brand-mark {
   display: grid;
   flex: 0 0 auto;
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   place-items: center;
   border: 1px solid var(--pa-hairline);
-  border-radius: var(--pa-radius-md);
-  background: linear-gradient(180deg, var(--pa-surface-card), var(--pa-surface));
+  border-radius: var(--pa-radius-sm);
+  background: var(--pa-surface-card);
   color: var(--pa-on-dark);
 }
 
@@ -55,7 +65,7 @@
 .brand-copy {
   display: grid;
   min-width: 0;
-  gap: 2px;
+  gap: 1px;
 }
 
 .brand-title,
@@ -67,25 +77,65 @@
 
 .brand-title {
   color: var(--pa-on-dark);
-  font-weight: 650;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.4;
 }
 
 .toolbar-tagline {
-  color: var(--pa-on-dark-mute);
-  font: var(--mat-sys-body-small);
+  color: var(--pa-muted);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
   letter-spacing: 0.2px;
+}
+
+.toolbar-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  padding: 4px 8px;
+  border: 1px solid var(--pa-hairline);
+  border-radius: var(--pa-radius-full, 9999px);
+  background: var(--pa-surface-elevated);
+  color: var(--pa-muted);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.meta-keycap {
+  display: inline-grid;
+  min-width: 20px;
+  height: 20px;
+  place-items: center;
+  border: 1px solid var(--pa-hairline);
+  border-radius: var(--pa-radius-sm);
+  background: var(--pa-surface-card);
+  color: var(--pa-body);
+  line-height: 1;
 }
 
 .app-main {
   width: min(100%, var(--pa-content-max));
   margin-inline: auto;
-  padding: clamp(32px, 6vw, 72px) 0 var(--pa-section-spacing);
+  padding-block: clamp(32px, 6vw, 72px) 0;
 }
 
 @media (width <= 640px) {
+  .app-shell {
+    padding: 10px 10px 48px;
+  }
+
+  .app-chrome {
+    top: 8px;
+    border-radius: var(--pa-radius-lg);
+  }
+
   .app-toolbar {
-    min-height: 56px;
-    padding-inline: 16px;
+    min-height: 54px;
+    padding-inline: 12px;
   }
 
   .brand-mark {
@@ -94,10 +144,14 @@
   }
 
   .toolbar-tagline {
-    font-size: 12px;
+    font-size: 11px;
+  }
+
+  .toolbar-meta {
+    display: none;
   }
 
   .app-main {
-    padding-block: 24px 64px;
+    padding-top: 24px;
   }
 }

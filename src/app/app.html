@@ -1,15 +1,23 @@
 <div class="app-shell">
-  <mat-toolbar class="app-toolbar" role="banner">
-    <span class="brand-lockup">
-      <span class="brand-mark" aria-hidden="true">
-        <mat-icon>casino</mat-icon>
+  <header class="app-chrome">
+    <mat-toolbar class="app-toolbar" role="banner">
+      <span class="brand-lockup">
+        <span class="brand-mark" aria-hidden="true">
+          <mat-icon>casino</mat-icon>
+        </span>
+        <span class="brand-copy">
+          <span class="brand-title">{{ title }}</span>
+          <span class="toolbar-tagline">台北幼兒園中籤率觀測站</span>
+        </span>
       </span>
-      <span class="brand-copy">
-        <span class="brand-title">{{ title }}</span>
-        <span class="toolbar-tagline">台北幼兒園中籤率觀測站</span>
+
+      <span class="toolbar-meta" aria-hidden="true">
+        <span class="meta-keycap">⌘</span>
+        <span class="meta-keycap">K</span>
+        <span>抽籤快搜</span>
       </span>
-    </span>
-  </mat-toolbar>
+    </mat-toolbar>
+  </header>
 
   <main class="app-main">
     <app-lottery-dashboard />

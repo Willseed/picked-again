@@ -2,6 +2,9 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  ElementRef,
+  HostListener,
+  ViewChild,
   computed,
   inject,
   signal,
@@ -67,6 +70,7 @@ export class LotteryDashboardComponent {
   protected readonly totalAgeGroups = computed(() =>
     this.schools().reduce((total, school) => total + school.ageGroups.length, 0),
   );
+  @ViewChild('searchInput') private searchInput?: ElementRef<HTMLInputElement>;
 
   constructor() {
     this.loadData();
@@ -78,6 +82,16 @@ export class LotteryDashboardComponent {
 
   protected retryLoad(): void {
     this.loadData();
+  }
+
+  @HostListener('window:keydown', ['$event'])
+  protected handleGlobalSearchShortcut(event: KeyboardEvent): void {
+    if (event.key.toLocaleLowerCase('en-US') !== 'k' || (!event.metaKey && !event.ctrlKey)) {
+      return;
+    }
+
+    event.preventDefault();
+    this.searchInput?.nativeElement.focus();
   }
 
   protected formatPercent(value: number | null): string {
