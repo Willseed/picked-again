@@ -62,6 +62,18 @@ describe('LotteryDashboardComponent', () => {
     expect(text).toContain('4 個班齡戰場');
   });
 
+  it('應顯示底部資料使用聲明', async () => {
+    const fixture = await renderDashboard();
+    const footerText = fixture.nativeElement.querySelector('.dashboard-footer')?.textContent as
+      | string
+      | undefined;
+
+    expect(footerText).toContain('資料使用聲明');
+    expect(footerText).toContain(
+      '本頁資料並非最終公告，僅供參考；實際招生名額、抽籤結果與相關規範，請以主管機關及各幼兒園官方資訊為準。',
+    );
+  });
+
   it('應顯示符合幼兒園的中籤率與正取／備取人數', async () => {
     const fixture = await renderDashboard();
     const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;

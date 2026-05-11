@@ -1,3 +1,31 @@
 :host {
   display: block;
 }
+
+.dashboard-footer {
+  margin-top: clamp(8px, 2vw, 18px);
+  padding: 18px clamp(4px, 2vw, 12px) 0;
+  border-top: 1px solid var(--pa-hairline-soft);
+  color: var(--pa-muted);
+  text-align: center;
+}
+
+.dashboard-footer p {
+  max-width: 760px;
+  margin: 0 auto;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.dashboard-footer strong {
+  margin-right: 0.5em;
+  color: var(--pa-on-dark-mute);
+  font-weight: 500;
+}
+
+@media (width <= 640px) {
+  .dashboard-footer {
+    margin-top: 4px;
+    padding-top: 14px;
+  }
+}
