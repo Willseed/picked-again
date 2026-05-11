@@ -41,6 +41,10 @@ Angular 21 standalone app. No NgModules anywhere — import Angular Material mod
 
 **Tests:** data-utility tests use `satisfies RawLotteryData`; component tests stub `LotteryDataService` — no real HTTP.
 
+**Every new school entry requires a test:** whenever a school is added to `data.json` / `public/assets/data.json`, add a matching `it` block in `lottery-data.utils.spec.ts` in the same commit that verifies:
+- `estimatedLotteryRatePercent` for every age group (via `toBeCloseTo`)
+- at least one school-specific search keyword (short name or unique alias) produces an exact match (`matchScore === 1`)
+
 ## Visual Style
 
 `DESIGN.md` is the source of truth. The target is a Raycast-inspired dark command-palette UI, not Material's default light theme.
