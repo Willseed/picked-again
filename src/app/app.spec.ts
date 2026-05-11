@@ -14,7 +14,7 @@ const sampleSchools = buildSchoolLotteryRates({
 } satisfies RawLotteryData);
 
 const lotteryDataServiceStub = {
-  dataUrl: '/assets/data.json',
+  dataUrl: 'assets/data.json',
   loadSchoolRates: () => of(sampleSchools),
   searchSchoolRates: (schools: readonly SchoolLotteryRates[], keyword: string) =>
     searchSchoolLotteryRates(schools, keyword),

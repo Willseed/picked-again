@@ -20,7 +20,7 @@ const sampleSchools = buildSchoolLotteryRates(sampleData);
 
 function createServiceMock(loadSchoolRates: () => Observable<readonly SchoolLotteryRates[]>) {
   return {
-    dataUrl: '/assets/data.json',
+    dataUrl: 'assets/data.json',
     loadSchoolRates,
     searchSchoolRates: (schools: readonly SchoolLotteryRates[], keyword: string) =>
       searchSchoolLotteryRates(schools, keyword),
@@ -115,6 +115,6 @@ describe('LotteryDashboardComponent', () => {
     const fixture = await renderDashboard(() => throwError(() => new Error('boom')));
 
     expect(fixture.nativeElement.textContent).toContain('資料載入失敗，焦慮先別加碼');
-    expect(fixture.nativeElement.textContent).toContain('無法載入 /assets/data.json');
+    expect(fixture.nativeElement.textContent).toContain('無法載入 assets/data.json');
   });
 });

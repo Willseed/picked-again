@@ -41,6 +41,15 @@ npm run build
 
 輸出會產生在 `dist/picked-again/`。
 
+建置 GitHub Pages 版本（會使用 `/picked-again/` base href）：
+
+```bash
+npm run build:pages
+```
+
+GitHub Actions 會在推送或手動觸發 `main` 時執行測試、建置，並把
+`dist/picked-again/browser/` 部署到 GitHub Pages；PR 只會測試與建置，不會部署。
+
 執行單元測試：
 
 ```bash
