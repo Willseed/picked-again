@@ -89,6 +89,40 @@ describe('抽籤資料工具', () => {
     expect(dalongdong?.ageGroups[0]?.estimatedLotteryRatePercent).toBeCloseTo(28.571, 3);
   });
 
+  it('應正確推導明倫非營利幼兒園四個班齡的估算中籤率', () => {
+    const minglunData = {
+      臺北市明倫非營利幼兒園: {
+        搜尋關鍵字: ['大同區', '臺北市大同區', '明倫'],
+        '5歲': { 正取: 3, 備取: 6 },
+        '4歲': { 正取: 6, 備取: 4 },
+        '3歲': { 正取: 1, 備取: 27 },
+        '2歲專班': { 正取: 31, 備取: 133 },
+      },
+    } satisfies RawLotteryData;
+
+    const [school] = buildSchoolLotteryRates(minglunData);
+
+    expect(school?.schoolName).toBe('臺北市明倫非營利幼兒園');
+    expect(school?.ageGroups.map((group) => group.ageGroup)).toEqual([
+      '5歲',
+      '4歲',
+      '3歲',
+      '2歲專班',
+    ]);
+
+    const ratesByAge = new Map(school?.ageGroups.map((group) => [group.ageGroup, group]));
+
+    expect(ratesByAge.get('5歲')?.estimatedLotteryRatePercent).toBeCloseTo(33.333, 3);
+    expect(ratesByAge.get('4歲')?.estimatedLotteryRatePercent).toBeCloseTo(60, 3);
+    expect(ratesByAge.get('3歲')?.estimatedLotteryRatePercent).toBeCloseTo(3.571, 3);
+    expect(ratesByAge.get('2歲專班')?.estimatedLotteryRatePercent).toBeCloseTo(18.902, 3);
+
+    const schools = buildSchoolLotteryRates(minglunData);
+    const [match] = searchSchoolLotteryRates(schools, '明倫');
+    expect(match?.schoolName).toBe('臺北市明倫非營利幼兒園');
+    expect(match?.matchScore).toBe(1);
+  });
+
   it('不相關關鍵字應回傳空結果', () => {
     const schools = buildSchoolLotteryRates(sampleData);
 
