@@ -493,9 +493,35 @@ app-lottery-dashboard {
       padding: 16px;
     }
 
-    .district-chips {
+    .school-card mat-card-header {
+      display: grid;
+      grid-template-areas:
+        'avatar title'
+        '. district';
+      grid-template-columns: 36px minmax(0, 1fr);
+      row-gap: 8px;
+    }
+
+    .school-card mat-icon[mat-card-avatar] {
+      grid-area: avatar;
+    }
+
+    .school-card .mat-mdc-card-header-text {
+      grid-area: title;
       width: 100%;
-      margin-left: 48px;
+    }
+
+    .school-card mat-card-title,
+    .school-card .mat-mdc-card-title {
+      word-break: keep-all;
+      overflow-wrap: normal;
+    }
+
+    .district-chips {
+      grid-area: district;
+      width: auto;
+      margin-left: 0;
+      justify-self: start;
     }
 
     .metric-grid,
