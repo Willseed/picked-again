@@ -64,7 +64,7 @@ describe('抽籤資料工具', () => {
     ]);
   });
 
-  it('同一行政區關鍵字應可找出多間幼兒園', () => {
+  it('同一行政區關鍵字應可找出多間幼兒園並保留原始資料順序', () => {
     const schools = buildSchoolLotteryRates({
       臺北市蘭州非營利幼兒園: {
         搜尋關鍵字: ['大同區'],
@@ -76,12 +76,17 @@ describe('抽籤資料工具', () => {
       },
     } satisfies RawLotteryData);
 
+    expect(schools.map((school) => school.schoolName)).toEqual([
+      '臺北市蘭州非營利幼兒園',
+      '臺北市大龍峒非營利幼兒園',
+    ]);
+
     const matches = searchSchoolLotteryRates(schools, '大同區');
     const dalongdong = matches.find((match) => match.schoolName.includes('大龍峒'));
 
     expect(matches.map((match) => match.schoolName)).toEqual([
-      '臺北市大龍峒非營利幼兒園',
       '臺北市蘭州非營利幼兒園',
+      '臺北市大龍峒非營利幼兒園',
     ]);
     expect(dalongdong?.ageGroups[0]?.acceptedCount).toBe(16);
     expect(dalongdong?.ageGroups[0]?.waitlistedCount).toBe(40);

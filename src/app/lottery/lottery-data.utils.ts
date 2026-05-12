@@ -17,9 +17,9 @@ export function buildLotteryRateRecords(data: unknown): readonly LotteryRateReco
     return [];
   }
 
-  return Object.entries(data)
-    .flatMap(([schoolName, ageGroups]) => buildSchoolRecords(schoolName, ageGroups))
-    .sort(compareLotteryRateRecords);
+  return Object.entries(data).flatMap(([schoolName, ageGroups]) =>
+    buildSchoolRecords(schoolName, ageGroups),
+  );
 }
 
 export function buildSchoolLotteryRates(data: unknown): readonly SchoolLotteryRates[] {
@@ -56,8 +56,7 @@ export function groupLotteryRateRecords(
           compareAgeGroupLabels(left.ageGroup, right.ageGroup),
         ),
       };
-    })
-    .sort((left, right) => compareSchoolNames(left.schoolName, right.schoolName));
+    });
 }
 
 export function searchSchoolLotteryRates(
@@ -71,15 +70,14 @@ export function searchSchoolLotteryRates(
   }
 
   return schools
-    .map((school) => ({
+    .map((school, orderIndex) => ({
       school,
+      orderIndex,
       matchScore: getBestFuzzyMatchScore(normalizedKeyword, school.normalizedSearchKeywords),
     }))
     .filter((match) => match.matchScore > 0)
     .sort(
-      (left, right) =>
-        right.matchScore - left.matchScore ||
-        compareSchoolNames(left.school.schoolName, right.school.schoolName),
+      (left, right) => right.matchScore - left.matchScore || left.orderIndex - right.orderIndex,
     )
     .map(({ school, matchScore }) => ({
       ...school,
@@ -416,17 +414,6 @@ function readCount(
   }
 
   return value;
-}
-
-function compareLotteryRateRecords(left: LotteryRateRecord, right: LotteryRateRecord): number {
-  return (
-    compareSchoolNames(left.schoolName, right.schoolName) ||
-    compareAgeGroupLabels(left.ageGroup, right.ageGroup)
-  );
-}
-
-function compareSchoolNames(left: string, right: string): number {
-  return left.localeCompare(right, 'zh-Hant');
 }
 
 function extractAge(label: string): number | null {
