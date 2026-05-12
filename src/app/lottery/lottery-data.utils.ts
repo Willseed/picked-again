@@ -230,7 +230,7 @@ function buildLotteryRateRecord(
   if (!isRecord(rawCounts)) {
     dataQualityIssues.push({
       code: 'invalid-count-record',
-      message: `${ageGroup} 不是含有正取/備取數字的資料，焦慮儀表板看不懂這張籤。`,
+      message: `${ageGroup} 不是含有正取/備取數字的資料，暫時無法估算。`,
     });
   }
 
@@ -259,7 +259,7 @@ function buildLotteryRateRecord(
   if (totalCount === 0) {
     dataQualityIssues.push({
       code: 'zero-denominator',
-      message: `${ageGroup} 沒有正取或備取人數，無法估算中籤率；連分母都缺席。`,
+      message: `${ageGroup} 沒有正取或備取人數，暫時無法估算中籤率。`,
     });
   }
 
@@ -401,7 +401,7 @@ function readCount(
     issues.push({
       code: 'negative-count',
       field,
-      message: `${field}人數不能是負數；名額再少也不該倒扣。`,
+      message: `${field}人數不能是負數；請確認原始資料。`,
     });
     return 0;
   }
@@ -410,7 +410,7 @@ function readCount(
     issues.push({
       code: 'non-integer-count',
       field,
-      message: `${field}人數必須是整數；半個名額只會讓家長群更焦慮。`,
+      message: `${field}人數必須是整數；請確認是否為完整人數。`,
     });
     return 0;
   }

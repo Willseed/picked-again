@@ -165,7 +165,7 @@ export class LotteryDashboardComponent {
         error: () => {
           this.schools.set([]);
           this.errorMessage.set(
-            `無法載入 ${this.dataUrl}。請確認資料檔存在且格式正確；不是每個崩潰都能怪抽籤。`,
+            `無法載入 ${this.dataUrl}。請確認資料檔存在且格式正確後再試一次。`,
           );
           this.loading.set(false);
         },

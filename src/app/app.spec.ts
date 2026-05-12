@@ -39,8 +39,8 @@ describe('App', () => {
     fixture.detectChanges();
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('又沒抽到？');
-    expect(compiled.textContent).toContain('台北幼兒園抽籤焦慮儀表板');
-    expect(compiled.textContent).toContain('輸入關鍵字，開始查榜前深呼吸');
+    expect(compiled.textContent).toContain('中籤率小幫手');
+    expect(compiled.textContent).toContain('台北幼兒園中籤率小幫手');
+    expect(compiled.textContent).toContain('輸入關鍵字，快速查看中籤率');
   });
 });

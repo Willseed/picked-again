@@ -48,7 +48,7 @@ describe('LotteryDashboardComponent', () => {
     const pendingSchools = new Subject<readonly SchoolLotteryRates[]>();
     const fixture = await renderDashboard(() => pendingSchools.asObservable());
 
-    expect(fixture.nativeElement.textContent).toContain('載入抽籤宇宙中');
+    expect(fixture.nativeElement.textContent).toContain('載入中籤率資料中');
 
     pendingSchools.complete();
   });
@@ -57,9 +57,9 @@ describe('LotteryDashboardComponent', () => {
     const fixture = await renderDashboard();
     const text = fixture.nativeElement.textContent as string;
 
-    expect(text).toContain('輸入關鍵字，開始查榜前深呼吸');
-    expect(text).toContain('1 間幼兒園待命');
-    expect(text).toContain('4 個班齡戰場');
+    expect(text).toContain('輸入關鍵字，快速查看中籤率');
+    expect(text).toContain('1 間幼兒園');
+    expect(text).toContain('4 個班齡組別');
   });
 
   it('應顯示底部資料使用聲明', async () => {
@@ -91,7 +91,7 @@ describe('LotteryDashboardComponent', () => {
     expect(text).toContain('25.0%');
     expect(text).toContain('正取');
     expect(text).toContain('備取');
-    expect(text).toContain('班齡戰場');
+    expect(text).toContain('班齡組別');
     expect(fixture.nativeElement.querySelector('.district-chips')?.textContent).toContain(
       '大同區',
     );
@@ -155,7 +155,7 @@ describe('LotteryDashboardComponent', () => {
   it('資料服務失敗時應顯示錯誤狀態', async () => {
     const fixture = await renderDashboard(() => throwError(() => new Error('boom')));
 
-    expect(fixture.nativeElement.textContent).toContain('資料載入失敗，焦慮先別加碼');
+    expect(fixture.nativeElement.textContent).toContain('資料載入失敗，先別擔心');
     expect(fixture.nativeElement.textContent).toContain('無法載入 assets/data.json');
   });
 });

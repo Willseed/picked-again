@@ -1,6 +1,6 @@
 export const LOTTERY_DATA_URL = 'assets/data.json';
 
-export const ESTIMATED_LOTTERY_RATE_LABEL = '估算中籤率（給心臟先打預防針）';
+export const ESTIMATED_LOTTERY_RATE_LABEL = '估算中籤率（快速參考）';
 export const ESTIMATED_LOTTERY_RATE_FORMULA = '正取 ÷ (正取 + 備取)';
 export const SEARCH_KEYWORDS_FIELD = '搜尋關鍵字';
 

@@ -1,12 +1,12 @@
-<section class="dashboard-shell" aria-label="台北幼兒園抽籤率搜尋儀表板">
+<section class="dashboard-shell" aria-label="台北幼兒園中籤率搜尋工具">
   <mat-card appearance="outlined" class="hero-card">
     <mat-card-header>
       <mat-icon mat-card-avatar aria-hidden="true">query_stats</mat-icon>
-      <mat-card-title>台北幼兒園抽籤焦慮儀表板</mat-card-title>
+      <mat-card-title>台北幼兒園中籤率小幫手</mat-card-title>
       <mat-card-subtitle>
         估算公式：{{
           rateFormula
-        }}。原始資料沒有報名人數，請把這裡當成家長群組焦慮的溫度計，不是神諭。
+        }}。原始資料沒有報名人數，這裡提供概略參考，方便快速比較各班齡。
       </mat-card-subtitle>
     </mat-card-header>
 
@@ -34,15 +34,15 @@
               <mat-icon aria-hidden="true">close</mat-icon>
             </button>
           }
-          <mat-hint>支援園名、行政區、模糊搜尋與臺/台正規化；手抖也算，像抽籤前一天一樣。</mat-hint>
+          <mat-hint>支援園名、行政區、模糊搜尋與臺/台正規化；輸入片段也能幫你找。</mat-hint>
         </mat-form-field>
       </form>
 
       <mat-chip-set aria-label="資料摘要" class="summary-chips">
-        <mat-chip>{{ schools().length }} 間幼兒園待命</mat-chip>
-        <mat-chip>{{ totalAgeGroups() }} 個班齡戰場</mat-chip>
+        <mat-chip>{{ schools().length }} 間幼兒園</mat-chip>
+        <mat-chip>{{ totalAgeGroups() }} 個班齡組別</mat-chip>
         @if (keyword().length > 0 && !loading() && !errorMessage()) {
-          <mat-chip>{{ searchResults().length }} 筆符合「{{ keyword() }}」，焦慮命中</mat-chip>
+          <mat-chip>{{ searchResults().length }} 筆符合「{{ keyword() }}」</mat-chip>
         }
       </mat-chip-set>
     </mat-card-content>
@@ -52,8 +52,8 @@
     <mat-card appearance="outlined" class="state-card" aria-live="polite">
       <mat-card-header>
         <mat-icon mat-card-avatar aria-hidden="true">sync</mat-icon>
-        <mat-card-title>載入抽籤宇宙中</mat-card-title>
-        <mat-card-subtitle>正在讀取 {{ dataUrl }}，家長群先不要刷新第八次</mat-card-subtitle>
+        <mat-card-title>載入中籤率資料中</mat-card-title>
+        <mat-card-subtitle>正在讀取 {{ dataUrl }}，請稍候一下，我們很快整理好。</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
         <mat-progress-bar mode="indeterminate" aria-label="抽籤資料載入中"></mat-progress-bar>
@@ -63,7 +63,7 @@
     <mat-card appearance="outlined" class="state-card error-card" aria-live="polite">
       <mat-card-header>
         <mat-icon mat-card-avatar aria-hidden="true">error</mat-icon>
-        <mat-card-title>資料載入失敗，焦慮先別加碼</mat-card-title>
+        <mat-card-title>資料載入失敗，先別擔心</mat-card-title>
         <mat-card-subtitle>{{ message }}</mat-card-subtitle>
       </mat-card-header>
       <mat-card-actions align="end">
@@ -77,16 +77,16 @@
       <mat-card-header>
         <mat-icon mat-card-avatar aria-hidden="true">database_off</mat-icon>
         <mat-card-title>沒有可顯示的資料</mat-card-title>
-        <mat-card-subtitle>資料檔沒有有效的幼兒園或班齡組別，連系統都抽不到。</mat-card-subtitle>
+        <mat-card-subtitle>資料檔沒有有效的幼兒園或班齡組別，請確認內容後再試一次。</mat-card-subtitle>
       </mat-card-header>
     </mat-card>
   } @else if (keyword().length === 0) {
     <mat-card appearance="outlined" class="state-card" aria-live="polite">
       <mat-card-header>
         <mat-icon mat-card-avatar aria-hidden="true">search</mat-icon>
-        <mat-card-title>輸入關鍵字，開始查榜前深呼吸</mat-card-title>
+        <mat-card-title>輸入關鍵字，快速查看中籤率</mat-card-title>
         <mat-card-subtitle
-          >例如輸入「蘭州」，看看各班齡估算中籤率，順便量一下心跳。</mat-card-subtitle
+          >例如輸入「蘭州」，查看各班齡估算中籤率，先把重點整理好。</mat-card-subtitle
         >
       </mat-card-header>
     </mat-card>
@@ -96,19 +96,19 @@
         <mat-icon mat-card-avatar aria-hidden="true">travel_explore</mat-icon>
         <mat-card-title>找不到符合「{{ keyword() }}」的幼兒園</mat-card-title>
         <mat-card-subtitle
-          >請試更短關鍵字，或改用臺/台另一種寫法；抽籤已夠殘酷，搜尋先別刁難你。</mat-card-subtitle
+          >請試更短關鍵字，或改用臺/台另一種寫法；也可以用行政區或園名片段再找一次。</mat-card-subtitle
         >
       </mat-card-header>
     </mat-card>
   } @else {
-    <section class="results-stack" aria-label="搜尋結果與抽籤焦慮指數" aria-live="polite">
+    <section class="results-stack" aria-label="搜尋結果與估算中籤率" aria-live="polite">
       @for (result of searchResults(); track result.schoolName) {
         <mat-card appearance="outlined" class="school-card">
           <mat-card-header>
             <mat-icon mat-card-avatar aria-hidden="true">school</mat-icon>
             <mat-card-title>{{ result.schoolName }}</mat-card-title>
             <mat-card-subtitle>
-              {{ result.ageGroups.length }} 個班齡戰場 · 模糊命中
+              {{ result.ageGroups.length }} 個班齡組別 · 模糊符合
               {{ formatMatchScore(result.matchScore) }}
             </mat-card-subtitle>
             @if (result.districtNames.length > 0) {
@@ -133,13 +133,13 @@
               </mat-card>
               <mat-card appearance="outlined" class="metric-card">
                 <mat-card-content>
-                  <span>備取長龍</span>
+                  <span>備取人數</span>
                   <strong>{{ waitlistedTotal(result) }}</strong>
                 </mat-card-content>
               </mat-card>
               <mat-card appearance="outlined" class="metric-card">
                 <mat-card-content>
-                  <span>班齡戰場</span>
+                  <span>班齡組別</span>
                   <strong>{{ result.ageGroups.length }}</strong>
                 </mat-card-content>
               </mat-card>
@@ -251,7 +251,7 @@
                           }
 
                           @if (record.dataQualityIssues.length > 0) {
-                            <mat-chip-set aria-label="資料品質提醒（家長群請冷靜）" class="issue-chips">
+                            <mat-chip-set aria-label="資料品質提醒（請以官方公告為準）" class="issue-chips">
                               @for (
                                 issue of record.dataQualityIssues;
                                 track issue.code + issue.message

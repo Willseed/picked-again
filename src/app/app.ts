@@ -11,5 +11,5 @@ import { LotteryDashboardComponent } from './lottery/lottery-dashboard.component
   styleUrl: './app.scss',
 })
 export class App {
-  protected readonly title = '又沒抽到？';
+  protected readonly title = '中籤率小幫手';
 }
