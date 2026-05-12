@@ -72,6 +72,8 @@ describe('LotteryDashboardComponent', () => {
     expect(footerText).toContain(
       '本頁資料並非最終公告，僅供參考；實際招生名額、抽籤結果與相關規範，請以主管機關及各幼兒園官方資訊為準。',
     );
+    expect(footerText).toContain('特別感謝');
+    expect(footerText).toContain('資料提供：米粒');
   });
 
   it('應顯示符合幼兒園的中籤率與正取／備取人數', async () => {
