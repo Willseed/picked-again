@@ -480,12 +480,32 @@ app-lottery-dashboard {
     gap: 16px;
   }
 
+  .rate-value {
+    display: grid;
+    justify-items: end;
+    gap: 4px;
+    text-align: right;
+  }
+
   .decision-rate strong {
     color: var(--pa-ink);
-    font-size: clamp(28px, 5vw, 40px);
+    font-size: clamp(24px, 4vw, 34px);
     font-weight: 800;
-    line-height: 0.95;
-    letter-spacing: -0.04em;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+  }
+
+  .decision-rate strong.is-unavailable {
+    max-width: 11ch;
+    font-size: clamp(20px, 3vw, 28px);
+    line-height: 1.15;
+    letter-spacing: 0;
+  }
+
+  .rate-value small {
+    color: var(--pa-muted);
+    font-size: 11px;
+    line-height: 1.4;
   }
 
   .decision-grid,
@@ -710,6 +730,17 @@ app-lottery-dashboard {
       align-items: flex-start;
       flex-direction: column;
       gap: 6px;
+    }
+
+    .decision-rate {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .rate-value {
+      justify-items: start;
+      text-align: left;
     }
   }
 }

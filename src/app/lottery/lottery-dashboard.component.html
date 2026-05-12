@@ -155,20 +155,22 @@
                       }
                       <span class="age-label">{{ record.ageLabel }}</span>
                     </mat-card-title>
-                    <mat-card-subtitle>{{
-                      record.sourceLabel || record.estimatedLotteryRateLabel
-                    }}</mat-card-subtitle>
+                    <mat-card-subtitle>{{ record.estimatedLotteryRateLabel }}</mat-card-subtitle>
                   </mat-card-header>
 
                   <mat-card-content>
                     <div class="decision-panel" aria-label="一般生主要決策資訊">
+                      @let displayRate = displayRatePercent(record);
                       <div class="decision-rate">
                         <span>一般生中籤率</span>
-                        <strong>{{
-                          formatPercent(
-                            record.generalLotteryRatePercent ?? record.estimatedLotteryRatePercent
-                          )
-                        }}</strong>
+                        <div class="rate-value">
+                          <strong [class.is-unavailable]="displayRate === null">{{
+                            formatPercent(displayRate)
+                          }}</strong>
+                          @if (formatPercentHint(displayRate); as percentHint) {
+                            <small>{{ percentHint }}</small>
+                          }
+                        </div>
                       </div>
                       <dl class="decision-grid">
                         <div>

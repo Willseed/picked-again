@@ -95,9 +95,11 @@ export class LotteryDashboardComponent {
   }
 
   protected formatPercent(value: number | null): string {
-    return value === null
-      ? '無法估算，命運連公式都不想接'
-      : `${this.percentFormatter.format(value)}%`;
+    return value === null ? '無法估算' : `${this.percentFormatter.format(value)}%`;
+  }
+
+  protected formatPercentHint(value: number | null): string | null {
+    return value === null ? '缺少有效分母（一般申請為 0）' : null;
   }
 
   protected formatMatchScore(value: number): string {
@@ -105,7 +107,7 @@ export class LotteryDashboardComponent {
   }
 
   protected rateProgressValue(record: LotteryRateRecord): number {
-    return record.generalLotteryRatePercent ?? record.estimatedLotteryRatePercent ?? 0;
+    return this.displayRatePercent(record) ?? 0;
   }
 
   protected formatCount(value: number | null): string {
@@ -118,6 +120,10 @@ export class LotteryDashboardComponent {
 
   protected waitlistedTotal(school: SchoolLotteryRates): number {
     return school.ageGroups.reduce((total, record) => total + record.waitlistedCount, 0);
+  }
+
+  protected displayRatePercent(record: LotteryRateRecord): number | null {
+    return record.generalLotteryRatePercent ?? record.estimatedLotteryRatePercent;
   }
 
   private loadData(): void {
