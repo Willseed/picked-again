@@ -151,6 +151,46 @@ describe('LotteryDashboardComponent', () => {
     expect(yearSections[1]?.textContent).toContain('4歲');
   });
 
+  it('公告缺額在特定順序達標時應高亮該順序', async () => {
+    const sequenceHighlightSchools = buildSchoolLotteryRates({
+      臺北市順序高亮測試幼兒園: {
+        搜尋關鍵字: ['高亮測試'],
+        '4歲': {
+          正取: 40,
+          備取: 5,
+          公告缺額: 40,
+          各序位: {
+            順序1: 4,
+            順序2: 5,
+            順序3: 6,
+            順序4: 5,
+            順序5: 7,
+            順序6: 4,
+            順序7: 9,
+            順序8: 3,
+          },
+        },
+      },
+    } satisfies RawLotteryData);
+    const fixture = await renderDashboard(() => of(sequenceHighlightSchools));
+    const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
+
+    input.value = '高亮測試';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    const highlightedChip = host.querySelector('.sequence-chip.is-fill-threshold');
+
+    expect(highlightedChip?.textContent).toContain('順序7');
+    expect(highlightedChip?.textContent).toContain('收滿點');
+    expect(host.querySelector('.sequence-fulfillment-hint')?.textContent).toContain(
+      '在順序7已達收滿門檻',
+    );
+  });
+
   it('按下全域快搜快捷鍵時應聚焦搜尋欄', async () => {
     const fixture = await renderDashboard();
     const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;

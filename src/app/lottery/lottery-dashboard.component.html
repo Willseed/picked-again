@@ -224,14 +224,27 @@
                           @if (record.sequenceCounts.length > 0) {
                             <section class="sequence-panel" aria-label="各序位申請人數">
                               <div class="section-kicker">各序位</div>
+                              @let fulfillmentMarker = sequenceFulfillmentMarker(record);
                               <div class="sequence-list">
                                 @for (sequence of record.sequenceCounts; track sequence.label) {
-                                  <span class="sequence-chip">
+                                  <span
+                                    class="sequence-chip"
+                                    [class.is-fill-threshold]="fulfillmentMarker?.label === sequence.label"
+                                  >
                                     <span>{{ sequence.label }}</span>
                                     <strong>{{ sequence.count }}</strong>
+                                    @if (fulfillmentMarker?.label === sequence.label) {
+                                      <em class="sequence-hit-badge">收滿點</em>
+                                    }
                                   </span>
                                 }
                               </div>
+                              @if (fulfillmentMarker) {
+                                <p class="sequence-fulfillment-hint">
+                                  公告缺額 {{ formatCount(record.announcedVacancyCount) }} 人，在{{ fulfillmentMarker.label }}已達收滿門檻（累計
+                                  {{ fulfillmentMarker.cumulativeCount }} 人）。
+                                </p>
+                              }
                             </section>
                           }
 

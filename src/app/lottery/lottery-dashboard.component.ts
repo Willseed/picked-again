@@ -32,6 +32,11 @@ interface SchoolYearLotteryGroup {
   readonly records: readonly LotteryRateRecord[];
 }
 
+interface SequenceFulfillmentMarker {
+  readonly label: string;
+  readonly cumulativeCount: number;
+}
+
 @Component({
   selector: 'app-lottery-dashboard',
   imports: [
@@ -119,6 +124,10 @@ export class LotteryDashboardComponent {
     return value === null ? '—' : `${value}`;
   }
 
+  protected sequenceFulfillmentMarker(record: LotteryRateRecord): SequenceFulfillmentMarker | null {
+    return findSequenceFulfillmentMarker(record);
+  }
+
   protected acceptedTotal(school: SchoolLotteryRates): number {
     return school.ageGroups.reduce((total, record) => total + record.acceptedCount, 0);
   }
@@ -195,4 +204,27 @@ function compareSchoolYearLabels(left: string, right: string): number {
 function extractNumericYear(label: string): number | null {
   const match = label.match(/\d+/u);
   return match ? Number(match[0]) : null;
+}
+
+function findSequenceFulfillmentMarker(record: LotteryRateRecord): SequenceFulfillmentMarker | null {
+  const announcedVacancyCount = record.announcedVacancyCount;
+
+  if (announcedVacancyCount === null || announcedVacancyCount <= 0 || record.sequenceCounts.length === 0) {
+    return null;
+  }
+
+  let cumulativeCount = 0;
+
+  for (const sequence of record.sequenceCounts) {
+    cumulativeCount += sequence.count;
+
+    if (cumulativeCount >= announcedVacancyCount) {
+      return {
+        label: sequence.label,
+        cumulativeCount,
+      };
+    }
+  }
+
+  return null;
 }

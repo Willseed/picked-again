@@ -714,9 +714,40 @@ app-lottery-dashboard {
     font-size: 12px;
   }
 
+  .sequence-chip.is-fill-threshold {
+    border-color: var(--pa-ink);
+    background: var(--pa-ink);
+    color: var(--pa-canvas);
+    font-weight: 700;
+  }
+
   .sequence-chip strong {
     color: var(--pa-on-dark-mute);
     font-weight: 700;
+  }
+
+  .sequence-chip.is-fill-threshold strong {
+    color: inherit;
+  }
+
+  .sequence-hit-badge {
+    border: 1px solid color-mix(in srgb, var(--pa-canvas) 70%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--pa-canvas) 16%, transparent);
+    padding: 1px 6px;
+    font-size: 10px;
+    font-style: normal;
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: 0.04em;
+  }
+
+  .sequence-fulfillment-hint {
+    margin: 0;
+    color: var(--pa-ink);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.5;
   }
 
   .record-note {
