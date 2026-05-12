@@ -135,9 +135,16 @@ describe('LotteryDashboardComponent', () => {
     const yearLabels = Array.from(host.querySelectorAll('.year-tag')).map((element) =>
       element.textContent?.trim(),
     );
+    const contextSchools = Array.from(host.querySelectorAll('.year-context-school')).map(
+      (element) => element.textContent?.trim(),
+    );
 
     expect(yearSections).toHaveLength(2);
     expect(yearLabels).toEqual(['114學年', '113學年']);
+    expect(contextSchools).toEqual([
+      '臺北市測試非營利幼兒園',
+      '臺北市測試非營利幼兒園',
+    ]);
     expect(yearSections[0]?.textContent).toContain('5歲');
     expect(yearSections[1]?.textContent).toContain('4歲');
   });

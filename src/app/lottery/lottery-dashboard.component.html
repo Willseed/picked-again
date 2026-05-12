@@ -147,10 +147,14 @@
 
             <div class="year-sections" aria-label="依學年分組的班齡資料">
               @for (yearGroup of groupedAgeGroups(result); track yearGroup.schoolYear) {
-                <section class="year-section" [attr.aria-label]="yearGroup.schoolYear + '資料'">
+                <section
+                  class="year-section"
+                  [attr.aria-label]="result.schoolName + ' ' + yearGroup.schoolYear + '資料'"
+                >
                   <header class="year-section-header">
-                    <div>
-                      <span class="year-kicker">學年度</span>
+                    <div class="year-context">
+                      <span class="year-kicker">目前查看</span>
+                      <strong class="year-context-school">{{ result.schoolName }}</strong>
                       <strong class="year-tag">{{ yearGroup.schoolYear }}</strong>
                     </div>
                     <span class="year-summary">{{ yearGroup.records.length }} 個班齡</span>
