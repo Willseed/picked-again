@@ -286,6 +286,7 @@ app-lottery-dashboard {
   .metric-card span,
   .rate-row span,
   .decision-rate span,
+  .decision-context dt,
   .section-kicker,
   dt {
     color: var(--pa-muted);
@@ -295,6 +296,8 @@ app-lottery-dashboard {
   .metric-card span,
   .rate-row span,
   .decision-rate span,
+  .decision-context dt,
+  .decision-context dd,
   .section-kicker,
   dt,
   .summary-chips mat-chip,
@@ -553,11 +556,33 @@ app-lottery-dashboard {
 
   .decision-panel {
     display: grid;
-    gap: 12px;
+    gap: 10px;
     border: 1px solid var(--pa-hairline-strong);
     border-radius: var(--pa-radius-lg);
     background: var(--pa-surface-card);
     padding: 16px;
+  }
+
+  .decision-context {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    margin: 0;
+  }
+
+  .decision-context div {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .decision-context dd {
+    margin: 0;
+    color: var(--pa-on-dark-mute);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.3;
   }
 
   .decision-rate {

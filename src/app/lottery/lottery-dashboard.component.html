@@ -137,12 +137,6 @@
                   <strong>{{ waitlistedTotal(result) }}</strong>
                 </mat-card-content>
               </mat-card>
-              <mat-card appearance="outlined" class="metric-card">
-                <mat-card-content>
-                  <span>班齡組別</span>
-                  <strong>{{ result.ageGroups.length }}</strong>
-                </mat-card-content>
-              </mat-card>
             </div>
 
             <div class="year-sections" aria-label="依學年分組的班齡資料">
@@ -173,6 +167,16 @@
                         <mat-card-content>
                           <div class="decision-panel" aria-label="一般生主要決策資訊">
                             @let displayRate = displayRatePercent(record);
+                            <dl class="decision-context" aria-label="公告報名資訊">
+                              <div>
+                                <dt>公告缺額</dt>
+                                <dd>{{ formatCount(record.announcedVacancyCount) }}</dd>
+                              </div>
+                              <div>
+                                <dt>總登記人數</dt>
+                                <dd>{{ formatCount(record.registrationCount) }}</dd>
+                              </div>
+                            </dl>
                             <div class="decision-rate">
                               <span>一般生中籤率</span>
                               <div class="rate-value">
@@ -249,14 +253,6 @@
                           }
 
                           <dl class="detail-grid">
-                            <div>
-                              <dt>公告缺額</dt>
-                              <dd>{{ formatCount(record.announcedVacancyCount) }}</dd>
-                            </div>
-                            <div>
-                              <dt>總登記</dt>
-                              <dd>{{ formatCount(record.registrationCount) }}</dd>
-                            </div>
                             <div>
                               <dt>正取／備取</dt>
                               <dd>{{ record.acceptedCount }}／{{ record.waitlistedCount }}</dd>

@@ -94,9 +94,49 @@ describe('LotteryDashboardComponent', () => {
     expect(text).toContain('正取');
     expect(text).toContain('備取');
     expect(text).toContain('班齡組別');
+    expect(fixture.nativeElement.querySelector('.metric-grid')?.textContent).not.toContain(
+      '班齡組別',
+    );
     expect(fixture.nativeElement.querySelector('.district-chips')?.textContent).toContain(
       '大同區',
     );
+  });
+
+  it('公告缺額與總登記人數應以小字顯示在一般中籤率上方', async () => {
+    const announcedCountSchools = buildSchoolLotteryRates({
+      臺北市公告資訊測試幼兒園: {
+        搜尋關鍵字: ['公告資訊測試'],
+        '4歲': {
+          正取: 10,
+          備取: 5,
+          公告缺額: 8,
+          總登記人數: 20,
+        },
+      },
+    } satisfies RawLotteryData);
+    const fixture = await renderDashboard(() => of(announcedCountSchools));
+    const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
+
+    input.value = '公告資訊測試';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    const decisionContext = host.querySelector('.decision-context') as HTMLElement;
+    const decisionRate = host.querySelector('.decision-rate') as HTMLElement;
+    const detailGrid = host.querySelector('.detail-grid') as HTMLElement;
+
+    expect(decisionContext.textContent).toContain('公告缺額');
+    expect(decisionContext.textContent).toContain('8');
+    expect(decisionContext.textContent).toContain('總登記人數');
+    expect(decisionContext.textContent).toContain('20');
+    expect(
+      decisionContext.compareDocumentPosition(decisionRate) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(detailGrid.textContent).not.toContain('公告缺額');
+    expect(detailGrid.textContent).not.toContain('總登記');
   });
 
   it('可用行政區關鍵字搜尋幼兒園', async () => {
