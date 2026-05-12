@@ -791,9 +791,9 @@ app-lottery-dashboard {
 
   mat-progress-bar {
     --mat-progress-bar-active-indicator-color: var(--pa-ink);
-    --mat-progress-bar-active-indicator-height: 6px;
+    --mat-progress-bar-active-indicator-height: 8px;
     --mat-progress-bar-track-color: var(--pa-button-fg);
-    --mat-progress-bar-track-height: 6px;
+    --mat-progress-bar-track-height: 8px;
     --mat-progress-bar-track-shape: 999px;
 
     overflow: hidden;

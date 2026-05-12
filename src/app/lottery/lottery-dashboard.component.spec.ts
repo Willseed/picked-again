@@ -222,8 +222,17 @@ describe('LotteryDashboardComponent', () => {
     fixture.detectChanges();
 
     const host = fixture.nativeElement as HTMLElement;
+    const progressBar = host.querySelector('mat-progress-bar') as HTMLElement;
+    const sequencePanel = host.querySelector('.sequence-panel') as HTMLElement;
+    const identityPanel = host.querySelector('.identity-panel') as HTMLElement;
     const highlightedChip = host.querySelector('.sequence-chip.is-fill-threshold');
 
+    expect(
+      progressBar.compareDocumentPosition(sequencePanel) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      sequencePanel.compareDocumentPosition(identityPanel) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
     expect(highlightedChip?.textContent).toContain('順序7');
     expect(highlightedChip?.textContent).toContain('收滿點');
     expect(host.querySelector('.sequence-fulfillment-hint')?.textContent).toContain(
