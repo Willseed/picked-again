@@ -6,7 +6,7 @@ html {
   @include mat.theme(
     (
       color: (
-        theme-type: dark,
+        theme-type: light,
         primary: mat.$azure-palette,
         tertiary: mat.$blue-palette,
       ),
@@ -17,27 +17,27 @@ html {
 }
 
 :root {
-  --pa-canvas: #07080a;
-  --pa-surface: #0d0d0d;
-  --pa-surface-elevated: #101111;
-  --pa-surface-card: #121212;
-  --pa-button-fg: #202223;
-  --pa-hairline: #242728;
-  --pa-hairline-soft: rgba(255, 255, 255, 0.08);
-  --pa-hairline-strong: rgba(255, 255, 255, 0.16);
-  --pa-ink: #f4f4f5;
-  --pa-charcoal: #d5d7da;
-  --pa-on-dark: #f4f4f5;
-  --pa-on-dark-mute: rgba(244, 244, 245, 0.78);
-  --pa-body: #d5d7da;
-  --pa-muted: #8f9499;
-  --pa-ash: #6d7378;
-  --pa-cta: #ffffff;
-  --pa-on-cta: #07080a;
-  --pa-error: #ff6b6b;
-  --pa-error-soft: rgba(255, 107, 107, 0.12);
-  --pa-accent-yellow: #ffd166;
-  --pa-accent-yellow-soft: rgba(255, 209, 102, 0.12);
+  --pa-canvas: #f7f4ee;
+  --pa-surface: #fffdf8;
+  --pa-surface-elevated: #fbf8f1;
+  --pa-surface-card: #f1ece2;
+  --pa-button-fg: #e8e0d4;
+  --pa-hairline: #ddd4c5;
+  --pa-hairline-soft: rgba(31, 26, 19, 0.08);
+  --pa-hairline-strong: rgba(31, 26, 19, 0.2);
+  --pa-ink: #17130f;
+  --pa-charcoal: #302922;
+  --pa-on-dark: #17130f;
+  --pa-on-dark-mute: rgba(31, 26, 19, 0.72);
+  --pa-body: #443b32;
+  --pa-muted: #74685b;
+  --pa-ash: #9b9287;
+  --pa-cta: #17130f;
+  --pa-on-cta: #fffaf2;
+  --pa-error: #b42318;
+  --pa-error-soft: rgba(180, 35, 24, 0.12);
+  --pa-accent-yellow: #8a5a00;
+  --pa-accent-yellow-soft: rgba(138, 90, 0, 0.12);
   --pa-font-sans:
     'Inter', 'Inter Fallback', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --pa-font-features: 'calt', 'kern', 'liga', 'ss03';
@@ -101,7 +101,7 @@ body {
   margin: 0;
   background: var(--pa-canvas);
   color: var(--pa-body);
-  color-scheme: dark;
+  color-scheme: light;
   font: var(--mat-sys-body-medium);
   font-family: var(--pa-font-sans);
   font-feature-settings: var(--pa-font-features);
@@ -430,7 +430,7 @@ app-lottery-dashboard {
     border: 1px solid var(--pa-hairline-strong);
     border-radius: var(--pa-radius-xl);
     background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 34%),
+      linear-gradient(180deg, rgba(23, 19, 15, 0.03), transparent 34%),
       var(--pa-surface-elevated);
     padding: 14px;
   }
@@ -446,7 +446,7 @@ app-lottery-dashboard {
     margin: -14px -14px 0;
     border-bottom: 1px solid var(--pa-hairline-soft);
     border-radius: var(--pa-radius-xl) var(--pa-radius-xl) 0 0;
-    background: rgba(16, 17, 17, 0.94);
+    background: rgba(255, 253, 248, 0.94);
     padding: 14px 14px 12px;
     backdrop-filter: blur(14px);
 
