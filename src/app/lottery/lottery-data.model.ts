@@ -9,6 +9,17 @@ export type LotteryCountField = '正取' | '備取';
 export interface RawLotteryCounts {
   readonly 正取?: unknown;
   readonly 備取?: unknown;
+  readonly 公告缺額?: unknown;
+  readonly 總登記人數?: unknown;
+  readonly 各序位?: unknown;
+  readonly 身份別?: unknown;
+  readonly 優先順序?: unknown;
+  readonly 一般缺額?: unknown;
+  readonly 一般順序?: unknown;
+  readonly 一般順序中籤率?: unknown;
+  readonly 資料來源?: unknown;
+  readonly 備取人數?: unknown;
+  readonly 備註?: unknown;
 }
 
 export type RawSchoolSearchKeywords = string | readonly string[];
@@ -33,6 +44,8 @@ export interface LotteryRateRecord {
   readonly schoolName: string;
   readonly normalizedSchoolName: string;
   readonly ageGroup: string;
+  readonly ageLabel: string;
+  readonly schoolYear: string | null;
   readonly acceptedCount: number;
   readonly waitlistedCount: number;
   readonly totalCount: number;
@@ -40,13 +53,31 @@ export interface LotteryRateRecord {
   readonly estimatedLotteryRatePercent: number | null;
   readonly estimatedLotteryRateLabel: typeof ESTIMATED_LOTTERY_RATE_LABEL;
   readonly estimatedLotteryRateFormula: typeof ESTIMATED_LOTTERY_RATE_FORMULA;
+  readonly announcedVacancyCount: number | null;
+  readonly registrationCount: number | null;
+  readonly priorityApplicantCount: number | null;
+  readonly generalVacancyCount: number | null;
+  readonly generalApplicantCount: number | null;
+  readonly generalAcceptedCount: number | null;
+  readonly generalWaitlistedCount: number | null;
+  readonly generalLotteryRate: number | null;
+  readonly generalLotteryRatePercent: number | null;
+  readonly sequenceCounts: readonly LotterySequenceCount[];
+  readonly sourceLabel: string | null;
+  readonly note: string | null;
   readonly dataQualityIssues: readonly LotteryDataIssue[];
+}
+
+export interface LotterySequenceCount {
+  readonly label: string;
+  readonly count: number;
 }
 
 export interface SchoolLotteryRates {
   readonly schoolName: string;
   readonly normalizedSchoolName: string;
   readonly searchKeywords: readonly string[];
+  readonly districtNames: readonly string[];
   readonly normalizedSearchKeywords: readonly string[];
   readonly ageGroups: readonly LotteryRateRecord[];
 }

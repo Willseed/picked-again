@@ -50,6 +50,7 @@ export function groupLotteryRateRecords(
         schoolName,
         normalizedSchoolName: normalizeSearchText(schoolName),
         searchKeywords,
+        districtNames: extractDistrictNames(searchKeywords),
         normalizedSearchKeywords: buildNormalizedSearchKeywords(schoolName, searchKeywords),
         ageGroups: [...ageGroups].sort((left, right) =>
           compareAgeGroupLabels(left.ageGroup, right.ageGroup),
@@ -200,6 +201,17 @@ function buildNormalizedSearchKeywords(
   return Array.from(new Set(normalizedKeywords));
 }
 
+function extractDistrictNames(searchAliases: readonly string[]): readonly string[] {
+  const districtNames = searchAliases
+    .map(
+      (alias) =>
+        alias.match(/(?:臺北市|台北市)?(?<district>[^,\s，、]+區)$/u)?.groups?.['district'],
+    )
+    .filter((district): district is string => typeof district === 'string' && district.length > 0);
+
+  return Array.from(new Set(districtNames));
+}
+
 function getBestFuzzyMatchScore(keyword: string, candidates: readonly string[]): number {
   return candidates.reduce(
     (bestScore, candidate) => Math.max(bestScore, getFuzzyMatchScore(keyword, candidate)),
@@ -226,6 +238,23 @@ function buildLotteryRateRecord(
   const waitlistedCount = readCount(countsRecord, WAITLISTED_FIELD, dataQualityIssues);
   const totalCount = acceptedCount + waitlistedCount;
   const estimatedLotteryRate = totalCount > 0 ? acceptedCount / totalCount : null;
+  const identityRecord = readRecord(countsRecord['身份別']);
+  const priorityIdentity = readRecord(identityRecord?.['優先順序']);
+  const generalIdentity = readRecord(identityRecord?.['一般生']);
+  const generalApplicantCount =
+    readOptionalCount(generalIdentity, '申請') ?? readOptionalCount(countsRecord, '一般順序');
+  const generalAcceptedCount = readOptionalCount(generalIdentity, ACCEPTED_FIELD);
+  const generalWaitlistedCount =
+    readOptionalCount(generalIdentity, WAITLISTED_FIELD) ??
+    readOptionalCount(countsRecord, '備取人數') ??
+    waitlistedCount;
+  const generalLotteryRate = deriveGeneralLotteryRate(
+    generalApplicantCount,
+    generalAcceptedCount,
+    readOptionalFiniteNumber(generalIdentity, '中籤率') ??
+      readOptionalFiniteNumber(countsRecord, '一般順序中籤率'),
+  );
+  const ageYearLabels = splitAgeYearLabel(ageGroup);
 
   if (totalCount === 0) {
     dataQualityIssues.push({
@@ -238,16 +267,109 @@ function buildLotteryRateRecord(
     schoolName,
     normalizedSchoolName: normalizeSearchText(schoolName),
     ageGroup,
+    ageLabel: ageYearLabels.ageLabel,
+    schoolYear: ageYearLabels.schoolYear,
     acceptedCount,
     waitlistedCount,
     totalCount,
     estimatedLotteryRate,
-    estimatedLotteryRatePercent:
-      estimatedLotteryRate === null ? null : estimatedLotteryRate * 100,
+    estimatedLotteryRatePercent: estimatedLotteryRate === null ? null : estimatedLotteryRate * 100,
     estimatedLotteryRateLabel: ESTIMATED_LOTTERY_RATE_LABEL,
     estimatedLotteryRateFormula: ESTIMATED_LOTTERY_RATE_FORMULA,
+    announcedVacancyCount: readOptionalCount(countsRecord, '公告缺額'),
+    registrationCount: readOptionalCount(countsRecord, '總登記人數'),
+    priorityApplicantCount:
+      readOptionalCount(priorityIdentity, '申請') ?? readOptionalCount(countsRecord, '優先順序'),
+    generalVacancyCount:
+      readOptionalCount(generalIdentity, '缺額') ?? readOptionalCount(countsRecord, '一般缺額'),
+    generalApplicantCount,
+    generalAcceptedCount,
+    generalWaitlistedCount,
+    generalLotteryRate,
+    generalLotteryRatePercent: generalLotteryRate === null ? null : generalLotteryRate * 100,
+    sequenceCounts: readSequenceCounts(countsRecord['各序位']),
+    sourceLabel: readOptionalString(countsRecord, '資料來源'),
+    note: readOptionalString(countsRecord, '備註'),
     dataQualityIssues,
   };
+}
+
+function splitAgeYearLabel(ageGroup: string): {
+  readonly ageLabel: string;
+  readonly schoolYear: string | null;
+} {
+  const normalizedAgeGroup = ageGroup.trim();
+  const match = normalizedAgeGroup.match(/^(?<age>.+?)\s*[（(](?<year>[^）)]+)[）)]$/u);
+
+  if (!match?.groups) {
+    return { ageLabel: normalizedAgeGroup, schoolYear: null };
+  }
+
+  return {
+    ageLabel: match.groups['age']?.trim() || normalizedAgeGroup,
+    schoolYear: match.groups['year']?.trim() || null,
+  };
+}
+
+function readSequenceCounts(
+  value: unknown,
+): readonly { readonly label: string; readonly count: number }[] {
+  const sequenceRecord = readRecord(value);
+
+  if (!sequenceRecord) {
+    return [];
+  }
+
+  return Object.entries(sequenceRecord)
+    .map(([label]) => ({ label, count: readOptionalFiniteNumber(sequenceRecord, label) }))
+    .filter(
+      (entry): entry is { readonly label: string; readonly count: number } =>
+        entry.count !== null && entry.count > 0,
+    );
+}
+
+function deriveGeneralLotteryRate(
+  applicantCount: number | null,
+  acceptedCount: number | null,
+  rawRate: number | null,
+): number | null {
+  if (applicantCount !== null && applicantCount > 0 && acceptedCount !== null) {
+    return Math.min(1, acceptedCount / applicantCount);
+  }
+
+  if (rawRate !== null) {
+    return Math.min(1, Math.max(0, rawRate));
+  }
+
+  return null;
+}
+
+function readOptionalCount(
+  source: Record<string, unknown> | null | undefined,
+  field: string,
+): number | null {
+  const value = readOptionalFiniteNumber(source, field);
+
+  return value !== null && value >= 0 && Number.isInteger(value) ? value : null;
+}
+
+function readOptionalFiniteNumber(
+  source: Record<string, unknown> | null | undefined,
+  field: string,
+): number | null {
+  if (!source || !Object.hasOwn(source, field)) {
+    return null;
+  }
+
+  const value = source[field];
+
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function readOptionalString(source: Record<string, unknown>, field: string): string | null {
+  const value = source[field];
+
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
 }
 
 function readCount(
@@ -335,4 +457,8 @@ function isOrderedSubsequence(needle: string, haystack: string): boolean {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function readRecord(value: unknown): Record<string, unknown> | null {
+  return isRecord(value) ? value : null;
 }

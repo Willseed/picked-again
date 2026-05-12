@@ -4,7 +4,9 @@
       <mat-icon mat-card-avatar aria-hidden="true">query_stats</mat-icon>
       <mat-card-title>台北幼兒園抽籤焦慮儀表板</mat-card-title>
       <mat-card-subtitle>
-        估算公式：{{ rateFormula }}。原始資料沒有報名人數，請把這裡當成家長群組焦慮的溫度計，不是神諭。
+        估算公式：{{
+          rateFormula
+        }}。原始資料沒有報名人數，請把這裡當成家長群組焦慮的溫度計，不是神諭。
       </mat-card-subtitle>
     </mat-card-header>
 
@@ -83,7 +85,9 @@
       <mat-card-header>
         <mat-icon mat-card-avatar aria-hidden="true">search</mat-icon>
         <mat-card-title>輸入關鍵字，開始查榜前深呼吸</mat-card-title>
-        <mat-card-subtitle>例如輸入「蘭州」，看看各班齡估算中籤率，順便量一下心跳。</mat-card-subtitle>
+        <mat-card-subtitle
+          >例如輸入「蘭州」，看看各班齡估算中籤率，順便量一下心跳。</mat-card-subtitle
+        >
       </mat-card-header>
     </mat-card>
   } @else if (searchResults().length === 0) {
@@ -91,7 +95,9 @@
       <mat-card-header>
         <mat-icon mat-card-avatar aria-hidden="true">travel_explore</mat-icon>
         <mat-card-title>找不到符合「{{ keyword() }}」的幼兒園</mat-card-title>
-        <mat-card-subtitle>請試更短關鍵字，或改用臺/台另一種寫法；抽籤已夠殘酷，搜尋先別刁難你。</mat-card-subtitle>
+        <mat-card-subtitle
+          >請試更短關鍵字，或改用臺/台另一種寫法；抽籤已夠殘酷，搜尋先別刁難你。</mat-card-subtitle
+        >
       </mat-card-header>
     </mat-card>
   } @else {
@@ -105,9 +111,14 @@
               {{ result.ageGroups.length }} 個班齡戰場 · 模糊命中
               {{ formatMatchScore(result.matchScore) }}
             </mat-card-subtitle>
-            @if (result.searchKeywords[0]; as districtName) {
-              <mat-chip-set class="district-chips" aria-label="行政區">
-                <mat-chip>{{ districtName }}</mat-chip>
+            @if (result.districtNames.length > 0) {
+              <mat-chip-set class="district-chips" aria-label="行政區別">
+                @for (districtName of result.districtNames; track districtName) {
+                  <mat-chip>
+                    <span class="district-label">區別</span>
+                    <strong>{{ districtName }}</strong>
+                  </mat-chip>
+                }
               </mat-chip-set>
             }
           </mat-card-header>
@@ -138,35 +149,96 @@
               @for (record of result.ageGroups; track record.ageGroup) {
                 <mat-card appearance="outlined" class="age-card">
                   <mat-card-header>
-                    <mat-card-title>{{ record.ageGroup }}</mat-card-title>
-                    <mat-card-subtitle>{{ record.estimatedLotteryRateLabel }}</mat-card-subtitle>
+                    <mat-card-title>
+                      @if (record.schoolYear) {
+                        <span class="year-pill">{{ record.schoolYear }}</span>
+                      }
+                      <span class="age-label">{{ record.ageLabel }}</span>
+                    </mat-card-title>
+                    <mat-card-subtitle>{{
+                      record.sourceLabel || record.estimatedLotteryRateLabel
+                    }}</mat-card-subtitle>
                   </mat-card-header>
 
                   <mat-card-content>
-                    <div class="rate-row">
-                      <span>估算中籤率</span>
-                      <strong>{{ formatPercent(record.estimatedLotteryRatePercent) }}</strong>
+                    <div class="decision-panel" aria-label="一般生主要決策資訊">
+                      <div class="decision-rate">
+                        <span>一般生中籤率</span>
+                        <strong>{{
+                          formatPercent(
+                            record.generalLotteryRatePercent ?? record.estimatedLotteryRatePercent
+                          )
+                        }}</strong>
+                      </div>
+                      <dl class="decision-grid">
+                        <div>
+                          <dt>一般缺額</dt>
+                          <dd>{{ formatCount(record.generalVacancyCount) }}</dd>
+                        </div>
+                        <div>
+                          <dt>一般申請</dt>
+                          <dd>{{ formatCount(record.generalApplicantCount) }}</dd>
+                        </div>
+                        <div>
+                          <dt>備取／未中</dt>
+                          <dd>{{ formatCount(record.generalWaitlistedCount) }}</dd>
+                        </div>
+                      </dl>
                     </div>
                     <mat-progress-bar
                       mode="determinate"
                       [value]="rateProgressValue(record)"
-                      [attr.aria-label]="record.ageGroup + ' 估算中籤率'"
+                      [attr.aria-label]="record.ageGroup + ' 一般生中籤率'"
                     ></mat-progress-bar>
 
-                    <dl class="count-grid">
+                    <section class="identity-panel" aria-label="身份別人數">
+                      <div class="identity-row priority">
+                        <span class="identity-label">優先順序</span>
+                        <strong>{{ formatCount(record.priorityApplicantCount) }}</strong>
+                        <small>申請</small>
+                      </div>
+                      <div class="identity-row general">
+                        <span class="identity-label">一般生</span>
+                        <strong>{{ formatCount(record.generalApplicantCount) }}</strong>
+                        <small>
+                          申請 · 正取
+                          {{ formatCount(record.generalAcceptedCount ?? record.acceptedCount) }}
+                        </small>
+                      </div>
+                    </section>
+
+                    @if (record.sequenceCounts.length > 0) {
+                      <section class="sequence-panel" aria-label="各序位申請人數">
+                        <div class="section-kicker">各序位</div>
+                        <div class="sequence-list">
+                          @for (sequence of record.sequenceCounts; track sequence.label) {
+                            <span class="sequence-chip">
+                              <span>{{ sequence.label }}</span>
+                              <strong>{{ sequence.count }}</strong>
+                            </span>
+                          }
+                        </div>
+                      </section>
+                    }
+
+                    <dl class="detail-grid">
                       <div>
-                        <dt>正取</dt>
-                        <dd>{{ record.acceptedCount }}</dd>
+                        <dt>公告缺額</dt>
+                        <dd>{{ formatCount(record.announcedVacancyCount) }}</dd>
                       </div>
                       <div>
-                        <dt>備取</dt>
-                        <dd>{{ record.waitlistedCount }}</dd>
+                        <dt>總登記</dt>
+                        <dd>{{ formatCount(record.registrationCount) }}</dd>
                       </div>
                       <div>
-                        <dt>估算分母</dt>
-                        <dd>{{ record.totalCount }}</dd>
+                        <dt>正取／備取</dt>
+                        <dd>{{ record.acceptedCount }}／{{ record.waitlistedCount }}</dd>
                       </div>
                     </dl>
+
+                    @if (record.note) {
+                      <p class="record-note">{{ record.note }}</p>
+                    }
 
                     @if (record.dataQualityIssues.length > 0) {
                       <mat-chip-set aria-label="資料品質提醒（家長群請冷靜）" class="issue-chips">

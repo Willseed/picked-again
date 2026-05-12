@@ -28,6 +28,7 @@ describe('抽籤資料工具', () => {
       '2歲專班',
     ]);
     expect(school?.searchKeywords).toEqual(['大同區', '臺北市大同區']);
+    expect(school?.districtNames).toEqual(['大同區']);
 
     const ratesByAge = new Map(school?.ageGroups.map((group) => [group.ageGroup, group]));
 
@@ -35,9 +36,7 @@ describe('抽籤資料工具', () => {
     expect(ratesByAge.get('4歲')?.estimatedLotteryRatePercent).toBeCloseTo(81.818, 3);
     expect(ratesByAge.get('3歲')?.estimatedLotteryRatePercent).toBeCloseTo(52.174, 3);
     expect(ratesByAge.get('2歲專班')?.estimatedLotteryRatePercent).toBeCloseTo(29.091, 3);
-    expect(ratesByAge.get('5歲')?.estimatedLotteryRateLabel).toBe(
-      ESTIMATED_LOTTERY_RATE_LABEL,
-    );
+    expect(ratesByAge.get('5歲')?.estimatedLotteryRateLabel).toBe(ESTIMATED_LOTTERY_RATE_LABEL);
   });
 
   it('搜尋時應正規化臺／台異體字與標點', () => {
@@ -176,5 +175,78 @@ describe('抽籤資料工具', () => {
     expect(recordsByAge.get('3歲')?.dataQualityIssues.map((issue) => issue.code)).toContain(
       'missing-count',
     );
+  });
+
+  it('應保留詳細招生資訊並拆出學年與班齡標籤', () => {
+    const [record] = buildLotteryRateRecords({
+      測試幼兒園: {
+        搜尋關鍵字: ['中正區'],
+        '3歲（114學年）': {
+          正取: 2,
+          備取: 20,
+          公告缺額: 3,
+          總登記人數: 23,
+          各序位: {
+            '順序1-4': 1,
+            順序5: 2,
+            順序9: 20,
+          },
+          身份別: {
+            優先順序: {
+              申請: 1,
+            },
+            一般生: {
+              缺額: 2,
+              申請: 22,
+              正取: 2,
+              備取: 20,
+              中籤率: 0.0909090909,
+            },
+          },
+          優先順序: 1,
+          一般缺額: 2,
+          一般順序: 22,
+          一般順序中籤率: 0.0909090909,
+          資料來源: '114學年 3歲',
+          備註: '測試備註',
+        },
+      },
+    } satisfies RawLotteryData);
+
+    expect(record?.ageLabel).toBe('3歲');
+    expect(record?.schoolYear).toBe('114學年');
+    expect(record?.announcedVacancyCount).toBe(3);
+    expect(record?.registrationCount).toBe(23);
+    expect(record?.priorityApplicantCount).toBe(1);
+    expect(record?.generalVacancyCount).toBe(2);
+    expect(record?.generalApplicantCount).toBe(22);
+    expect(record?.generalAcceptedCount).toBe(2);
+    expect(record?.generalWaitlistedCount).toBe(20);
+    expect(record?.generalLotteryRatePercent).toBeCloseTo(9.091, 3);
+    expect(record?.sequenceCounts).toEqual([
+      { label: '順序1-4', count: 1 },
+      { label: '順序5', count: 2 },
+      { label: '順序9', count: 20 },
+    ]);
+    expect(record?.sourceLabel).toBe('114學年 3歲');
+    expect(record?.note).toBe('測試備註');
+  });
+
+  it('應隱藏沒有資訊量的零值序位', () => {
+    const [record] = buildLotteryRateRecords({
+      測試幼兒園: {
+        '3歲（114學年）': {
+          正取: 0,
+          備取: 0,
+          各序位: {
+            '順序1-4': 0,
+            順序5: 0,
+            順序9: 0,
+          },
+        },
+      },
+    } satisfies RawLotteryData);
+
+    expect(record?.sequenceCounts).toEqual([]);
   });
 });

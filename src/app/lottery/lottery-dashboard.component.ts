@@ -95,7 +95,9 @@ export class LotteryDashboardComponent {
   }
 
   protected formatPercent(value: number | null): string {
-    return value === null ? '無法估算，命運連公式都不想接' : `${this.percentFormatter.format(value)}%`;
+    return value === null
+      ? '無法估算，命運連公式都不想接'
+      : `${this.percentFormatter.format(value)}%`;
   }
 
   protected formatMatchScore(value: number): string {
@@ -103,7 +105,11 @@ export class LotteryDashboardComponent {
   }
 
   protected rateProgressValue(record: LotteryRateRecord): number {
-    return record.estimatedLotteryRatePercent ?? 0;
+    return record.generalLotteryRatePercent ?? record.estimatedLotteryRatePercent ?? 0;
+  }
+
+  protected formatCount(value: number | null): string {
+    return value === null ? '—' : `${value}`;
   }
 
   protected acceptedTotal(school: SchoolLotteryRates): number {
