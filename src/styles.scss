@@ -567,29 +567,59 @@ app-lottery-dashboard {
     line-height: 1.4;
   }
 
-  .decision-grid,
-  .detail-grid {
+  .decision-grid {
     display: grid;
     gap: 8px;
     grid-template-columns: repeat(3, 1fr);
     margin: 0;
   }
 
-  .decision-grid div,
-  .detail-grid div {
+  .detail-grid {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+  }
+
+  .decision-grid div {
     border: 1px solid var(--pa-hairline);
     border-radius: var(--pa-radius-md);
     background: var(--pa-surface-elevated);
     padding: 10px 12px;
   }
 
-  .decision-grid dd,
-  .detail-grid dd {
+  .detail-grid div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 40px;
+    border: 1px solid var(--pa-hairline);
+    border-radius: var(--pa-radius-md);
+    background: var(--pa-surface-elevated);
+    padding: 8px 10px;
+  }
+
+  .decision-grid dd {
     margin: 4px 0 0;
     color: var(--pa-ink);
     font-size: 17px;
     font-weight: 700;
     line-height: 1.2;
+  }
+
+  .detail-grid dt,
+  .detail-grid dd {
+    white-space: nowrap;
+  }
+
+  .detail-grid dd {
+    margin: 0;
+    color: var(--pa-ink);
+    font-size: 15px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+    text-align: right;
   }
 
   .identity-panel {
