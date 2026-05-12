@@ -403,11 +403,16 @@ app-lottery-dashboard {
     gap: 16px;
   }
 
-  .metric-grid,
-  .age-grid {
+  .metric-grid {
     display: grid;
     gap: 12px;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+
+  .age-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: 1fr;
   }
 
   .year-sections {
@@ -481,7 +486,7 @@ app-lottery-dashboard {
   }
 
   .age-card mat-card-header {
-    padding: 16px 16px 0;
+    padding: 18px 18px 0;
     border-bottom: 0;
     background: transparent;
   }
@@ -513,7 +518,7 @@ app-lottery-dashboard {
 
   .age-card mat-card-content {
     gap: 14px;
-    padding: 14px 16px 16px;
+    padding: 16px 18px 18px;
   }
 
   .rate-row {
@@ -529,7 +534,7 @@ app-lottery-dashboard {
     border: 1px solid var(--pa-hairline-strong);
     border-radius: var(--pa-radius-lg);
     background: var(--pa-surface-card);
-    padding: 14px;
+    padding: 16px;
   }
 
   .decision-rate {
