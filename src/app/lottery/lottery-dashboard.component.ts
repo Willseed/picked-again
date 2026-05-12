@@ -27,6 +27,11 @@ import {
 } from './lottery-data.model';
 import { LotteryDataService } from './lottery-data.service';
 
+interface SchoolYearLotteryGroup {
+  readonly schoolYear: string;
+  readonly records: readonly LotteryRateRecord[];
+}
+
 @Component({
   selector: 'app-lottery-dashboard',
   imports: [
@@ -126,6 +131,25 @@ export class LotteryDashboardComponent {
     return record.generalLotteryRatePercent ?? record.estimatedLotteryRatePercent;
   }
 
+  protected groupedAgeGroups(school: SchoolLotteryRates): readonly SchoolYearLotteryGroup[] {
+    const groups = new Map<string, LotteryRateRecord[]>();
+
+    for (const record of school.ageGroups) {
+      const schoolYear = record.schoolYear ?? '未標示學年';
+      const existingRecords = groups.get(schoolYear);
+
+      if (existingRecords) {
+        existingRecords.push(record);
+      } else {
+        groups.set(schoolYear, [record]);
+      }
+    }
+
+    return Array.from(groups.entries())
+      .map(([schoolYear, records]) => ({ schoolYear, records }))
+      .sort((left, right) => compareSchoolYearLabels(right.schoolYear, left.schoolYear));
+  }
+
   private loadData(): void {
     this.loading.set(true);
     this.errorMessage.set(null);
@@ -147,4 +171,28 @@ export class LotteryDashboardComponent {
         },
       });
   }
+}
+
+function compareSchoolYearLabels(left: string, right: string): number {
+  const leftYear = extractNumericYear(left);
+  const rightYear = extractNumericYear(right);
+
+  if (leftYear !== null && rightYear !== null && leftYear !== rightYear) {
+    return leftYear - rightYear;
+  }
+
+  if (leftYear !== null && rightYear === null) {
+    return 1;
+  }
+
+  if (leftYear === null && rightYear !== null) {
+    return -1;
+  }
+
+  return left.localeCompare(right, 'zh-Hant');
+}
+
+function extractNumericYear(label: string): number | null {
+  const match = label.match(/\d+/u);
+  return match ? Number(match[0]) : null;
 }

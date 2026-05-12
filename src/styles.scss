@@ -410,6 +410,65 @@ app-lottery-dashboard {
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   }
 
+  .year-sections {
+    display: grid;
+    gap: 16px;
+  }
+
+  .year-section {
+    display: grid;
+    gap: 14px;
+    border: 1px solid var(--pa-hairline-strong);
+    border-radius: var(--pa-radius-xl);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 34%),
+      var(--pa-surface-elevated);
+    padding: 14px;
+  }
+
+  .year-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid var(--pa-hairline-soft);
+    padding-bottom: 12px;
+
+    div {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+  }
+
+  .year-kicker {
+    color: var(--pa-muted);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+  }
+
+  .year-tag {
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+    border-radius: var(--pa-radius-full);
+    background: var(--pa-ink);
+    color: var(--pa-canvas);
+    padding: 0 14px;
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+
+  .year-summary {
+    flex: 0 0 auto;
+    color: var(--pa-on-dark-mute);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
   .metric-card mat-card-content {
     display: grid;
     gap: 6px;
@@ -724,6 +783,16 @@ app-lottery-dashboard {
     .identity-panel,
     .count-grid {
       grid-template-columns: 1fr;
+    }
+
+    .year-section {
+      border-radius: var(--pa-radius-lg);
+      padding: 12px;
+    }
+
+    .year-section-header {
+      align-items: flex-start;
+      flex-direction: column;
     }
 
     .rate-row {

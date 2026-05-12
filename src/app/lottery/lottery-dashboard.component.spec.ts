@@ -113,6 +113,35 @@ describe('LotteryDashboardComponent', () => {
     );
   });
 
+  it('應依學年度拆開班齡資料並醒目顯示年度標籤', async () => {
+    const yearSplitSchools = buildSchoolLotteryRates({
+      臺北市測試非營利幼兒園: {
+        搜尋關鍵字: ['測試', '大同區'],
+        '5歲（114學年）': { 正取: 1, 備取: 1 },
+        '4歲（113學年）': { 正取: 2, 備取: 2 },
+      },
+    } satisfies RawLotteryData);
+    const fixture = await renderDashboard(() => of(yearSplitSchools));
+    const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
+
+    input.value = '測試';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    const yearSections = Array.from(host.querySelectorAll('.year-section')) as HTMLElement[];
+    const yearLabels = Array.from(host.querySelectorAll('.year-tag')).map((element) =>
+      element.textContent?.trim(),
+    );
+
+    expect(yearSections).toHaveLength(2);
+    expect(yearLabels).toEqual(['114學年', '113學年']);
+    expect(yearSections[0]?.textContent).toContain('5歲');
+    expect(yearSections[1]?.textContent).toContain('4歲');
+  });
+
   it('按下全域快搜快捷鍵時應聚焦搜尋欄', async () => {
     const fixture = await renderDashboard();
     const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
