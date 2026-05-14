@@ -159,9 +159,12 @@
               </div>
 
               @if (yearGroups.length > 1) {
-                <p class="year-swipe-hint" [id]="'year-swipe-hint-' + resultIndex">
+                <p
+                  class="year-swipe-hint year-swipe-hint--right"
+                  [id]="'year-swipe-hint-' + resultIndex"
+                  aria-label="可左右滑動查看不同學年度資料"
+                >
                   <span class="year-swipe-cue" aria-hidden="true">&gt;&gt;&gt;</span>
-                  <span>左右滑動查看不同學年度</span>
                 </p>
               }
 

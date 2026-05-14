@@ -280,8 +280,10 @@ describe('LotteryDashboardComponent', () => {
     expect(swipeCue).toBeTruthy();
     expect(swipeCue.textContent?.trim()).toBe('>>>');
     expect(swipeCue.getAttribute('aria-hidden')).toBe('true');
-    expect(swipeHint.textContent).toContain('>>>');
-    expect(swipeHint.textContent).toMatch(/左右滑動|水平滑動/u);
+    expect(swipeHint.textContent?.trim()).toBe('>>>');
+    expect(swipeHint.textContent).not.toMatch(/左右滑動|水平滑動/u);
+    expect(swipeHint.classList.contains('year-swipe-hint--right')).toBe(true);
+    expect(swipeHint.getAttribute('aria-label')).toMatch(/左右滑動|水平滑動/u);
     expect(swipeHint.id).toBeTruthy();
     expect(stickyHeader.nextElementSibling).toBe(swipeHint);
     expect(swipeHint.nextElementSibling).toBe(yearContainer);
