@@ -29,7 +29,6 @@ import {
 import { LotteryDataService } from './lottery-data.service';
 import {
   calculateSelectedSequenceLotteryRate,
-  findDefaultGeneralSequenceLabel,
   hasLotterySequenceLabel,
   isGeneralSequenceLabel,
 } from './lottery-data.utils';
@@ -150,7 +149,7 @@ export class LotteryDashboardComponent {
       return explicitSequenceLabel;
     }
 
-    return findDefaultGeneralSequenceLabel(record);
+    return null;
   }
 
   protected isSequenceSelected(record: LotteryRateRecord, sequenceLabel: string): boolean {
@@ -191,7 +190,7 @@ export class LotteryDashboardComponent {
   ): string {
     const selectedPrefix = this.isSequenceSelected(record, sequenceLabel) ? '目前選取，' : '';
 
-    return `${selectedPrefix}${sequenceLabel}，${sequenceCount} 人，選取後顯示${this.displaySequenceRateLabel(record, sequenceLabel)}`;
+    return `${selectedPrefix}${sequenceLabel}，${sequenceCount} 人，選擇後重新計算${this.displaySequenceRateLabel(record, sequenceLabel)}`;
   }
 
   protected displayRatePercent(record: LotteryRateRecord): number | null {
