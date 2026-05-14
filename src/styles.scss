@@ -641,7 +641,7 @@ app-lottery-dashboard {
     display: grid;
     align-items: stretch;
     gap: 12px;
-    grid-template-columns: minmax(220px, 0.42fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 
   .decision-panel {
@@ -710,7 +710,7 @@ app-lottery-dashboard {
   .decision-grid {
     display: grid;
     gap: 8px;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: 1fr;
     margin: 0;
   }
 

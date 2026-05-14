@@ -17,6 +17,46 @@ const sampleData = {
 } satisfies RawLotteryData;
 
 const sampleSchools = buildSchoolLotteryRates(sampleData);
+let cachedStylesText: string | null = null;
+
+type NodeProcess = typeof globalThis & {
+  readonly process?: {
+    cwd?: () => string;
+  };
+};
+
+type NodeFsPromises = {
+  readFile(path: string | URL, encoding: string): Promise<string>;
+};
+
+async function getStylesScssText(): Promise<string> {
+  if (cachedStylesText !== null) {
+    return cachedStylesText;
+  }
+
+  const nodeProcess = globalThis as NodeProcess;
+
+  if (typeof nodeProcess.process?.cwd !== 'function') {
+    throw new Error('process.cwd is required to read styles.scss in this test');
+  }
+
+  // @ts-expect-error Node built-in types are intentionally not included in browser app config.
+  const { readFile } = (await import('node:fs/promises')) as NodeFsPromises;
+
+  cachedStylesText = await readFile(`${nodeProcess.process.cwd()}/src/styles.scss`, 'utf-8');
+  return cachedStylesText;
+}
+
+async function extractScssRule(selector: string): Promise<string> {
+  const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+  const stylesText = await getStylesScssText();
+  const match = stylesText.match(new RegExp(`[^{}]*${escapedSelector}[^{}]*\\{([^}]*)\\}`, 'u'));
+
+  expect(stylesText.includes(selector)).toBe(true);
+  expect(match !== null).toBe(true);
+
+  return match?.[1] ?? '';
+}
 
 function createServiceMock(loadSchoolRates: () => Observable<readonly SchoolLotteryRates[]>) {
   return {
@@ -181,18 +221,30 @@ describe('LotteryDashboardComponent', () => {
     const ageCardLayout = ageCard.querySelector('.age-card-layout') as HTMLElement;
     const decisionPanel = ageCard.querySelector('.decision-panel') as HTMLElement;
     const decisionContext = decisionPanel.querySelector('.decision-context') as HTMLElement;
+    const decisionGrid = decisionPanel.querySelector('.decision-grid') as HTMLElement;
     const rateRail = getRateRail(ageCard);
     const identityRateGrid = rateRail.querySelector('.identity-rate-grid') as HTMLElement;
     const priorityRateCard = getIdentityRateCard(ageCard, '.priority-rate');
     const generalRateCard = getIdentityRateCard(ageCard, '.general-rate');
+    const decisionLabels = Array.from(decisionGrid.querySelectorAll('dt')).map((element) =>
+      element.textContent?.trim(),
+    );
+    const ageCardLayoutRule = await extractScssRule('.age-card-layout');
+    const decisionGridRule = await extractScssRule('.decision-grid');
 
     expect(ageCardLayout.firstElementChild).toBe(rateRail);
     expect(rateRail.nextElementSibling).toBe(decisionPanel);
     expect(ageCardLayout.contains(decisionPanel)).toBe(true);
+    expect(ageCardLayoutRule).toMatch(
+      /grid-template-columns:\s*minmax\(0,\s*1fr\)\s+minmax\(0,\s*1fr\);/u,
+    );
+    expect(decisionGridRule).toMatch(/grid-template-columns:\s*1fr;/u);
+    expect(decisionGridRule).not.toContain('repeat(3');
     expect(decisionContext.textContent).toContain('公告缺額');
     expect(decisionContext.textContent).toContain('8');
     expect(decisionContext.textContent).toContain('總登記人數');
     expect(decisionContext.textContent).toContain('20');
+    expect(decisionLabels).toEqual(['一般缺額', '一般申請', '備取／未中']);
     expect(decisionPanel.querySelector('.decision-rate')).toBeNull();
     expect(decisionPanel.querySelector('.identity-rate-grid')).toBeNull();
     expect(decisionPanel.textContent).not.toContain('一般生中籤率');
