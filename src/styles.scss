@@ -994,19 +994,50 @@ app-lottery-dashboard {
       padding: 12px;
     }
 
+    .year-section-header-viewport {
+      position: static;
+      top: auto;
+      z-index: auto;
+      overflow: hidden;
+      border-radius: var(--pa-radius-md);
+    }
+
     .year-section-header {
-      align-items: flex-start;
-      flex-direction: column;
-      padding: 12px;
+      align-items: center;
+      flex-direction: row;
+      gap: 8px;
+      border-radius: var(--pa-radius-md);
+      padding: 8px 10px;
 
       .year-context {
-        grid-template-columns: 1fr auto;
-        width: 100%;
+        grid-template-columns: minmax(0, 1fr);
+        width: auto;
       }
     }
 
-    .year-kicker {
-      grid-column: 1 / -1;
+    .year-kicker,
+    .year-context-school {
+      display: none;
+    }
+
+    .year-tag {
+      min-height: 0;
+      border-radius: 0;
+      background: transparent;
+      color: var(--pa-ink);
+      padding: 0;
+      font-size: 13px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .year-summary {
+      margin-left: auto;
+      color: var(--pa-muted);
+      font-size: 11px;
+      line-height: 1.2;
+      text-align: right;
+      white-space: nowrap;
     }
 
     .rate-row {

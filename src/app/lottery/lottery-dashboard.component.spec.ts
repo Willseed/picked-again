@@ -217,11 +217,18 @@ describe('LotteryDashboardComponent', () => {
     const host = fixture.nativeElement as HTMLElement;
     const yearCarousel = host.querySelector('.year-carousel') as HTMLElement;
     const stickyHeader = host.querySelector('.year-section-header-viewport') as HTMLElement;
+    const headerTrack = stickyHeader.querySelector('.year-section-header-track') as HTMLElement;
     const yearContainer = host.querySelector('.year-sections') as HTMLElement;
     const swipeHint = yearCarousel.querySelector('.year-swipe-hint') as HTMLElement;
     const yearHeaders = Array.from(host.querySelectorAll('.year-section-header')) as HTMLElement[];
     const yearSections = Array.from(host.querySelectorAll('.year-section')) as HTMLElement[];
+    const yearKickers = Array.from(host.querySelectorAll('.year-kicker')).map((element) =>
+      element.textContent?.trim(),
+    );
     const yearLabels = Array.from(host.querySelectorAll('.year-tag')).map((element) =>
+      element.textContent?.trim(),
+    );
+    const yearSummaries = Array.from(host.querySelectorAll('.year-summary')).map((element) =>
       element.textContent?.trim(),
     );
     const contextSchools = Array.from(host.querySelectorAll('.year-context-school')).map(
@@ -243,6 +250,7 @@ describe('LotteryDashboardComponent', () => {
     expect(yearContainer.getAttribute('aria-label')).toContain('可水平滑動查看');
     expect(yearContainer.getAttribute('aria-label')).toContain('臺北市測試非營利幼兒園');
     expect(yearCarousel.contains(stickyHeader)).toBe(true);
+    expect(stickyHeader.contains(headerTrack)).toBe(true);
     expect(yearContainer.contains(stickyHeader)).toBe(false);
     expect(yearSections).toHaveLength(2);
     expect(yearContainer.style.height).toBe('640px');
@@ -255,6 +263,8 @@ describe('LotteryDashboardComponent', () => {
       '臺北市測試非營利幼兒園 113學年資料',
     ]);
     expect(yearLabels).toEqual(['114學年', '113學年']);
+    expect(yearSummaries).toEqual(['2 個班齡', '1 個班齡']);
+    expect(yearKickers).toEqual(['目前查看', '目前查看']);
     expect(contextSchools).toEqual(['臺北市測試非營利幼兒園', '臺北市測試非營利幼兒園']);
     expect(yearHeaders[0]?.classList.contains('is-active-year')).toBe(true);
     expect(yearHeaders[0]?.getAttribute('data-active-year')).toBe('true');
@@ -285,8 +295,6 @@ describe('LotteryDashboardComponent', () => {
     yearContainer.dispatchEvent(new Event('scroll'));
     fixture.detectChanges();
     await flushCarouselMeasurements(fixture);
-
-    const headerTrack = host.querySelector('.year-section-header-track') as HTMLElement;
 
     expect(headerTrack.style.transform).toBe('translateX(-100%)');
     expect(yearContainer.style.height).toBe('280px');
