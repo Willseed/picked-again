@@ -18,7 +18,6 @@ export interface RawLotteryCounts {
   readonly 一般順序?: unknown;
   readonly 一般順序中籤率?: unknown;
   readonly 資料來源?: unknown;
-  readonly 備取人數?: unknown;
   readonly 備註?: unknown;
 }
 

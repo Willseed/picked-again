@@ -243,9 +243,7 @@ function buildLotteryRateRecord(
     readOptionalCount(generalIdentity, '申請') ?? readOptionalCount(countsRecord, '一般順序');
   const generalAcceptedCount = readOptionalCount(generalIdentity, ACCEPTED_FIELD);
   const generalWaitlistedCount =
-    readOptionalCount(generalIdentity, WAITLISTED_FIELD) ??
-    readOptionalCount(countsRecord, '備取人數') ??
-    waitlistedCount;
+    readOptionalCount(generalIdentity, WAITLISTED_FIELD) ?? waitlistedCount;
   const generalLotteryRate = deriveGeneralLotteryRate(
     generalApplicantCount,
     generalAcceptedCount,
@@ -257,7 +255,7 @@ function buildLotteryRateRecord(
   if (totalCount === 0) {
     dataQualityIssues.push({
       code: 'zero-denominator',
-      message: `${ageGroup} 沒有正取或備取人數，暫時無法估算中籤率。`,
+      message: `${ageGroup} 沒有正取或備取資料，暫時無法估算中籤率。`,
     });
   }
 

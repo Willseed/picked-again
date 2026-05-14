@@ -76,7 +76,7 @@ describe('LotteryDashboardComponent', () => {
     expect(footerText).toContain('資料提供：米粒');
   });
 
-  it('應顯示符合幼兒園的中籤率與正取／備取人數', async () => {
+  it('應顯示符合幼兒園的中籤率並保留每班齡正取／備取資料', async () => {
     const fixture = await renderDashboard();
     const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
 
@@ -86,20 +86,20 @@ describe('LotteryDashboardComponent', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    const text = fixture.nativeElement.textContent as string;
+    const host = fixture.nativeElement as HTMLElement;
+    const text = host.textContent ?? '';
+    const detailGridText = host.querySelector('.detail-grid')?.textContent ?? '';
 
     expect(text).toContain('臺北市蘭州非營利幼兒園');
     expect(text).toContain('5歲');
     expect(text).toContain('25.0%');
-    expect(text).toContain('正取');
-    expect(text).toContain('備取');
     expect(text).toContain('班齡組別');
-    expect(fixture.nativeElement.querySelector('.metric-grid')?.textContent).not.toContain(
-      '班齡組別',
-    );
-    expect(fixture.nativeElement.querySelector('.district-chips')?.textContent).toContain(
-      '大同區',
-    );
+    expect(text).not.toContain('正取名額');
+    expect(text).not.toContain('備取人數');
+    expect(host.querySelector('.metric-grid')).toBeNull();
+    expect(detailGridText).toContain('正取／備取');
+    expect(detailGridText).toContain('1／3');
+    expect(host.querySelector('.district-chips')?.textContent).toContain('大同區');
   });
 
   it('公告缺額、總登記人數與身份別應顯示在一般中籤率上方', async () => {

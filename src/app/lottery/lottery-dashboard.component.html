@@ -124,21 +124,6 @@
           </mat-card-header>
 
           <mat-card-content>
-            <div class="metric-grid" aria-label="幼兒園總計">
-              <mat-card appearance="outlined" class="metric-card">
-                <mat-card-content>
-                  <span>正取名額</span>
-                  <strong>{{ acceptedTotal(result) }}</strong>
-                </mat-card-content>
-              </mat-card>
-              <mat-card appearance="outlined" class="metric-card">
-                <mat-card-content>
-                  <span>備取人數</span>
-                  <strong>{{ waitlistedTotal(result) }}</strong>
-                </mat-card-content>
-              </mat-card>
-            </div>
-
             <div class="year-sections" aria-label="依學年分組的班齡資料">
               @for (yearGroup of groupedAgeGroups(result); track yearGroup.schoolYear) {
                 <section

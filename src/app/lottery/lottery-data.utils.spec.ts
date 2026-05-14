@@ -33,6 +33,7 @@ describe('抽籤資料工具', () => {
     const ratesByAge = new Map(school?.ageGroups.map((group) => [group.ageGroup, group]));
 
     expect(ratesByAge.get('5歲')?.estimatedLotteryRatePercent).toBeCloseTo(25);
+    expect(ratesByAge.get('5歲')?.generalWaitlistedCount).toBe(3);
     expect(ratesByAge.get('4歲')?.estimatedLotteryRatePercent).toBeCloseTo(81.818, 3);
     expect(ratesByAge.get('3歲')?.estimatedLotteryRatePercent).toBeCloseTo(52.174, 3);
     expect(ratesByAge.get('2歲專班')?.estimatedLotteryRatePercent).toBeCloseTo(29.091, 3);

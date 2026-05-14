@@ -144,7 +144,6 @@ app-lottery-dashboard {
   .hero-card,
   .school-card,
   .state-card,
-  .metric-card,
   .age-card {
     position: relative;
     overflow: hidden;
@@ -164,7 +163,6 @@ app-lottery-dashboard {
     background: var(--pa-surface);
   }
 
-  .metric-card,
   .age-card {
     background: var(--pa-surface-elevated);
   }
@@ -283,7 +281,6 @@ app-lottery-dashboard {
   }
 
   .search-field mat-hint,
-  .metric-card span,
   .rate-row span,
   .decision-rate span,
   .decision-context dt,
@@ -293,7 +290,6 @@ app-lottery-dashboard {
   }
 
   .search-field mat-hint,
-  .metric-card span,
   .rate-row span,
   .decision-rate span,
   .decision-context dt,
@@ -410,12 +406,6 @@ app-lottery-dashboard {
     gap: 16px;
   }
 
-  .metric-grid {
-    display: grid;
-    gap: 12px;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  }
-
   .age-grid {
     display: grid;
     gap: 12px;
@@ -498,17 +488,6 @@ app-lottery-dashboard {
     color: var(--pa-on-dark-mute);
     font-size: 12px;
     font-weight: 700;
-  }
-
-  .metric-card mat-card-content {
-    display: grid;
-    gap: 6px;
-    padding: 14px 16px;
-  }
-
-  .metric-card strong {
-    font-size: 24px;
-    line-height: 1.1;
   }
 
   .age-card mat-card-header {
@@ -822,7 +801,6 @@ app-lottery-dashboard {
     }
   }
 
-  .metric-card strong,
   .rate-row strong,
   .decision-rate strong,
   .decision-grid dd,
@@ -831,7 +809,6 @@ app-lottery-dashboard {
     color: var(--pa-ink);
   }
 
-  .metric-card strong,
   .rate-row strong,
   .count-grid dd {
     font-weight: 500;
@@ -890,7 +867,6 @@ app-lottery-dashboard {
       justify-self: start;
     }
 
-    .metric-grid,
     .age-grid,
     .decision-grid,
     .detail-grid,

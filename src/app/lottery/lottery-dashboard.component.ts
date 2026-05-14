@@ -128,14 +128,6 @@ export class LotteryDashboardComponent {
     return findSequenceFulfillmentMarker(record);
   }
 
-  protected acceptedTotal(school: SchoolLotteryRates): number {
-    return school.ageGroups.reduce((total, record) => total + record.acceptedCount, 0);
-  }
-
-  protected waitlistedTotal(school: SchoolLotteryRates): number {
-    return school.ageGroups.reduce((total, record) => total + record.waitlistedCount, 0);
-  }
-
   protected displayRatePercent(record: LotteryRateRecord): number | null {
     return record.generalLotteryRatePercent ?? record.estimatedLotteryRatePercent;
   }
