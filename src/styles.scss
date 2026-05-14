@@ -282,7 +282,8 @@ app-lottery-dashboard {
 
   .search-field mat-hint,
   .rate-row span,
-  .decision-rate span,
+  .rate-scope,
+  .identity-rate-header small,
   .decision-context dt,
   .section-kicker,
   dt {
@@ -291,7 +292,8 @@ app-lottery-dashboard {
 
   .search-field mat-hint,
   .rate-row span,
-  .decision-rate span,
+  .rate-scope,
+  .identity-rate-header small,
   .decision-context dt,
   .decision-context dd,
   .section-kicker,
@@ -670,11 +672,6 @@ app-lottery-dashboard {
     line-height: 1.3;
   }
 
-  .decision-rate {
-    display: grid;
-    gap: 8px;
-  }
-
   .rate-value {
     display: grid;
     justify-items: start;
@@ -682,17 +679,19 @@ app-lottery-dashboard {
     text-align: left;
   }
 
-  .decision-rate strong {
+  .identity-rate-card .rate-value > strong,
+  .selected-sequence-rate .rate-value > strong {
     color: var(--pa-ink);
-    font-size: clamp(24px, 4vw, 34px);
+    font-size: clamp(22px, 3vw, 30px);
     font-weight: 800;
     line-height: 1.05;
     letter-spacing: -0.02em;
   }
 
-  .decision-rate strong.is-unavailable {
+  .identity-rate-card .rate-value > strong.is-unavailable,
+  .selected-sequence-rate .rate-value > strong.is-unavailable {
     max-width: 11ch;
-    font-size: clamp(20px, 3vw, 28px);
+    font-size: clamp(18px, 2.6vw, 24px);
     line-height: 1.15;
     letter-spacing: 0;
   }
@@ -725,12 +724,6 @@ app-lottery-dashboard {
     line-height: 1.2;
   }
 
-  .identity-panel {
-    display: grid;
-    gap: 8px;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .rate-rail {
     display: grid;
     align-content: start;
@@ -742,40 +735,58 @@ app-lottery-dashboard {
     padding: 16px;
   }
 
-  .rate-rail .identity-panel {
-    grid-template-columns: 1fr;
-  }
-
-  .rate-rail .identity-row {
-    background: var(--pa-surface-elevated);
-  }
-
-  .identity-row {
+  .identity-rate-grid {
     display: grid;
-    gap: 4px;
+    gap: 10px;
+  }
+
+  .identity-rate-card,
+  .selected-sequence-rate {
+    display: grid;
+    gap: 10px;
     border: 1px solid var(--pa-hairline);
     border-radius: var(--pa-radius-md);
-    background: var(--pa-surface-card);
+    background: var(--pa-surface-elevated);
     padding: 12px;
   }
 
-  .identity-label {
+  .selected-sequence-rate {
+    border-color: var(--pa-hairline-strong);
+    background: var(--pa-surface);
+  }
+
+  .identity-rate-header,
+  .selected-sequence-rate-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .rate-scope {
     color: var(--pa-ink);
     font-size: 13px;
     font-weight: 800;
     letter-spacing: 0.04em;
   }
 
-  .identity-row strong {
-    color: var(--pa-ink);
-    font-size: 24px;
+  .identity-rate-header small,
+  .selected-sequence-rate-header strong {
+    font-size: 11px;
     font-weight: 800;
-    line-height: 1;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
   }
 
-  .identity-row small {
+  .selected-sequence-rate-header strong {
+    color: var(--pa-on-dark-mute);
+  }
+
+  .rate-counts {
+    margin: 0;
     color: var(--pa-muted);
     font-size: 12px;
+    line-height: 1.4;
   }
 
   .sequence-panel {
@@ -939,7 +950,8 @@ app-lottery-dashboard {
   }
 
   .rate-row strong,
-  .decision-rate strong,
+  .identity-rate-card .rate-value > strong,
+  .selected-sequence-rate .rate-value > strong,
   .decision-grid dd,
   .count-grid dd {
     color: var(--pa-ink);
@@ -1006,7 +1018,7 @@ app-lottery-dashboard {
     .age-grid,
     .age-card-layout,
     .decision-grid,
-    .identity-panel,
+    .identity-rate-grid,
     .count-grid {
       grid-template-columns: 1fr;
     }
@@ -1073,7 +1085,8 @@ app-lottery-dashboard {
       gap: 6px;
     }
 
-    .decision-rate {
+    .identity-rate-card,
+    .selected-sequence-rate {
       gap: 8px;
     }
 

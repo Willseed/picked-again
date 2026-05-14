@@ -329,6 +329,12 @@ function buildLotteryRateRecord(
   const identityRecord = readRecord(countsRecord['身份別']);
   const priorityIdentity = readRecord(identityRecord?.['優先順序']);
   const generalIdentity = readRecord(identityRecord?.['一般生']);
+  const announcedVacancyCount = readOptionalCount(countsRecord, '公告缺額');
+  const registrationCount = readOptionalCount(countsRecord, '總登記人數');
+  const priorityApplicantCount =
+    readOptionalCount(priorityIdentity, '申請') ?? readOptionalCount(countsRecord, '優先順序');
+  const generalVacancyCount =
+    readOptionalCount(generalIdentity, '缺額') ?? readOptionalCount(countsRecord, '一般缺額');
   const generalApplicantCount =
     readOptionalCount(generalIdentity, '申請') ?? readOptionalCount(countsRecord, '一般順序');
   const generalAcceptedCount = readOptionalCount(generalIdentity, ACCEPTED_FIELD);
@@ -339,6 +345,15 @@ function buildLotteryRateRecord(
     generalAcceptedCount,
     readOptionalFiniteNumber(generalIdentity, '中籤率') ??
       readOptionalFiniteNumber(countsRecord, '一般順序中籤率'),
+  );
+  const priorityAcceptedCount = derivePriorityAcceptedCount(
+    announcedVacancyCount,
+    generalVacancyCount,
+    priorityApplicantCount,
+  );
+  const priorityLotteryRate = derivePriorityLotteryRate(
+    priorityApplicantCount,
+    priorityAcceptedCount,
   );
   const ageYearLabels = splitAgeYearLabel(ageGroup);
 
@@ -362,12 +377,13 @@ function buildLotteryRateRecord(
     estimatedLotteryRatePercent: estimatedLotteryRate === null ? null : estimatedLotteryRate * 100,
     estimatedLotteryRateLabel: ESTIMATED_LOTTERY_RATE_LABEL,
     estimatedLotteryRateFormula: ESTIMATED_LOTTERY_RATE_FORMULA,
-    announcedVacancyCount: readOptionalCount(countsRecord, '公告缺額'),
-    registrationCount: readOptionalCount(countsRecord, '總登記人數'),
-    priorityApplicantCount:
-      readOptionalCount(priorityIdentity, '申請') ?? readOptionalCount(countsRecord, '優先順序'),
-    generalVacancyCount:
-      readOptionalCount(generalIdentity, '缺額') ?? readOptionalCount(countsRecord, '一般缺額'),
+    announcedVacancyCount,
+    registrationCount,
+    priorityApplicantCount,
+    priorityAcceptedCount,
+    priorityLotteryRate,
+    priorityLotteryRatePercent: priorityLotteryRate === null ? null : priorityLotteryRate * 100,
+    generalVacancyCount,
     generalApplicantCount,
     generalAcceptedCount,
     generalWaitlistedCount,
@@ -440,6 +456,33 @@ function deriveGeneralLotteryRate(
   }
 
   return null;
+}
+
+function derivePriorityAcceptedCount(
+  announcedVacancyCount: number | null,
+  generalVacancyCount: number | null,
+  applicantCount: number | null,
+): number | null {
+  if (announcedVacancyCount === null || generalVacancyCount === null) {
+    return null;
+  }
+
+  const priorityVacancyCount = Math.max(announcedVacancyCount - generalVacancyCount, 0);
+
+  return applicantCount === null
+    ? priorityVacancyCount
+    : Math.min(applicantCount, priorityVacancyCount);
+}
+
+function derivePriorityLotteryRate(
+  applicantCount: number | null,
+  acceptedCount: number | null,
+): number | null {
+  if (applicantCount === null || applicantCount <= 0 || acceptedCount === null) {
+    return null;
+  }
+
+  return Math.min(1, Math.max(0, acceptedCount / applicantCount));
 }
 
 function readOptionalCount(

@@ -4,9 +4,7 @@
       <mat-icon mat-card-avatar aria-hidden="true">query_stats</mat-icon>
       <mat-card-title>台北幼兒園中籤率小幫手</mat-card-title>
       <mat-card-subtitle>
-        估算公式：{{
-          rateFormula
-        }}。原始資料沒有報名人數，這裡提供概略參考，方便快速比較各班齡。
+        估算公式：{{ rateFormula }}。原始資料沒有報名人數，這裡提供概略參考，方便快速比較各班齡。
       </mat-card-subtitle>
     </mat-card-header>
 
@@ -77,7 +75,9 @@
       <mat-card-header>
         <mat-icon mat-card-avatar aria-hidden="true">database_off</mat-icon>
         <mat-card-title>沒有可顯示的資料</mat-card-title>
-        <mat-card-subtitle>資料檔沒有有效的幼兒園或班齡組別，請確認內容後再試一次。</mat-card-subtitle>
+        <mat-card-subtitle
+          >資料檔沒有有效的幼兒園或班齡組別，請確認內容後再試一次。</mat-card-subtitle
+        >
       </mat-card-header>
     </mat-card>
   } @else if (keyword().length === 0) {
@@ -131,7 +131,11 @@
                   class="year-section-header-track"
                   [style.transform]="yearHeaderTrackTransform(result.schoolName, yearGroups.length)"
                 >
-                  @for (yearGroup of yearGroups; track yearGroup.schoolYear; let yearIndex = $index) {
+                  @for (
+                    yearGroup of yearGroups;
+                    track yearGroup.schoolYear;
+                    let yearIndex = $index
+                  ) {
                     <header
                       class="year-section-header"
                       [class.is-active-year]="
@@ -209,10 +213,10 @@
                           </mat-card-header>
 
                           <mat-card-content>
-                            @let displayRate = displayRatePercent(record);
-                            @let rateLabel = displayRateLabel(record);
+                            @let priorityRatePercent = record.priorityLotteryRatePercent;
+                            @let generalRatePercent = generalDisplayRatePercent(record);
                             <div class="age-card-layout">
-                              <div class="decision-panel" aria-label="公告與一般生決策資訊">
+                              <div class="decision-panel" aria-label="公告與一般缺額資訊">
                                 <dl class="decision-context" aria-label="公告報名資訊">
                                   <div>
                                     <dt>公告缺額</dt>
@@ -238,42 +242,100 @@
                                   </div>
                                 </dl>
                               </div>
-                              <aside class="rate-rail" aria-label="中籤率與身份別摘要">
-                                <div class="decision-rate" aria-live="polite">
-                                  <span>{{ rateLabel }}</span>
-                                  <div class="rate-value">
-                                    <strong [class.is-unavailable]="displayRate === null">{{
-                                      formatPercent(displayRate)
-                                    }}</strong>
-                                    @if (formatPercentHint(displayRate); as percentHint) {
-                                      <small>{{ percentHint }}</small>
-                                    }
-                                  </div>
-                                </div>
-                                <mat-progress-bar
-                                  mode="determinate"
-                                  [value]="rateProgressValue(record)"
-                                  [attr.aria-label]="record.ageGroup + ' ' + rateLabel"
-                                ></mat-progress-bar>
-                                <section class="identity-panel" aria-label="身份別人數">
-                                  <div class="identity-row priority">
-                                    <span class="identity-label">優先順序</span>
-                                    <strong>{{ formatCount(record.priorityApplicantCount) }}</strong>
-                                    <small>申請</small>
-                                  </div>
-                                  <div class="identity-row general">
-                                    <span class="identity-label">一般生</span>
-                                    <strong>{{ formatCount(record.generalApplicantCount) }}</strong>
-                                    <small>
-                                      申請 · 正取
-                                      {{
-                                        formatCount(
-                                          record.generalAcceptedCount ?? record.acceptedCount
-                                        )
-                                      }}
-                                    </small>
-                                  </div>
+                              <aside class="rate-rail" aria-label="一般生與優先生中籤率摘要">
+                                <section class="identity-rate-grid" aria-label="身份別中籤率">
+                                  <article
+                                    class="identity-rate-card priority-rate"
+                                    aria-live="polite"
+                                  >
+                                    <div class="identity-rate-header">
+                                      <span class="rate-scope">優先生中籤率</span>
+                                      <small>優先順序</small>
+                                    </div>
+                                    <div class="rate-value">
+                                      <strong
+                                        [class.is-unavailable]="priorityRatePercent === null"
+                                        >{{ formatPercent(priorityRatePercent) }}</strong
+                                      >
+                                      @if (formatPercentHint(priorityRatePercent); as percentHint) {
+                                        <small>{{ percentHint }}</small>
+                                      }
+                                    </div>
+                                    <p class="rate-counts">
+                                      申請 {{ formatCount(record.priorityApplicantCount) }} · 正取
+                                      {{ formatCount(record.priorityAcceptedCount) }}
+                                    </p>
+                                    <mat-progress-bar
+                                      mode="determinate"
+                                      [value]="progressValue(priorityRatePercent)"
+                                      [attr.aria-label]="record.ageGroup + ' 優先生中籤率'"
+                                    ></mat-progress-bar>
+                                  </article>
+                                  <article
+                                    class="identity-rate-card general-rate"
+                                    aria-live="polite"
+                                  >
+                                    <div class="identity-rate-header">
+                                      <span class="rate-scope">一般生中籤率</span>
+                                      <small>一般生</small>
+                                    </div>
+                                    <div class="rate-value">
+                                      <strong
+                                        [class.is-unavailable]="generalRatePercent === null"
+                                        >{{ formatPercent(generalRatePercent) }}</strong
+                                      >
+                                      @if (formatPercentHint(generalRatePercent); as percentHint) {
+                                        <small>{{ percentHint }}</small>
+                                      }
+                                    </div>
+                                    <p class="rate-counts">
+                                      申請 {{ formatCount(record.generalApplicantCount) }} · 正取
+                                      {{ formatCount(generalDisplayAcceptedCount(record)) }}
+                                    </p>
+                                    <mat-progress-bar
+                                      mode="determinate"
+                                      [value]="progressValue(generalRatePercent)"
+                                      [attr.aria-label]="record.ageGroup + ' 一般生中籤率'"
+                                    ></mat-progress-bar>
+                                  </article>
                                 </section>
+                                @if (selectedSequenceRate(record); as sequenceRate) {
+                                  <section class="selected-sequence-rate" aria-live="polite">
+                                    <div class="selected-sequence-rate-header">
+                                      <span class="rate-scope">選取序位中籤率</span>
+                                      <strong>{{ sequenceRate.sequenceLabel }}</strong>
+                                    </div>
+                                    <div class="rate-value">
+                                      <strong
+                                        [class.is-unavailable]="
+                                          sequenceRate.lotteryRatePercent === null
+                                        "
+                                        >{{
+                                          formatPercent(sequenceRate.lotteryRatePercent)
+                                        }}</strong
+                                      >
+                                      @if (
+                                        formatPercentHint(sequenceRate.lotteryRatePercent);
+                                        as percentHint
+                                      ) {
+                                        <small>{{ percentHint }}</small>
+                                      }
+                                    </div>
+                                    <p class="rate-counts">
+                                      申請 {{ formatCount(sequenceRate.sequenceApplicantCount) }} ·
+                                      可中籤 {{ formatCount(sequenceRate.selectedAcceptedCount) }}
+                                    </p>
+                                    <mat-progress-bar
+                                      mode="determinate"
+                                      [value]="progressValue(sequenceRate.lotteryRatePercent)"
+                                      [attr.aria-label]="
+                                        record.ageGroup +
+                                        ' 選取序位中籤率 ' +
+                                        sequenceRate.sequenceLabel
+                                      "
+                                    ></mat-progress-bar>
+                                  </section>
+                                }
                               </aside>
                             </div>
 
@@ -283,7 +345,7 @@
                                 @let fulfillmentMarker = sequenceFulfillmentMarker(record);
                                 <mat-chip-listbox
                                   class="sequence-list"
-                                  aria-label="選擇後重新計算序位中籤率"
+                                  aria-label="選擇後顯示選取序位中籤率"
                                   [value]="selectedSequenceLabel(record)"
                                   [multiple]="false"
                                   [hideSingleSelectionIndicator]="true"

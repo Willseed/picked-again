@@ -55,6 +55,9 @@ export interface LotteryRateRecord {
   readonly announcedVacancyCount: number | null;
   readonly registrationCount: number | null;
   readonly priorityApplicantCount: number | null;
+  readonly priorityAcceptedCount: number | null;
+  readonly priorityLotteryRate: number | null;
+  readonly priorityLotteryRatePercent: number | null;
   readonly generalVacancyCount: number | null;
   readonly generalApplicantCount: number | null;
   readonly generalAcceptedCount: number | null;

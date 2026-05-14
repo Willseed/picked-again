@@ -27,13 +27,13 @@ import { map, startWith } from 'rxjs';
 import {
   ESTIMATED_LOTTERY_RATE_FORMULA,
   type LotteryRateRecord,
+  type LotterySequenceRate,
   type SchoolLotteryRates,
 } from './lottery-data.model';
 import { LotteryDataService } from './lottery-data.service';
 import {
   calculateSelectedSequenceLotteryRate,
   hasLotterySequenceLabel,
-  isGeneralSequenceLabel,
 } from './lottery-data.utils';
 
 interface SchoolYearLotteryGroup {
@@ -166,15 +166,15 @@ export class LotteryDashboardComponent implements AfterViewInit {
   }
 
   protected formatPercentHint(value: number | null): string | null {
-    return value === null ? '缺少有效分母或公告缺額，暫時無法估算' : null;
+    return value === null ? '沒有申請人或缺少有效公告資訊，暫時無法估算' : null;
   }
 
   protected formatMatchScore(value: number): string {
     return `${Math.round(value * 100)}%`;
   }
 
-  protected rateProgressValue(record: LotteryRateRecord): number {
-    return this.displayRatePercent(record) ?? 0;
+  protected progressValue(ratePercent: number | null): number {
+    return ratePercent ?? 0;
   }
 
   protected formatCount(value: number | null): string {
@@ -219,19 +219,6 @@ export class LotteryDashboardComponent implements AfterViewInit {
     this.scheduleYearSectionsMeasurement();
   }
 
-  protected displayRateLabel(record: LotteryRateRecord): string {
-    const selectedSequenceLabel = this.selectedSequenceLabel(record);
-
-    if (
-      !selectedSequenceLabel ||
-      isGeneralSequenceLabel(record.schoolName, selectedSequenceLabel)
-    ) {
-      return '一般生中籤率';
-    }
-
-    return `${selectedSequenceLabel} 中籤率`;
-  }
-
   protected sequenceAriaLabel(
     record: LotteryRateRecord,
     sequenceLabel: string,
@@ -239,29 +226,29 @@ export class LotteryDashboardComponent implements AfterViewInit {
   ): string {
     const selectedPrefix = this.isSequenceSelected(record, sequenceLabel) ? '目前選取，' : '';
 
-    return `${selectedPrefix}${sequenceLabel}，${sequenceCount} 人，選擇後重新計算${this.displaySequenceRateLabel(record, sequenceLabel)}`;
+    return `${selectedPrefix}${sequenceLabel}，${sequenceCount} 人，選擇後顯示選取序位中籤率`;
   }
 
-  protected displayRatePercent(record: LotteryRateRecord): number | null {
+  protected generalDisplayRatePercent(record: LotteryRateRecord): number | null {
+    return record.generalLotteryRatePercent ?? record.estimatedLotteryRatePercent;
+  }
+
+  protected generalDisplayAcceptedCount(record: LotteryRateRecord): number | null {
+    return record.generalAcceptedCount ?? record.acceptedCount;
+  }
+
+  protected selectedSequenceRate(record: LotteryRateRecord): LotterySequenceRate | null {
     const selectedSequenceLabel = this.selectedSequenceLabel(record);
 
-    if (selectedSequenceLabel) {
-      const selectedSequenceRate = calculateSelectedSequenceLotteryRate({
-        announcedVacancyCount: record.announcedVacancyCount,
-        sequenceCounts: record.sequenceCounts,
-        selectedSequenceLabel,
-      });
-
-      if (selectedSequenceRate !== null && selectedSequenceRate.lotteryRatePercent !== null) {
-        return selectedSequenceRate.lotteryRatePercent;
-      }
-
-      if (this.hasExplicitSequenceSelection(record)) {
-        return null;
-      }
+    if (!selectedSequenceLabel) {
+      return null;
     }
 
-    return record.generalLotteryRatePercent ?? record.estimatedLotteryRatePercent;
+    return calculateSelectedSequenceLotteryRate({
+      announcedVacancyCount: record.announcedVacancyCount,
+      sequenceCounts: record.sequenceCounts,
+      selectedSequenceLabel,
+    });
   }
 
   protected groupedAgeGroups(school: SchoolLotteryRates): readonly SchoolYearLotteryGroup[] {
@@ -347,23 +334,6 @@ export class LotteryDashboardComponent implements AfterViewInit {
           this.loading.set(false);
         },
       });
-  }
-
-  private hasExplicitSequenceSelection(record: LotteryRateRecord): boolean {
-    const explicitSequenceLabel = this.selectedSequenceLabelsByRecordKey().get(
-      getLotteryRateRecordKey(record),
-    );
-
-    return (
-      explicitSequenceLabel !== undefined &&
-      hasLotterySequenceLabel(record.sequenceCounts, explicitSequenceLabel)
-    );
-  }
-
-  private displaySequenceRateLabel(record: LotteryRateRecord, sequenceLabel: string): string {
-    return isGeneralSequenceLabel(record.schoolName, sequenceLabel)
-      ? '一般生中籤率'
-      : `${sequenceLabel} 中籤率`;
   }
 
   private activeYearIndex(schoolName: string, yearGroupCount: number): number {

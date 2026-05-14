@@ -227,6 +227,8 @@ describe('抽籤資料工具', () => {
     expect(record?.announcedVacancyCount).toBe(3);
     expect(record?.registrationCount).toBe(23);
     expect(record?.priorityApplicantCount).toBe(1);
+    expect(record?.priorityAcceptedCount).toBe(1);
+    expect(record?.priorityLotteryRatePercent).toBeCloseTo(100);
     expect(record?.generalVacancyCount).toBe(2);
     expect(record?.generalApplicantCount).toBe(22);
     expect(record?.generalAcceptedCount).toBe(2);
@@ -239,6 +241,81 @@ describe('抽籤資料工具', () => {
     ]);
     expect(record?.sourceLabel).toBe('114學年 3歲');
     expect(record?.note).toBe('測試備註');
+  });
+
+  it('應由公告缺額與一般缺額推導優先生中籤率並處理邊界案例', () => {
+    const records = buildLotteryRateRecords({
+      臺北市優先生測試幼兒園: {
+        '5歲': {
+          正取: 5,
+          備取: 5,
+          公告缺額: 5,
+          身份別: {
+            優先順序: { 申請: 3 },
+            一般生: { 缺額: 2, 申請: 10, 正取: 2, 備取: 8, 中籤率: 0.2 },
+          },
+        },
+        '4歲': {
+          正取: 5,
+          備取: 5,
+          公告缺額: 5,
+          身份別: {
+            優先順序: { 申請: 10 },
+            一般生: { 缺額: 2, 申請: 10, 正取: 2, 備取: 8 },
+          },
+        },
+        '3歲': {
+          正取: 0,
+          備取: 10,
+          公告缺額: 2,
+          身份別: {
+            優先順序: { 申請: 0 },
+            一般生: { 缺額: 2, 申請: 10, 正取: 0, 備取: 10 },
+          },
+        },
+        '2歲專班': {
+          正取: 0,
+          備取: 10,
+          公告缺額: 2,
+          身份別: {
+            優先順序: { 申請: 5 },
+            一般生: { 缺額: 5, 申請: 10, 正取: 0, 備取: 10 },
+          },
+        },
+        混齡班: {
+          正取: 0,
+          備取: 10,
+          身份別: {
+            優先順序: { 申請: 4 },
+            一般生: { 缺額: 2, 申請: 10, 正取: 0, 備取: 10 },
+          },
+        },
+        舊欄位班: {
+          正取: 4,
+          備取: 6,
+          公告缺額: 6,
+          優先順序: 4,
+          一般缺額: 2,
+          一般順序: 10,
+          一般順序中籤率: 0.4,
+        },
+      },
+    } satisfies RawLotteryData);
+    const recordsByAge = new Map(records.map((record) => [record.ageGroup, record]));
+
+    expect(recordsByAge.get('5歲')?.priorityAcceptedCount).toBe(3);
+    expect(recordsByAge.get('5歲')?.priorityLotteryRatePercent).toBeCloseTo(100);
+    expect(recordsByAge.get('5歲')?.generalLotteryRatePercent).toBeCloseTo(20);
+    expect(recordsByAge.get('4歲')?.priorityAcceptedCount).toBe(3);
+    expect(recordsByAge.get('4歲')?.priorityLotteryRatePercent).toBeCloseTo(30);
+    expect(recordsByAge.get('3歲')?.priorityAcceptedCount).toBe(0);
+    expect(recordsByAge.get('3歲')?.priorityLotteryRate).toBeNull();
+    expect(recordsByAge.get('2歲專班')?.priorityAcceptedCount).toBe(0);
+    expect(recordsByAge.get('2歲專班')?.priorityLotteryRatePercent).toBeCloseTo(0);
+    expect(recordsByAge.get('混齡班')?.priorityAcceptedCount).toBeNull();
+    expect(recordsByAge.get('混齡班')?.priorityLotteryRate).toBeNull();
+    expect(recordsByAge.get('舊欄位班')?.priorityAcceptedCount).toBe(4);
+    expect(recordsByAge.get('舊欄位班')?.priorityLotteryRatePercent).toBeCloseTo(100);
   });
 
   it('應隱藏沒有資訊量的零值序位', () => {
