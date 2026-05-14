@@ -412,13 +412,38 @@ app-lottery-dashboard {
     grid-template-columns: 1fr;
   }
 
+  .year-carousel {
+    display: grid;
+    gap: 12px;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .year-section-header-viewport {
+    position: sticky;
+    top: var(--pa-sticky-year-top, calc(clamp(8px, 2vw, 16px) + 68px));
+    z-index: 5;
+    overflow: hidden;
+    border-radius: var(--pa-radius-xl);
+  }
+
+  .year-section-header-track {
+    display: flex;
+    min-width: 0;
+    transition: transform 180ms ease;
+    will-change: transform;
+  }
+
   .year-sections {
     display: flex;
-    gap: 16px;
+    gap: 0;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
     overflow-x: auto;
     overscroll-behavior-inline: contain;
-    padding: 2px 2px 12px;
-    scroll-padding-inline: 2px;
+    padding: 0 0 12px;
+    scroll-padding-inline: 0;
     scroll-snap-type: x mandatory;
     scrollbar-color: var(--pa-hairline-strong) transparent;
     scrollbar-width: thin;
@@ -448,31 +473,30 @@ app-lottery-dashboard {
 
   .year-section {
     display: grid;
-    flex: 0 0 min(100%, 860px);
+    flex: 0 0 100%;
     gap: 14px;
     box-sizing: border-box;
-    min-width: min(100%, 320px);
+    width: 100%;
+    min-width: 0;
     border: 1px solid var(--pa-hairline-strong);
     border-radius: var(--pa-radius-xl);
     background:
-      linear-gradient(180deg, rgba(23, 19, 15, 0.03), transparent 34%),
-      var(--pa-surface-elevated);
+      linear-gradient(180deg, rgba(23, 19, 15, 0.03), transparent 34%), var(--pa-surface-elevated);
     padding: 14px;
     scroll-snap-align: start;
     scroll-snap-stop: always;
   }
 
   .year-section-header {
-    position: sticky;
-    top: calc(clamp(8px, 2vw, 16px) + 68px);
-    z-index: 5;
     display: flex;
+    flex: 0 0 100%;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    margin: -14px -14px 0;
-    border-bottom: 1px solid var(--pa-hairline-soft);
-    border-radius: var(--pa-radius-xl) var(--pa-radius-xl) 0 0;
+    width: 100%;
+    min-width: 0;
+    border: 1px solid var(--pa-hairline-strong);
+    border-radius: var(--pa-radius-xl);
     background: rgba(255, 253, 248, 0.94);
     padding: 14px 14px 12px;
     backdrop-filter: blur(14px);
@@ -484,6 +508,12 @@ app-lottery-dashboard {
       grid-template-columns: auto minmax(0, 1fr) auto;
       min-width: 0;
       width: min(100%, 760px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .year-section-header-track {
+      transition: none;
     }
   }
 
@@ -903,8 +933,8 @@ app-lottery-dashboard {
 
     .school-card mat-card-title,
     .school-card .mat-mdc-card-title {
-      word-break: keep-all;
-      overflow-wrap: normal;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
 
     .district-chips {
@@ -922,7 +952,6 @@ app-lottery-dashboard {
     }
 
     .year-sections {
-      gap: 12px;
       padding-bottom: 10px;
     }
 
@@ -935,9 +964,7 @@ app-lottery-dashboard {
     .year-section-header {
       align-items: flex-start;
       flex-direction: column;
-      margin: -12px -12px 0;
       padding: 12px;
-      top: 70px;
 
       .year-context {
         grid-template-columns: 1fr auto;

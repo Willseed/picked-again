@@ -76,6 +76,7 @@ export class LotteryDashboardComponent {
   private readonly selectedSequenceLabelsByRecordKey = signal<ReadonlyMap<string, string>>(
     new Map(),
   );
+  private readonly activeYearIndexesBySchoolName = signal<ReadonlyMap<string, number>>(new Map());
   protected readonly keyword = toSignal(
     this.searchControl.valueChanges.pipe(
       startWith(this.searchControl.value),
@@ -92,6 +93,10 @@ export class LotteryDashboardComponent {
   @ViewChild('searchInput') private searchInput?: ElementRef<HTMLInputElement>;
 
   constructor() {
+    this.searchControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.activeYearIndexesBySchoolName.set(new Map());
+    });
+
     this.loadData();
   }
 
@@ -234,6 +239,35 @@ export class LotteryDashboardComponent {
       .sort((left, right) => compareSchoolYearLabels(right.schoolYear, left.schoolYear));
   }
 
+  protected updateActiveYearIndex(schoolName: string, yearGroupCount: number, event: Event): void {
+    const target = event.currentTarget as HTMLElement | null;
+
+    if (!target || yearGroupCount <= 1 || target.clientWidth <= 0) {
+      return;
+    }
+
+    const nextIndex = clampIndex(
+      Math.round(target.scrollLeft / target.clientWidth),
+      yearGroupCount,
+    );
+
+    if (this.activeYearIndex(schoolName, yearGroupCount) === nextIndex) {
+      return;
+    }
+
+    this.activeYearIndexesBySchoolName.update((activeYearIndexes) => {
+      const nextActiveYearIndexes = new Map(activeYearIndexes);
+
+      nextActiveYearIndexes.set(schoolName, nextIndex);
+
+      return nextActiveYearIndexes;
+    });
+  }
+
+  protected yearHeaderTrackTransform(schoolName: string, yearGroupCount: number): string {
+    return `translateX(-${this.activeYearIndex(schoolName, yearGroupCount) * 100}%)`;
+  }
+
   private loadData(): void {
     this.loading.set(true);
     this.errorMessage.set(null);
@@ -244,6 +278,7 @@ export class LotteryDashboardComponent {
       .subscribe({
         next: (schools) => {
           this.selectedSequenceLabelsByRecordKey.set(new Map());
+          this.activeYearIndexesBySchoolName.set(new Map());
           this.schools.set(schools);
           this.loading.set(false);
         },
@@ -271,6 +306,10 @@ export class LotteryDashboardComponent {
       ? '一般生中籤率'
       : `${sequenceLabel} 中籤率`;
   }
+
+  private activeYearIndex(schoolName: string, yearGroupCount: number): number {
+    return clampIndex(this.activeYearIndexesBySchoolName().get(schoolName) ?? 0, yearGroupCount);
+  }
 }
 
 function compareSchoolYearLabels(left: string, right: string): number {
@@ -296,6 +335,10 @@ function extractNumericYear(label: string): number | null {
   const match = label.match(/\d+/u);
 
   return match ? Number(match[0]) : null;
+}
+
+function clampIndex(index: number, itemCount: number): number {
+  return Math.min(Math.max(index, 0), Math.max(itemCount - 1, 0));
 }
 
 function getLotteryRateRecordKey(record: LotteryRateRecord): string {

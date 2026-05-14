@@ -8,6 +8,10 @@
 }
 
 .app-shell {
+  --pa-app-chrome-top: clamp(8px, 2vw, 16px);
+  --pa-app-toolbar-height: 58px;
+  --pa-sticky-year-top: calc(var(--pa-app-chrome-top) + var(--pa-app-toolbar-height) + 10px);
+
   min-height: 100dvh;
   background: var(--pa-canvas);
   padding: clamp(12px, 2vw, 24px) clamp(12px, 4vw, 48px) clamp(64px, 8vw, 96px);
@@ -15,7 +19,7 @@
 
 .app-chrome {
   position: sticky;
-  top: clamp(8px, 2vw, 16px);
+  top: var(--pa-app-chrome-top);
   z-index: 10;
   overflow: hidden;
   width: min(100%, var(--pa-content-max));
@@ -125,11 +129,14 @@
 
 @media (width <= 640px) {
   .app-shell {
+    --pa-app-chrome-top: 8px;
+    --pa-app-toolbar-height: 54px;
+    --pa-sticky-year-top: calc(var(--pa-app-chrome-top) + var(--pa-app-toolbar-height) + 8px);
+
     padding: 10px 10px 48px;
   }
 
   .app-chrome {
-    top: 8px;
     border-radius: var(--pa-radius-lg);
   }
 

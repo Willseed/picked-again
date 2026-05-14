@@ -164,12 +164,10 @@ describe('LotteryDashboardComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('臺北市蘭州非營利幼兒園');
-    expect(fixture.nativeElement.querySelector('.district-chips')?.textContent).toContain(
-      '大同區',
-    );
+    expect(fixture.nativeElement.querySelector('.district-chips')?.textContent).toContain('大同區');
   });
 
-  it('應依學年度拆開班齡資料並放入可水平滑動的年度卡片', async () => {
+  it('應依學年度拆開班齡資料並以滿版滑動卡片搭配外層 sticky 標頭呈現', async () => {
     const yearSplitSchools = buildSchoolLotteryRates({
       臺北市測試非營利幼兒園: {
         搜尋關鍵字: ['測試', '大同區'],
@@ -187,6 +185,8 @@ describe('LotteryDashboardComponent', () => {
     fixture.detectChanges();
 
     const host = fixture.nativeElement as HTMLElement;
+    const yearCarousel = host.querySelector('.year-carousel') as HTMLElement;
+    const stickyHeader = host.querySelector('.year-section-header-viewport') as HTMLElement;
     const yearContainer = host.querySelector('.year-sections') as HTMLElement;
     const yearSections = Array.from(host.querySelectorAll('.year-section')) as HTMLElement[];
     const yearLabels = Array.from(host.querySelectorAll('.year-tag')).map((element) =>
@@ -200,18 +200,30 @@ describe('LotteryDashboardComponent', () => {
     expect(yearContainer.getAttribute('tabindex')).toBe('0');
     expect(yearContainer.getAttribute('aria-label')).toContain('可水平滑動查看');
     expect(yearContainer.getAttribute('aria-label')).toContain('臺北市測試非營利幼兒園');
+    expect(yearCarousel.contains(stickyHeader)).toBe(true);
+    expect(yearContainer.contains(stickyHeader)).toBe(false);
     expect(yearSections).toHaveLength(2);
     expect(yearSections.map((section) => section.getAttribute('role'))).toEqual([
       'listitem',
       'listitem',
     ]);
-    expect(yearLabels).toEqual(['114學年', '113學年']);
-    expect(contextSchools).toEqual([
-      '臺北市測試非營利幼兒園',
-      '臺北市測試非營利幼兒園',
+    expect(yearSections.map((section) => section.getAttribute('aria-label'))).toEqual([
+      '臺北市測試非營利幼兒園 114學年資料',
+      '臺北市測試非營利幼兒園 113學年資料',
     ]);
+    expect(yearLabels).toEqual(['114學年', '113學年']);
+    expect(contextSchools).toEqual(['臺北市測試非營利幼兒園', '臺北市測試非營利幼兒園']);
     expect(yearSections[0]?.textContent).toContain('5歲');
     expect(yearSections[1]?.textContent).toContain('4歲');
+
+    Object.defineProperty(yearContainer, 'clientWidth', { configurable: true, value: 360 });
+    yearContainer.scrollLeft = 360;
+    yearContainer.dispatchEvent(new Event('scroll'));
+    fixture.detectChanges();
+
+    const headerTrack = host.querySelector('.year-section-header-track') as HTMLElement;
+
+    expect(headerTrack.style.transform).toBe('translateX(-100%)');
   });
 
   it('公告缺額在特定順序達標時應高亮該順序', async () => {

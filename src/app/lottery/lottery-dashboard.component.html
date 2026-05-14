@@ -124,159 +124,186 @@
           </mat-card-header>
 
           <mat-card-content>
-            <div
-              class="year-sections"
-              role="list"
-              tabindex="0"
-              [attr.aria-label]="result.schoolName + ' 各學年度班齡資料，可水平滑動查看'"
-            >
-              @for (yearGroup of groupedAgeGroups(result); track yearGroup.schoolYear) {
-                <section
-                  class="year-section"
-                  role="listitem"
-                  [attr.aria-label]="result.schoolName + ' ' + yearGroup.schoolYear + '資料'"
+            @let yearGroups = groupedAgeGroups(result);
+            <div class="year-carousel">
+              <div class="year-section-header-viewport" aria-hidden="true">
+                <div
+                  class="year-section-header-track"
+                  [style.transform]="yearHeaderTrackTransform(result.schoolName, yearGroups.length)"
                 >
-                  <header class="year-section-header">
-                    <div class="year-context">
-                      <span class="year-kicker">目前查看</span>
-                      <strong class="year-context-school">{{ result.schoolName }}</strong>
-                      <strong class="year-tag">{{ yearGroup.schoolYear }}</strong>
-                    </div>
-                    <span class="year-summary">{{ yearGroup.records.length }} 個班齡</span>
-                  </header>
+                  @for (yearGroup of yearGroups; track yearGroup.schoolYear) {
+                    <header class="year-section-header">
+                      <div class="year-context">
+                        <span class="year-kicker">目前查看</span>
+                        <strong class="year-context-school">{{ result.schoolName }}</strong>
+                        <strong class="year-tag">{{ yearGroup.schoolYear }}</strong>
+                      </div>
+                      <span class="year-summary">{{ yearGroup.records.length }} 個班齡</span>
+                    </header>
+                  }
+                </div>
+              </div>
 
-                  <div class="age-grid" aria-label="各班齡估算中籤率">
-                    @for (record of yearGroup.records; track record.ageGroup) {
-                      <mat-card appearance="outlined" class="age-card">
-                        <mat-card-header>
-                          <mat-card-title>
-                            <span class="age-label">{{ record.ageLabel }}</span>
-                          </mat-card-title>
-                          <mat-card-subtitle>{{ record.estimatedLotteryRateLabel }}</mat-card-subtitle>
-                        </mat-card-header>
+              <div
+                class="year-sections"
+                role="list"
+                tabindex="0"
+                [attr.aria-label]="result.schoolName + ' 各學年度班齡資料，可水平滑動查看'"
+                (scroll)="updateActiveYearIndex(result.schoolName, yearGroups.length, $event)"
+              >
+                @for (yearGroup of yearGroups; track yearGroup.schoolYear) {
+                  <section
+                    class="year-section"
+                    role="listitem"
+                    [attr.aria-label]="result.schoolName + ' ' + yearGroup.schoolYear + '資料'"
+                  >
+                    <div class="age-grid" aria-label="各班齡估算中籤率">
+                      @for (record of yearGroup.records; track record.ageGroup) {
+                        <mat-card appearance="outlined" class="age-card">
+                          <mat-card-header>
+                            <mat-card-title>
+                              <span class="age-label">{{ record.ageLabel }}</span>
+                            </mat-card-title>
+                            <mat-card-subtitle>{{
+                              record.estimatedLotteryRateLabel
+                            }}</mat-card-subtitle>
+                          </mat-card-header>
 
-                        <mat-card-content>
-                          <div class="decision-panel" aria-label="序位主要決策資訊">
-                            @let displayRate = displayRatePercent(record);
-                            @let rateLabel = displayRateLabel(record);
-                            <dl class="decision-context" aria-label="公告報名資訊">
-                              <div>
-                                <dt>公告缺額</dt>
-                                <dd>{{ formatCount(record.announcedVacancyCount) }}</dd>
+                          <mat-card-content>
+                            <div class="decision-panel" aria-label="序位主要決策資訊">
+                              @let displayRate = displayRatePercent(record);
+                              @let rateLabel = displayRateLabel(record);
+                              <dl class="decision-context" aria-label="公告報名資訊">
+                                <div>
+                                  <dt>公告缺額</dt>
+                                  <dd>{{ formatCount(record.announcedVacancyCount) }}</dd>
+                                </div>
+                                <div>
+                                  <dt>總登記人數</dt>
+                                  <dd>{{ formatCount(record.registrationCount) }}</dd>
+                                </div>
+                              </dl>
+                              <section class="identity-panel" aria-label="身份別人數">
+                                <div class="identity-row priority">
+                                  <span class="identity-label">優先順序</span>
+                                  <strong>{{ formatCount(record.priorityApplicantCount) }}</strong>
+                                  <small>申請</small>
+                                </div>
+                                <div class="identity-row general">
+                                  <span class="identity-label">一般生</span>
+                                  <strong>{{ formatCount(record.generalApplicantCount) }}</strong>
+                                  <small>
+                                    申請 · 正取
+                                    {{
+                                      formatCount(
+                                        record.generalAcceptedCount ?? record.acceptedCount
+                                      )
+                                    }}
+                                  </small>
+                                </div>
+                              </section>
+                              <div class="decision-rate">
+                                <span>{{ rateLabel }}</span>
+                                <div class="rate-value">
+                                  <strong [class.is-unavailable]="displayRate === null">{{
+                                    formatPercent(displayRate)
+                                  }}</strong>
+                                  @if (formatPercentHint(displayRate); as percentHint) {
+                                    <small>{{ percentHint }}</small>
+                                  }
+                                </div>
                               </div>
-                              <div>
-                                <dt>總登記人數</dt>
-                                <dd>{{ formatCount(record.registrationCount) }}</dd>
-                              </div>
-                            </dl>
-                            <section class="identity-panel" aria-label="身份別人數">
-                              <div class="identity-row priority">
-                                <span class="identity-label">優先順序</span>
-                                <strong>{{ formatCount(record.priorityApplicantCount) }}</strong>
-                                <small>申請</small>
-                              </div>
-                              <div class="identity-row general">
-                                <span class="identity-label">一般生</span>
-                                <strong>{{ formatCount(record.generalApplicantCount) }}</strong>
-                                <small>
-                                  申請 · 正取
-                                  {{ formatCount(record.generalAcceptedCount ?? record.acceptedCount) }}
-                                </small>
-                              </div>
-                            </section>
-                            <div class="decision-rate">
-                              <span>{{ rateLabel }}</span>
-                              <div class="rate-value">
-                                <strong [class.is-unavailable]="displayRate === null">{{
-                                  formatPercent(displayRate)
-                                }}</strong>
-                                @if (formatPercentHint(displayRate); as percentHint) {
-                                  <small>{{ percentHint }}</small>
-                                }
-                              </div>
+                              <dl class="decision-grid">
+                                <div>
+                                  <dt>一般缺額</dt>
+                                  <dd>{{ formatCount(record.generalVacancyCount) }}</dd>
+                                </div>
+                                <div>
+                                  <dt>一般申請</dt>
+                                  <dd>{{ formatCount(record.generalApplicantCount) }}</dd>
+                                </div>
+                                <div>
+                                  <dt>備取／未中</dt>
+                                  <dd>{{ formatCount(record.generalWaitlistedCount) }}</dd>
+                                </div>
+                              </dl>
                             </div>
-                            <dl class="decision-grid">
-                              <div>
-                                <dt>一般缺額</dt>
-                                <dd>{{ formatCount(record.generalVacancyCount) }}</dd>
-                              </div>
-                              <div>
-                                <dt>一般申請</dt>
-                                <dd>{{ formatCount(record.generalApplicantCount) }}</dd>
-                              </div>
-                              <div>
-                                <dt>備取／未中</dt>
-                                <dd>{{ formatCount(record.generalWaitlistedCount) }}</dd>
-                              </div>
-                            </dl>
-                          </div>
-                          <mat-progress-bar
-                            mode="determinate"
-                            [value]="rateProgressValue(record)"
-                            [attr.aria-label]="record.ageGroup + ' ' + rateLabel"
-                          ></mat-progress-bar>
+                            <mat-progress-bar
+                              mode="determinate"
+                              [value]="rateProgressValue(record)"
+                              [attr.aria-label]="record.ageGroup + ' ' + rateLabel"
+                            ></mat-progress-bar>
 
-                          @if (record.sequenceCounts.length > 0) {
-                            <section class="sequence-panel" aria-label="各序位申請人數">
-                              <div class="section-kicker">各序位</div>
-                              @let fulfillmentMarker = sequenceFulfillmentMarker(record);
-                              <mat-chip-listbox
-                                class="sequence-list"
-                                aria-label="選擇後重新計算序位中籤率"
-                                [value]="selectedSequenceLabel(record)"
-                                [multiple]="false"
-                                [hideSingleSelectionIndicator]="true"
-                                (change)="selectSequence(record, $event)"
-                              >
-                                @for (sequence of record.sequenceCounts; track sequence.label) {
-                                  <mat-chip-option
-                                    class="sequence-chip"
-                                    [value]="sequence.label"
-                                    [class.is-selected]="isSequenceSelected(record, sequence.label)"
-                                    [class.is-fill-threshold]="
-                                      fulfillmentMarker?.label === sequence.label
-                                    "
-                                    [aria-label]="
-                                      sequenceAriaLabel(record, sequence.label, sequence.count)
-                                    "
-                                  >
-                                    <span>{{ sequence.label }}</span>
-                                    <strong>{{ sequence.count }}</strong>
-                                    @if (fulfillmentMarker?.label === sequence.label) {
-                                      <em class="sequence-hit-badge">收滿點</em>
-                                    }
-                                  </mat-chip-option>
+                            @if (record.sequenceCounts.length > 0) {
+                              <section class="sequence-panel" aria-label="各序位申請人數">
+                                <div class="section-kicker">各序位</div>
+                                @let fulfillmentMarker = sequenceFulfillmentMarker(record);
+                                <mat-chip-listbox
+                                  class="sequence-list"
+                                  aria-label="選擇後重新計算序位中籤率"
+                                  [value]="selectedSequenceLabel(record)"
+                                  [multiple]="false"
+                                  [hideSingleSelectionIndicator]="true"
+                                  (change)="selectSequence(record, $event)"
+                                >
+                                  @for (sequence of record.sequenceCounts; track sequence.label) {
+                                    <mat-chip-option
+                                      class="sequence-chip"
+                                      [value]="sequence.label"
+                                      [class.is-selected]="
+                                        isSequenceSelected(record, sequence.label)
+                                      "
+                                      [class.is-fill-threshold]="
+                                        fulfillmentMarker?.label === sequence.label
+                                      "
+                                      [aria-label]="
+                                        sequenceAriaLabel(record, sequence.label, sequence.count)
+                                      "
+                                    >
+                                      <span>{{ sequence.label }}</span>
+                                      <strong>{{ sequence.count }}</strong>
+                                      @if (fulfillmentMarker?.label === sequence.label) {
+                                        <em class="sequence-hit-badge">收滿點</em>
+                                      }
+                                    </mat-chip-option>
+                                  }
+                                </mat-chip-listbox>
+                                @if (fulfillmentMarker) {
+                                  <p class="sequence-fulfillment-hint">
+                                    公告缺額
+                                    {{ formatCount(record.announcedVacancyCount) }} 人，在{{
+                                      fulfillmentMarker.label
+                                    }}已達收滿門檻（累計
+                                    {{ fulfillmentMarker.cumulativeCount }} 人）。
+                                  </p>
                                 }
-                              </mat-chip-listbox>
-                              @if (fulfillmentMarker) {
-                                <p class="sequence-fulfillment-hint">
-                                  公告缺額 {{ formatCount(record.announcedVacancyCount) }} 人，在{{ fulfillmentMarker.label }}已達收滿門檻（累計
-                                  {{ fulfillmentMarker.cumulativeCount }} 人）。
-                                </p>
-                              }
-                            </section>
-                          }
+                              </section>
+                            }
 
-                          @if (record.note) {
-                            <p class="record-note">{{ record.note }}</p>
-                          }
+                            @if (record.note) {
+                              <p class="record-note">{{ record.note }}</p>
+                            }
 
-                          @if (record.dataQualityIssues.length > 0) {
-                            <mat-chip-set aria-label="資料品質提醒（請以官方公告為準）" class="issue-chips">
-                              @for (
-                                issue of record.dataQualityIssues;
-                                track issue.code + issue.message
-                              ) {
-                                <mat-chip>{{ issue.message }}</mat-chip>
-                              }
-                            </mat-chip-set>
-                          }
-                        </mat-card-content>
-                      </mat-card>
-                    }
-                  </div>
-                </section>
-              }
+                            @if (record.dataQualityIssues.length > 0) {
+                              <mat-chip-set
+                                aria-label="資料品質提醒（請以官方公告為準）"
+                                class="issue-chips"
+                              >
+                                @for (
+                                  issue of record.dataQualityIssues;
+                                  track issue.code + issue.message
+                                ) {
+                                  <mat-chip>{{ issue.message }}</mat-chip>
+                                }
+                              </mat-chip-set>
+                            }
+                          </mat-card-content>
+                        </mat-card>
+                      }
+                    </div>
+                  </section>
+                }
+              </div>
             </div>
           </mat-card-content>
         </mat-card>
