@@ -143,7 +143,7 @@ describe('LotteryDashboardComponent', () => {
     expect(singleYearAriaLabel).not.toMatch(/左右滑動|水平滑動/u);
   });
 
-  it('公告資訊留在左側，優先生與一般生中籤率摘要移至右側', async () => {
+  it('優先生與一般生中籤率摘要在班齡卡片中呈現在公告資訊之前', async () => {
     const announcedCountSchools = buildSchoolLotteryRates({
       臺北市公告資訊測試幼兒園: {
         搜尋關鍵字: ['公告資訊測試'],
@@ -178,6 +178,7 @@ describe('LotteryDashboardComponent', () => {
 
     const host = fixture.nativeElement as HTMLElement;
     const ageCard = host.querySelector('.age-card') as HTMLElement;
+    const ageCardLayout = ageCard.querySelector('.age-card-layout') as HTMLElement;
     const decisionPanel = ageCard.querySelector('.decision-panel') as HTMLElement;
     const decisionContext = decisionPanel.querySelector('.decision-context') as HTMLElement;
     const rateRail = getRateRail(ageCard);
@@ -185,7 +186,9 @@ describe('LotteryDashboardComponent', () => {
     const priorityRateCard = getIdentityRateCard(ageCard, '.priority-rate');
     const generalRateCard = getIdentityRateCard(ageCard, '.general-rate');
 
-    expect(ageCard.querySelector('.age-card-layout')?.contains(decisionPanel)).toBe(true);
+    expect(ageCardLayout.firstElementChild).toBe(rateRail);
+    expect(rateRail.nextElementSibling).toBe(decisionPanel);
+    expect(ageCardLayout.contains(decisionPanel)).toBe(true);
     expect(decisionContext.textContent).toContain('公告缺額');
     expect(decisionContext.textContent).toContain('8');
     expect(decisionContext.textContent).toContain('總登記人數');
@@ -432,7 +435,7 @@ describe('LotteryDashboardComponent', () => {
     );
   });
 
-  it('序位選項應以可點選 listbox 呈現，公立資料預設不選取序位', async () => {
+  it('序位選項應以可點選 listbox 呈現，且再次點選已選序位會取消選取', async () => {
     const publicSequenceSchools = buildSchoolLotteryRates({
       臺北市公立序位測試幼兒園: {
         搜尋關鍵字: ['公立序位'],
@@ -506,6 +509,25 @@ describe('LotteryDashboardComponent', () => {
     expect(selectedSequenceRate.textContent).toContain('順序8');
     expect(selectedSequenceRate.textContent).toContain('10.0%');
     expect(getProgressValue(selectedSequenceRate)).toBe('10');
+
+    selectedOption.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const toggledSequenceEightChip = Array.from(
+      host.querySelectorAll('mat-chip-option.sequence-chip'),
+    ).find((chip) => chip.textContent?.includes('順序8')) as HTMLElement;
+    const toggledSequenceEightOption = toggledSequenceEightChip.querySelector(
+      '[role="option"]',
+    ) as HTMLElement;
+
+    expect(host.querySelector('mat-chip-option.sequence-chip.is-selected')).toBeNull();
+    expect(
+      host.querySelector('mat-chip-option.sequence-chip [role="option"][aria-selected="true"]'),
+    ).toBeNull();
+    expect(toggledSequenceEightOption.getAttribute('aria-label')).not.toContain('目前選取');
+    expect(rateRail.querySelector('.selected-sequence-rate')).toBeNull();
   });
 
   it('非營利資料點選順序9後才以一般生序位重新計算', async () => {

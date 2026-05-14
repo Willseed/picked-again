@@ -217,32 +217,6 @@
                             @let priorityRatePercent = record.priorityLotteryRatePercent;
                             @let generalRatePercent = generalDisplayRatePercent(record);
                             <div class="age-card-layout">
-                              <div class="decision-panel" aria-label="公告與一般缺額資訊">
-                                <dl class="decision-context" aria-label="公告報名資訊">
-                                  <div>
-                                    <dt>公告缺額</dt>
-                                    <dd>{{ formatCount(record.announcedVacancyCount) }}</dd>
-                                  </div>
-                                  <div>
-                                    <dt>總登記人數</dt>
-                                    <dd>{{ formatCount(record.registrationCount) }}</dd>
-                                  </div>
-                                </dl>
-                                <dl class="decision-grid">
-                                  <div>
-                                    <dt>一般缺額</dt>
-                                    <dd>{{ formatCount(record.generalVacancyCount) }}</dd>
-                                  </div>
-                                  <div>
-                                    <dt>一般申請</dt>
-                                    <dd>{{ formatCount(record.generalApplicantCount) }}</dd>
-                                  </div>
-                                  <div>
-                                    <dt>備取／未中</dt>
-                                    <dd>{{ formatCount(record.generalWaitlistedCount) }}</dd>
-                                  </div>
-                                </dl>
-                              </div>
                               <aside class="rate-rail" aria-label="一般生與優先生中籤率摘要">
                                 <section class="identity-rate-grid" aria-label="身份別中籤率">
                                   <article
@@ -338,6 +312,32 @@
                                   </section>
                                 }
                               </aside>
+                              <div class="decision-panel" aria-label="公告與一般缺額資訊">
+                                <dl class="decision-context" aria-label="公告報名資訊">
+                                  <div>
+                                    <dt>公告缺額</dt>
+                                    <dd>{{ formatCount(record.announcedVacancyCount) }}</dd>
+                                  </div>
+                                  <div>
+                                    <dt>總登記人數</dt>
+                                    <dd>{{ formatCount(record.registrationCount) }}</dd>
+                                  </div>
+                                </dl>
+                                <dl class="decision-grid">
+                                  <div>
+                                    <dt>一般缺額</dt>
+                                    <dd>{{ formatCount(record.generalVacancyCount) }}</dd>
+                                  </div>
+                                  <div>
+                                    <dt>一般申請</dt>
+                                    <dd>{{ formatCount(record.generalApplicantCount) }}</dd>
+                                  </div>
+                                  <div>
+                                    <dt>備取／未中</dt>
+                                    <dd>{{ formatCount(record.generalWaitlistedCount) }}</dd>
+                                  </div>
+                                </dl>
+                              </div>
                             </div>
 
                             @if (record.sequenceCounts.length > 0) {

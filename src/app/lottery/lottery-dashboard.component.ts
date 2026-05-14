@@ -205,14 +205,18 @@ export class LotteryDashboardComponent implements AfterViewInit {
   }
 
   protected selectSequence(record: LotteryRateRecord, event: MatChipListboxChange): void {
-    if (typeof event.value !== 'string') {
-      return;
-    }
+    const recordKey = getLotteryRateRecordKey(record);
+    const nextSequenceLabel = typeof event.value === 'string' ? event.value : null;
 
     this.selectedSequenceLabelsByRecordKey.update((selectedSequenceLabels) => {
       const nextSelection = new Map(selectedSequenceLabels);
+      const selectedSequenceLabel = nextSelection.get(recordKey) ?? null;
 
-      nextSelection.set(getLotteryRateRecordKey(record), event.value);
+      if (nextSequenceLabel === null || selectedSequenceLabel === nextSequenceLabel) {
+        nextSelection.delete(recordKey);
+      } else {
+        nextSelection.set(recordKey, nextSequenceLabel);
+      }
 
       return nextSelection;
     });
