@@ -120,6 +120,15 @@ describe('LotteryDashboardComponent', () => {
     expect(host.querySelector('.metric-grid')).toBeNull();
     expect(host.querySelector('.detail-grid')).toBeNull();
     expect(host.querySelector('.district-chips')?.textContent).toContain('大同區');
+
+    const yearCarousel = host.querySelector('.year-carousel') as HTMLElement;
+    const yearContainer = host.querySelector('.year-sections') as HTMLElement;
+    const singleYearAriaLabel = yearContainer.getAttribute('aria-label') ?? '';
+
+    expect(yearCarousel.querySelector('.year-swipe-hint')).toBeNull();
+    expect(yearContainer.getAttribute('aria-describedby')).toBeNull();
+    expect(singleYearAriaLabel).toContain('臺北市蘭州非營利幼兒園');
+    expect(singleYearAriaLabel).not.toMatch(/左右滑動|水平滑動/u);
   });
 
   it('公告缺額、總登記人數與身份別應顯示在一般中籤率上方', async () => {
@@ -209,6 +218,7 @@ describe('LotteryDashboardComponent', () => {
     const yearCarousel = host.querySelector('.year-carousel') as HTMLElement;
     const stickyHeader = host.querySelector('.year-section-header-viewport') as HTMLElement;
     const yearContainer = host.querySelector('.year-sections') as HTMLElement;
+    const swipeHint = yearCarousel.querySelector('.year-swipe-hint') as HTMLElement;
     const yearHeaders = Array.from(host.querySelectorAll('.year-section-header')) as HTMLElement[];
     const yearSections = Array.from(host.querySelectorAll('.year-section')) as HTMLElement[];
     const yearLabels = Array.from(host.querySelectorAll('.year-tag')).map((element) =>
@@ -222,8 +232,14 @@ describe('LotteryDashboardComponent', () => {
     stubElementHeight(yearSections[1] as HTMLElement, 280);
     await flushCarouselMeasurements(fixture);
 
+    expect(swipeHint).toBeTruthy();
+    expect(swipeHint.textContent).toMatch(/左右滑動|水平滑動/u);
+    expect(swipeHint.id).toBeTruthy();
+    expect(stickyHeader.nextElementSibling).toBe(swipeHint);
+    expect(swipeHint.nextElementSibling).toBe(yearContainer);
     expect(yearContainer.getAttribute('role')).toBe('list');
     expect(yearContainer.getAttribute('tabindex')).toBe('0');
+    expect(yearContainer.getAttribute('aria-describedby')).toBe(swipeHint.id);
     expect(yearContainer.getAttribute('aria-label')).toContain('可水平滑動查看');
     expect(yearContainer.getAttribute('aria-label')).toContain('臺北市測試非營利幼兒園');
     expect(yearCarousel.contains(stickyHeader)).toBe(true);

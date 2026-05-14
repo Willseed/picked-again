@@ -419,6 +419,31 @@ app-lottery-dashboard {
     max-width: 100%;
   }
 
+  .year-swipe-hint {
+    display: inline-flex;
+    align-items: center;
+    justify-self: start;
+    width: fit-content;
+    min-height: 32px;
+    margin: 0;
+    border: 1px solid var(--pa-hairline);
+    border-radius: var(--pa-radius-full);
+    background: var(--pa-surface-elevated);
+    color: var(--pa-muted);
+    padding: 0 12px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  .year-swipe-hint::before {
+    content: '← →';
+    margin-right: 8px;
+    color: var(--pa-on-dark-mute);
+    font-size: 11px;
+    letter-spacing: -0.08em;
+  }
+
   .year-section-header-viewport {
     position: sticky;
     top: var(--pa-sticky-year-top, calc(clamp(8px, 2vw, 16px) + 68px));

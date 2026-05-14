@@ -102,7 +102,7 @@
     </mat-card>
   } @else {
     <section class="results-stack" aria-label="搜尋結果與估算中籤率" aria-live="polite">
-      @for (result of searchResults(); track result.schoolName) {
+      @for (result of searchResults(); track result.schoolName; let resultIndex = $index) {
         <mat-card appearance="outlined" class="school-card">
           <mat-card-header>
             <mat-icon mat-card-avatar aria-hidden="true">school</mat-icon>
@@ -154,6 +154,12 @@
                 </div>
               </div>
 
+              @if (yearGroups.length > 1) {
+                <p class="year-swipe-hint" [id]="'year-swipe-hint-' + resultIndex">
+                  左右滑動查看不同學年度
+                </p>
+              }
+
               <div
                 #yearSections
                 class="year-sections"
@@ -161,7 +167,14 @@
                 tabindex="0"
                 [style.height]="yearSectionsHeight(result.schoolName)"
                 [attr.data-school-name]="result.schoolName"
-                [attr.aria-label]="result.schoolName + ' 各學年度班齡資料，可水平滑動查看'"
+                [attr.aria-describedby]="
+                  yearGroups.length > 1 ? 'year-swipe-hint-' + resultIndex : null
+                "
+                [attr.aria-label]="
+                  yearGroups.length > 1
+                    ? result.schoolName + ' 各學年度班齡資料，可水平滑動查看'
+                    : result.schoolName + ' 各學年度班齡資料'
+                "
                 (scroll)="updateActiveYearIndex(result.schoolName, yearGroups.length, $event)"
               >
                 @for (yearGroup of yearGroups; track yearGroup.schoolYear; let yearIndex = $index) {
