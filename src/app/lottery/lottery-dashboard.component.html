@@ -209,69 +209,73 @@
                           </mat-card-header>
 
                           <mat-card-content>
-                            <div class="decision-panel" aria-label="序位主要決策資訊">
-                              @let displayRate = displayRatePercent(record);
-                              @let rateLabel = displayRateLabel(record);
-                              <dl class="decision-context" aria-label="公告報名資訊">
-                                <div>
-                                  <dt>公告缺額</dt>
-                                  <dd>{{ formatCount(record.announcedVacancyCount) }}</dd>
-                                </div>
-                                <div>
-                                  <dt>總登記人數</dt>
-                                  <dd>{{ formatCount(record.registrationCount) }}</dd>
-                                </div>
-                              </dl>
-                              <section class="identity-panel" aria-label="身份別人數">
-                                <div class="identity-row priority">
-                                  <span class="identity-label">優先順序</span>
-                                  <strong>{{ formatCount(record.priorityApplicantCount) }}</strong>
-                                  <small>申請</small>
-                                </div>
-                                <div class="identity-row general">
-                                  <span class="identity-label">一般生</span>
-                                  <strong>{{ formatCount(record.generalApplicantCount) }}</strong>
-                                  <small>
-                                    申請 · 正取
-                                    {{
-                                      formatCount(
-                                        record.generalAcceptedCount ?? record.acceptedCount
-                                      )
-                                    }}
-                                  </small>
-                                </div>
-                              </section>
-                              <div class="decision-rate">
-                                <span>{{ rateLabel }}</span>
-                                <div class="rate-value">
-                                  <strong [class.is-unavailable]="displayRate === null">{{
-                                    formatPercent(displayRate)
-                                  }}</strong>
-                                  @if (formatPercentHint(displayRate); as percentHint) {
-                                    <small>{{ percentHint }}</small>
-                                  }
-                                </div>
+                            @let displayRate = displayRatePercent(record);
+                            @let rateLabel = displayRateLabel(record);
+                            <div class="age-card-layout">
+                              <div class="decision-panel" aria-label="公告與一般生決策資訊">
+                                <dl class="decision-context" aria-label="公告報名資訊">
+                                  <div>
+                                    <dt>公告缺額</dt>
+                                    <dd>{{ formatCount(record.announcedVacancyCount) }}</dd>
+                                  </div>
+                                  <div>
+                                    <dt>總登記人數</dt>
+                                    <dd>{{ formatCount(record.registrationCount) }}</dd>
+                                  </div>
+                                </dl>
+                                <dl class="decision-grid">
+                                  <div>
+                                    <dt>一般缺額</dt>
+                                    <dd>{{ formatCount(record.generalVacancyCount) }}</dd>
+                                  </div>
+                                  <div>
+                                    <dt>一般申請</dt>
+                                    <dd>{{ formatCount(record.generalApplicantCount) }}</dd>
+                                  </div>
+                                  <div>
+                                    <dt>備取／未中</dt>
+                                    <dd>{{ formatCount(record.generalWaitlistedCount) }}</dd>
+                                  </div>
+                                </dl>
                               </div>
-                              <dl class="decision-grid">
-                                <div>
-                                  <dt>一般缺額</dt>
-                                  <dd>{{ formatCount(record.generalVacancyCount) }}</dd>
+                              <aside class="rate-rail" aria-label="中籤率與身份別摘要">
+                                <div class="decision-rate" aria-live="polite">
+                                  <span>{{ rateLabel }}</span>
+                                  <div class="rate-value">
+                                    <strong [class.is-unavailable]="displayRate === null">{{
+                                      formatPercent(displayRate)
+                                    }}</strong>
+                                    @if (formatPercentHint(displayRate); as percentHint) {
+                                      <small>{{ percentHint }}</small>
+                                    }
+                                  </div>
                                 </div>
-                                <div>
-                                  <dt>一般申請</dt>
-                                  <dd>{{ formatCount(record.generalApplicantCount) }}</dd>
-                                </div>
-                                <div>
-                                  <dt>備取／未中</dt>
-                                  <dd>{{ formatCount(record.generalWaitlistedCount) }}</dd>
-                                </div>
-                              </dl>
+                                <mat-progress-bar
+                                  mode="determinate"
+                                  [value]="rateProgressValue(record)"
+                                  [attr.aria-label]="record.ageGroup + ' ' + rateLabel"
+                                ></mat-progress-bar>
+                                <section class="identity-panel" aria-label="身份別人數">
+                                  <div class="identity-row priority">
+                                    <span class="identity-label">優先順序</span>
+                                    <strong>{{ formatCount(record.priorityApplicantCount) }}</strong>
+                                    <small>申請</small>
+                                  </div>
+                                  <div class="identity-row general">
+                                    <span class="identity-label">一般生</span>
+                                    <strong>{{ formatCount(record.generalApplicantCount) }}</strong>
+                                    <small>
+                                      申請 · 正取
+                                      {{
+                                        formatCount(
+                                          record.generalAcceptedCount ?? record.acceptedCount
+                                        )
+                                      }}
+                                    </small>
+                                  </div>
+                                </section>
+                              </aside>
                             </div>
-                            <mat-progress-bar
-                              mode="determinate"
-                              [value]="rateProgressValue(record)"
-                              [attr.aria-label]="record.ageGroup + ' ' + rateLabel"
-                            ></mat-progress-bar>
 
                             @if (record.sequenceCounts.length > 0) {
                               <section class="sequence-panel" aria-label="各序位申請人數">

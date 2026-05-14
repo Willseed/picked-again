@@ -630,9 +630,18 @@ app-lottery-dashboard {
     gap: 16px;
   }
 
+  .age-card-layout {
+    display: grid;
+    align-items: stretch;
+    gap: 12px;
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 0.42fr);
+  }
+
   .decision-panel {
     display: grid;
+    align-content: start;
     gap: 10px;
+    min-width: 0;
     border: 1px solid var(--pa-hairline-strong);
     border-radius: var(--pa-radius-lg);
     background: var(--pa-surface-card);
@@ -662,17 +671,15 @@ app-lottery-dashboard {
   }
 
   .decision-rate {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 16px;
+    display: grid;
+    gap: 8px;
   }
 
   .rate-value {
     display: grid;
-    justify-items: end;
+    justify-items: start;
     gap: 4px;
-    text-align: right;
+    text-align: left;
   }
 
   .decision-rate strong {
@@ -722,6 +729,25 @@ app-lottery-dashboard {
     display: grid;
     gap: 8px;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .rate-rail {
+    display: grid;
+    align-content: start;
+    gap: 12px;
+    min-width: 0;
+    border: 1px solid var(--pa-hairline-strong);
+    border-radius: var(--pa-radius-lg);
+    background: var(--pa-surface-card);
+    padding: 16px;
+  }
+
+  .rate-rail .identity-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .rate-rail .identity-row {
+    background: var(--pa-surface-elevated);
   }
 
   .identity-row {
@@ -978,6 +1004,7 @@ app-lottery-dashboard {
     }
 
     .age-grid,
+    .age-card-layout,
     .decision-grid,
     .identity-panel,
     .count-grid {
@@ -1047,8 +1074,6 @@ app-lottery-dashboard {
     }
 
     .decision-rate {
-      align-items: flex-start;
-      flex-direction: column;
       gap: 8px;
     }
 

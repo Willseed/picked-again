@@ -131,7 +131,7 @@ describe('LotteryDashboardComponent', () => {
     expect(singleYearAriaLabel).not.toMatch(/左右滑動|水平滑動/u);
   });
 
-  it('公告缺額、總登記人數與身份別應顯示在一般中籤率上方', async () => {
+  it('公告資訊留在左側，身份別與中籤率摘要移至右側', async () => {
     const announcedCountSchools = buildSchoolLotteryRates({
       臺北市公告資訊測試幼兒園: {
         搜尋關鍵字: ['公告資訊測試'],
@@ -155,29 +155,33 @@ describe('LotteryDashboardComponent', () => {
     fixture.detectChanges();
 
     const host = fixture.nativeElement as HTMLElement;
-    const decisionPanel = host.querySelector('.decision-panel') as HTMLElement;
-    const decisionContext = host.querySelector('.decision-context') as HTMLElement;
-    const identityPanel = host.querySelector('.identity-panel') as HTMLElement;
-    const decisionRate = host.querySelector('.decision-rate') as HTMLElement;
+    const ageCard = host.querySelector('.age-card') as HTMLElement;
+    const decisionPanel = ageCard.querySelector('.decision-panel') as HTMLElement;
+    const decisionContext = decisionPanel.querySelector('.decision-context') as HTMLElement;
+    const rateRail = ageCard.querySelector('.rate-rail') as HTMLElement;
+    const identityPanel = rateRail.querySelector('.identity-panel') as HTMLElement;
+    const decisionRate = rateRail.querySelector('.decision-rate') as HTMLElement;
+    const progressBar = rateRail.querySelector('mat-progress-bar') as HTMLElement;
 
-    expect(decisionPanel.contains(identityPanel)).toBe(true);
+    expect(ageCard.querySelector('.age-card-layout')?.contains(decisionPanel)).toBe(true);
     expect(decisionContext.textContent).toContain('公告缺額');
     expect(decisionContext.textContent).toContain('8');
     expect(decisionContext.textContent).toContain('總登記人數');
     expect(decisionContext.textContent).toContain('20');
+    expect(decisionPanel.querySelector('.decision-rate')).toBeNull();
+    expect(decisionPanel.querySelector('.identity-panel')).toBeNull();
+    expect(decisionPanel.textContent).not.toContain('一般生中籤率');
+    expect(rateRail.contains(decisionRate)).toBe(true);
+    expect(rateRail.contains(progressBar)).toBe(true);
+    expect(rateRail.contains(identityPanel)).toBe(true);
     expect(identityPanel.textContent).toContain('優先順序');
     expect(identityPanel.textContent).toContain('4');
     expect(identityPanel.textContent).toContain('一般生');
     expect(identityPanel.textContent).toContain('12');
     expect(identityPanel.textContent).toContain('正取');
     expect(identityPanel.textContent).toContain('10');
-    expect(
-      decisionContext.compareDocumentPosition(identityPanel) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    expect(identityPanel.nextElementSibling).toBe(decisionRate);
-    expect(
-      decisionContext.compareDocumentPosition(decisionRate) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
+    expect(decisionRate.textContent).toContain('一般生中籤率');
+    expect(decisionRate.textContent).toContain('66.7%');
     expect(host.querySelector('.detail-grid')).toBeNull();
     expect(host.textContent).not.toContain('正取／備取');
   });
@@ -350,19 +354,22 @@ describe('LotteryDashboardComponent', () => {
     fixture.detectChanges();
 
     const host = fixture.nativeElement as HTMLElement;
-    const progressBar = host.querySelector('mat-progress-bar') as HTMLElement;
+    const ageCard = host.querySelector('.age-card') as HTMLElement;
+    const ageCardLayout = ageCard.querySelector('.age-card-layout') as HTMLElement;
+    const rateRail = ageCard.querySelector('.rate-rail') as HTMLElement;
+    const progressBar = rateRail.querySelector('mat-progress-bar') as HTMLElement;
     const sequencePanel = host.querySelector('.sequence-panel') as HTMLElement;
-    const identityPanel = host.querySelector('.identity-panel') as HTMLElement;
+    const identityPanel = rateRail.querySelector('.identity-panel') as HTMLElement;
     const highlightedChip = host.querySelector(
       'mat-chip-option.sequence-chip.is-fill-threshold',
     ) as HTMLElement;
     const highlightedOption = highlightedChip.querySelector('[role="option"]') as HTMLElement;
 
+    expect(rateRail.contains(identityPanel)).toBe(true);
+    expect(rateRail.contains(progressBar)).toBe(true);
+    expect(ageCard.querySelector('.decision-panel .decision-rate')).toBeNull();
     expect(
-      identityPanel.compareDocumentPosition(progressBar) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    expect(
-      progressBar.compareDocumentPosition(sequencePanel) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ageCardLayout.compareDocumentPosition(sequencePanel) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     expect(highlightedChip.textContent).toContain('順序7');
     expect(highlightedChip.textContent).toContain('收滿點');
@@ -422,8 +429,11 @@ describe('LotteryDashboardComponent', () => {
       host.querySelectorAll('mat-chip-option.sequence-chip'),
     ).find((chip) => chip.textContent?.includes('順序8')) as HTMLElement;
     const sequenceEightOption = sequenceEightChip.querySelector('[role="option"]') as HTMLElement;
-    const decisionRate = host.querySelector('.decision-rate') as HTMLElement;
-    const progressBar = host.querySelector('mat-progress-bar') as HTMLElement;
+    const rateRail = (host.querySelector('.age-card') as HTMLElement).querySelector(
+      '.rate-rail',
+    ) as HTMLElement;
+    const decisionRate = rateRail.querySelector('.decision-rate') as HTMLElement;
+    const progressBar = rateRail.querySelector('mat-progress-bar') as HTMLElement;
 
     expect(listbox.getAttribute('role')).toBe('listbox');
     expect(listbox.getAttribute('aria-label')).toContain('選擇後重新計算');
@@ -433,6 +443,8 @@ describe('LotteryDashboardComponent', () => {
     ).toBeNull();
     expect(sequenceEightOption.getAttribute('aria-label')).not.toContain('目前選取');
     expect(sequenceEightOption.getAttribute('aria-label')).toContain('選擇後重新計算一般生中籤率');
+    expect(host.querySelector('.decision-panel .decision-rate')).toBeNull();
+    expect(rateRail.contains(decisionRate)).toBe(true);
     expect(decisionRate.textContent).toContain('一般生中籤率');
     expect(decisionRate.textContent).toContain('50.0%');
     expect(progressBar.getAttribute('aria-valuenow')).toBe('50');
@@ -450,6 +462,7 @@ describe('LotteryDashboardComponent', () => {
     expect(selectedChip.textContent).toContain('順序8');
     expect(selectedOption.getAttribute('aria-selected')).toBe('true');
     expect(selectedOption.getAttribute('aria-label')).toContain('目前選取');
+    expect(decisionRate.textContent).toContain('一般生中籤率');
     expect(decisionRate.textContent).toContain('10.0%');
     expect(progressBar.getAttribute('aria-valuenow')).toBe('10');
   });
@@ -486,12 +499,16 @@ describe('LotteryDashboardComponent', () => {
       host.querySelectorAll('mat-chip-option.sequence-chip'),
     ).find((chip) => chip.textContent?.includes('順序9')) as HTMLElement;
     const sequenceNineOption = sequenceNineChip.querySelector('[role="option"]') as HTMLElement;
-    const decisionRate = host.querySelector('.decision-rate') as HTMLElement;
-    const progressBar = host.querySelector('mat-progress-bar') as HTMLElement;
+    const rateRail = (host.querySelector('.age-card') as HTMLElement).querySelector(
+      '.rate-rail',
+    ) as HTMLElement;
+    const decisionRate = rateRail.querySelector('.decision-rate') as HTMLElement;
+    const progressBar = rateRail.querySelector('mat-progress-bar') as HTMLElement;
 
     expect(host.querySelector('mat-chip-option.sequence-chip.is-selected')).toBeNull();
     expect(sequenceNineOption.getAttribute('aria-selected')).not.toBe('true');
     expect(sequenceNineOption.getAttribute('aria-label')).not.toContain('目前選取');
+    expect(host.querySelector('.decision-panel .decision-rate')).toBeNull();
     expect(decisionRate.textContent).toContain('一般生中籤率');
     expect(decisionRate.textContent).toContain('50.0%');
     expect(progressBar.getAttribute('aria-valuenow')).toBe('50');
@@ -509,6 +526,7 @@ describe('LotteryDashboardComponent', () => {
     expect(selectedChip.textContent).toContain('順序9');
     expect(selectedOption.getAttribute('aria-selected')).toBe('true');
     expect(selectedOption.getAttribute('aria-label')).toContain('目前選取');
+    expect(decisionRate.textContent).toContain('一般生中籤率');
     expect(decisionRate.textContent).toContain('15.0%');
     expect(progressBar.getAttribute('aria-valuenow')).toBe('15');
   });
@@ -557,8 +575,14 @@ describe('LotteryDashboardComponent', () => {
     ).find((chip) => chip.textContent?.includes('順序2')) as HTMLElement;
     const sequenceTwoOption = sequenceTwoChip.querySelector('[role="option"]') as HTMLElement;
 
-    expect(firstAgeCard.querySelector('.decision-rate')?.textContent).toContain('33.3%');
-    expect(secondAgeCard.querySelector('.decision-rate')?.textContent).toContain('44.4%');
+    expect(firstAgeCard.querySelector('.rate-rail .decision-rate')?.textContent).toContain(
+      '33.3%',
+    );
+    expect(secondAgeCard.querySelector('.rate-rail .decision-rate')?.textContent).toContain(
+      '44.4%',
+    );
+    expect(firstAgeCard.querySelector('.decision-panel .decision-rate')).toBeNull();
+    expect(secondAgeCard.querySelector('.decision-panel .decision-rate')).toBeNull();
     expect(firstAgeCard.querySelector('mat-chip-option.sequence-chip.is-selected')).toBeNull();
     expect(secondAgeCard.querySelector('mat-chip-option.sequence-chip.is-selected')).toBeNull();
 
@@ -572,15 +596,23 @@ describe('LotteryDashboardComponent', () => {
     ) as HTMLElement;
     const firstProgressBar = firstAgeCard.querySelector('mat-progress-bar') as HTMLElement;
 
-    expect(firstAgeCard.querySelector('.decision-rate')?.textContent).toContain('順序2 中籤率');
-    expect(firstAgeCard.querySelector('.decision-rate')?.textContent).toContain('100.0%');
+    expect(firstAgeCard.querySelector('.rate-rail .decision-rate')?.textContent).toContain(
+      '順序2 中籤率',
+    );
+    expect(firstAgeCard.querySelector('.rate-rail .decision-rate')?.textContent).toContain(
+      '100.0%',
+    );
     expect(firstProgressBar.getAttribute('aria-valuenow')).toBe('100');
     expect(firstSelectedChip.textContent).toContain('順序2');
     expect(firstSelectedChip.querySelector('[role="option"]')?.getAttribute('aria-selected')).toBe(
       'true',
     );
-    expect(secondAgeCard.querySelector('.decision-rate')?.textContent).toContain('一般生中籤率');
-    expect(secondAgeCard.querySelector('.decision-rate')?.textContent).toContain('44.4%');
+    expect(secondAgeCard.querySelector('.rate-rail .decision-rate')?.textContent).toContain(
+      '一般生中籤率',
+    );
+    expect(secondAgeCard.querySelector('.rate-rail .decision-rate')?.textContent).toContain(
+      '44.4%',
+    );
     expect(secondAgeCard.querySelector('mat-chip-option.sequence-chip.is-selected')).toBeNull();
   });
 
@@ -611,10 +643,11 @@ describe('LotteryDashboardComponent', () => {
     fixture.detectChanges();
 
     const host = fixture.nativeElement as HTMLElement;
-    const decisionRate = host.querySelector('.decision-rate') as HTMLElement;
+    const decisionRate = host.querySelector('.rate-rail .decision-rate') as HTMLElement;
 
     expect(decisionRate.textContent).toContain('一般生中籤率');
     expect(decisionRate.textContent).toContain('25.0%');
+    expect(host.querySelector('.decision-panel .decision-rate')).toBeNull();
     expect(host.querySelector('mat-chip-option.sequence-chip.is-selected')).toBeNull();
   });
 
