@@ -160,7 +160,8 @@
 
               @if (yearGroups.length > 1) {
                 <p class="year-swipe-hint" [id]="'year-swipe-hint-' + resultIndex">
-                  左右滑動查看不同學年度
+                  <span class="year-swipe-cue" aria-hidden="true">&gt;&gt;&gt;</span>
+                  <span>左右滑動查看不同學年度</span>
                 </p>
               }
 

@@ -271,7 +271,13 @@ describe('LotteryDashboardComponent', () => {
     stubElementHeight(yearSections[1] as HTMLElement, 280);
     await flushCarouselMeasurements(fixture);
 
+    const swipeCue = swipeHint.querySelector('.year-swipe-cue') as HTMLElement;
+
     expect(swipeHint).toBeTruthy();
+    expect(swipeCue).toBeTruthy();
+    expect(swipeCue.textContent?.trim()).toBe('>>>');
+    expect(swipeCue.getAttribute('aria-hidden')).toBe('true');
+    expect(swipeHint.textContent).toContain('>>>');
     expect(swipeHint.textContent).toMatch(/左右滑動|水平滑動/u);
     expect(swipeHint.id).toBeTruthy();
     expect(stickyHeader.nextElementSibling).toBe(swipeHint);
