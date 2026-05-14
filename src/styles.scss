@@ -749,6 +749,14 @@ app-lottery-dashboard {
     font-weight: 700;
   }
 
+  .sequence-chip.is-fill-threshold.is-selected {
+    --mat-chip-elevated-selected-container-color: var(--pa-button-fg);
+    --mat-chip-selected-label-text-color: var(--pa-ink);
+
+    background: var(--pa-button-fg);
+    color: var(--pa-ink);
+  }
+
   .sequence-chip strong {
     color: var(--pa-on-dark-mute);
     font-weight: 700;
@@ -761,6 +769,10 @@ app-lottery-dashboard {
 
   .sequence-chip.is-fill-threshold .mat-mdc-chip-action-label {
     color: var(--pa-canvas);
+  }
+
+  .sequence-chip.is-fill-threshold.is-selected .mat-mdc-chip-action-label {
+    color: var(--pa-ink);
   }
 
   .sequence-hit-badge {
