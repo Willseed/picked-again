@@ -1,10 +1,13 @@
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
   ElementRef,
   HostListener,
+  QueryList,
   ViewChild,
+  ViewChildren,
   computed,
   inject,
   signal,
@@ -59,13 +62,19 @@ interface SequenceFulfillmentMarker {
   styleUrl: './lottery-dashboard.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class LotteryDashboardComponent {
+export class LotteryDashboardComponent implements AfterViewInit {
   private readonly lotteryDataService = inject(LotteryDataService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly yearSectionHeightsBySchoolName = signal<ReadonlyMap<string, number>>(new Map());
+  private readonly yearSectionResizeObserver =
+    typeof ResizeObserver === 'undefined'
+      ? null
+      : new ResizeObserver(() => this.scheduleYearSectionsMeasurement());
   private readonly percentFormatter = new Intl.NumberFormat('zh-TW', {
     maximumFractionDigits: 1,
     minimumFractionDigits: 1,
   });
+  private yearSectionMeasurementFrameId: number | null = null;
 
   protected readonly searchControl = new FormControl('', { nonNullable: true });
   protected readonly dataUrl = this.lotteryDataService.dataUrl;
@@ -91,13 +100,42 @@ export class LotteryDashboardComponent {
     this.schools().reduce((total, school) => total + school.ageGroups.length, 0),
   );
   @ViewChild('searchInput') private searchInput?: ElementRef<HTMLInputElement>;
+  @ViewChildren('yearSections') private yearSectionContainers?: QueryList<
+    ElementRef<HTMLElement>
+  >;
+  @ViewChildren('yearSection') private yearSectionElements?: QueryList<ElementRef<HTMLElement>>;
 
   constructor() {
     this.searchControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.activeYearIndexesBySchoolName.set(new Map());
+      this.yearSectionHeightsBySchoolName.set(new Map());
+      this.scheduleYearSectionsMeasurement();
+    });
+
+    this.destroyRef.onDestroy(() => {
+      if (this.yearSectionMeasurementFrameId !== null) {
+        this.cancelMeasurementFrame(this.yearSectionMeasurementFrameId);
+      }
+
+      this.yearSectionResizeObserver?.disconnect();
     });
 
     this.loadData();
+  }
+
+  ngAfterViewInit(): void {
+    this.yearSectionContainers?.changes
+      .pipe(startWith(this.yearSectionContainers), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.scheduleYearSectionsMeasurement());
+    this.yearSectionElements?.changes
+      .pipe(startWith(this.yearSectionElements), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.observeYearSectionsForResize();
+        this.scheduleYearSectionsMeasurement();
+      });
+
+    this.observeYearSectionsForResize();
+    this.scheduleYearSectionsMeasurement();
   }
 
   protected clearSearch(): void {
@@ -116,6 +154,11 @@ export class LotteryDashboardComponent {
 
     event.preventDefault();
     this.searchInput?.nativeElement.focus();
+  }
+
+  @HostListener('window:resize')
+  protected handleWindowResize(): void {
+    this.scheduleYearSectionsMeasurement();
   }
 
   protected formatPercent(value: number | null): string {
@@ -173,6 +216,7 @@ export class LotteryDashboardComponent {
 
       return nextSelection;
     });
+    this.scheduleYearSectionsMeasurement();
   }
 
   protected displayRateLabel(record: LotteryRateRecord): string {
@@ -252,6 +296,7 @@ export class LotteryDashboardComponent {
     );
 
     if (this.activeYearIndex(schoolName, yearGroupCount) === nextIndex) {
+      this.scheduleYearSectionsMeasurement();
       return;
     }
 
@@ -262,10 +307,21 @@ export class LotteryDashboardComponent {
 
       return nextActiveYearIndexes;
     });
+    this.scheduleYearSectionsMeasurement();
   }
 
   protected yearHeaderTrackTransform(schoolName: string, yearGroupCount: number): string {
     return `translateX(-${this.activeYearIndex(schoolName, yearGroupCount) * 100}%)`;
+  }
+
+  protected yearSectionsHeight(schoolName: string): string | null {
+    const measuredHeight = this.yearSectionHeightsBySchoolName().get(schoolName);
+
+    return measuredHeight === undefined ? null : `${measuredHeight}px`;
+  }
+
+  protected isActiveYear(schoolName: string, yearGroupCount: number, yearIndex: number): boolean {
+    return this.activeYearIndex(schoolName, yearGroupCount) === yearIndex;
   }
 
   private loadData(): void {
@@ -279,11 +335,14 @@ export class LotteryDashboardComponent {
         next: (schools) => {
           this.selectedSequenceLabelsByRecordKey.set(new Map());
           this.activeYearIndexesBySchoolName.set(new Map());
+          this.yearSectionHeightsBySchoolName.set(new Map());
           this.schools.set(schools);
           this.loading.set(false);
+          this.scheduleYearSectionsMeasurement();
         },
         error: () => {
           this.schools.set([]);
+          this.yearSectionHeightsBySchoolName.set(new Map());
           this.errorMessage.set(`無法載入 ${this.dataUrl}。請確認資料檔存在且格式正確後再試一次。`);
           this.loading.set(false);
         },
@@ -310,6 +369,108 @@ export class LotteryDashboardComponent {
   private activeYearIndex(schoolName: string, yearGroupCount: number): number {
     return clampIndex(this.activeYearIndexesBySchoolName().get(schoolName) ?? 0, yearGroupCount);
   }
+
+  private scheduleYearSectionsMeasurement(): void {
+    if (this.yearSectionMeasurementFrameId !== null) {
+      return;
+    }
+
+    this.yearSectionMeasurementFrameId = this.requestMeasurementFrame(() => {
+      this.yearSectionMeasurementFrameId = null;
+      this.measureYearSections();
+    });
+  }
+
+  private measureYearSections(): void {
+    const containers = this.yearSectionContainers?.toArray() ?? [];
+
+    if (containers.length === 0) {
+      if (this.yearSectionHeightsBySchoolName().size > 0) {
+        this.yearSectionHeightsBySchoolName.set(new Map());
+      }
+
+      return;
+    }
+
+    const nextHeights = new Map(this.yearSectionHeightsBySchoolName());
+    const visibleSchoolNames = new Set<string>();
+    let hasChanged = false;
+
+    for (const { nativeElement: container } of containers) {
+      const schoolName = container.dataset['schoolName'];
+
+      if (!schoolName) {
+        continue;
+      }
+
+      visibleSchoolNames.add(schoolName);
+
+      const activeSection =
+        container.querySelector<HTMLElement>('.year-section[data-active-year="true"]') ??
+        container.querySelector<HTMLElement>('.year-section');
+
+      if (!activeSection) {
+        continue;
+      }
+
+      const measuredHeight = measureElementHeight(activeSection);
+
+      if (measuredHeight <= 0) {
+        continue;
+      }
+
+      if (nextHeights.get(schoolName) !== measuredHeight) {
+        nextHeights.set(schoolName, measuredHeight);
+        hasChanged = true;
+      }
+    }
+
+    for (const schoolName of nextHeights.keys()) {
+      if (!visibleSchoolNames.has(schoolName)) {
+        nextHeights.delete(schoolName);
+        hasChanged = true;
+      }
+    }
+
+    if (hasChanged) {
+      this.yearSectionHeightsBySchoolName.set(nextHeights);
+    }
+  }
+
+  private observeYearSectionsForResize(): void {
+    if (!this.yearSectionResizeObserver) {
+      return;
+    }
+
+    this.yearSectionResizeObserver.disconnect();
+
+    for (const { nativeElement: yearSection } of this.yearSectionElements?.toArray() ?? []) {
+      this.yearSectionResizeObserver.observe(yearSection);
+    }
+  }
+
+  private requestMeasurementFrame(callback: FrameRequestCallback): number {
+    if (typeof requestAnimationFrame === 'function') {
+      return requestAnimationFrame(callback);
+    }
+
+    return window.setTimeout(() => callback(performance.now()), 0);
+  }
+
+  private cancelMeasurementFrame(frameId: number): void {
+    if (typeof cancelAnimationFrame === 'function') {
+      cancelAnimationFrame(frameId);
+      return;
+    }
+
+    clearTimeout(frameId);
+  }
+}
+
+function measureElementHeight(element: HTMLElement): number {
+  return Math.ceil(
+    Math.max(element.offsetHeight, element.scrollHeight, element.getBoundingClientRect().height),
+  );
 }
 
 function compareSchoolYearLabels(left: string, right: string): number {

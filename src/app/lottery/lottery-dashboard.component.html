@@ -131,8 +131,18 @@
                   class="year-section-header-track"
                   [style.transform]="yearHeaderTrackTransform(result.schoolName, yearGroups.length)"
                 >
-                  @for (yearGroup of yearGroups; track yearGroup.schoolYear) {
-                    <header class="year-section-header">
+                  @for (yearGroup of yearGroups; track yearGroup.schoolYear; let yearIndex = $index) {
+                    <header
+                      class="year-section-header"
+                      [class.is-active-year]="
+                        isActiveYear(result.schoolName, yearGroups.length, yearIndex)
+                      "
+                      [attr.data-active-year]="
+                        isActiveYear(result.schoolName, yearGroups.length, yearIndex)
+                          ? 'true'
+                          : null
+                      "
+                    >
                       <div class="year-context">
                         <span class="year-kicker">目前查看</span>
                         <strong class="year-context-school">{{ result.schoolName }}</strong>
@@ -145,16 +155,32 @@
               </div>
 
               <div
+                #yearSections
                 class="year-sections"
                 role="list"
                 tabindex="0"
+                [style.height]="yearSectionsHeight(result.schoolName)"
+                [attr.data-school-name]="result.schoolName"
                 [attr.aria-label]="result.schoolName + ' 各學年度班齡資料，可水平滑動查看'"
                 (scroll)="updateActiveYearIndex(result.schoolName, yearGroups.length, $event)"
               >
-                @for (yearGroup of yearGroups; track yearGroup.schoolYear) {
+                @for (yearGroup of yearGroups; track yearGroup.schoolYear; let yearIndex = $index) {
                   <section
+                    #yearSection
                     class="year-section"
                     role="listitem"
+                    [class.is-active-year]="
+                      isActiveYear(result.schoolName, yearGroups.length, yearIndex)
+                    "
+                    [attr.data-active-year]="
+                      isActiveYear(result.schoolName, yearGroups.length, yearIndex) ? 'true' : null
+                    "
+                    [attr.aria-hidden]="
+                      isActiveYear(result.schoolName, yearGroups.length, yearIndex) ? null : 'true'
+                    "
+                    [attr.inert]="
+                      isActiveYear(result.schoolName, yearGroups.length, yearIndex) ? null : ''
+                    "
                     [attr.aria-label]="result.schoolName + ' ' + yearGroup.schoolYear + '資料'"
                   >
                     <div class="age-grid" aria-label="各班齡估算中籤率">

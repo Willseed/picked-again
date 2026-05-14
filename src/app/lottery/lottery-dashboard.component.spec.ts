@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Observable, Subject, of, throwError } from 'rxjs';
 
 import { LotteryDashboardComponent } from './lottery-dashboard.component';
@@ -39,6 +39,26 @@ async function renderDashboard(loadSchoolRates = () => of(sampleSchools)) {
   fixture.detectChanges();
 
   return fixture;
+}
+
+async function flushCarouselMeasurements(
+  fixture: ComponentFixture<LotteryDashboardComponent>,
+): Promise<void> {
+  window.dispatchEvent(new Event('resize'));
+  await new Promise<void>((resolve) => {
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => resolve());
+      return;
+    }
+
+    setTimeout(resolve, 0);
+  });
+  fixture.detectChanges();
+}
+
+function stubElementHeight(element: HTMLElement, height: number): void {
+  Object.defineProperty(element, 'offsetHeight', { configurable: true, value: height });
+  Object.defineProperty(element, 'scrollHeight', { configurable: true, value: height });
 }
 
 describe('LotteryDashboardComponent', () => {
@@ -171,8 +191,9 @@ describe('LotteryDashboardComponent', () => {
     const yearSplitSchools = buildSchoolLotteryRates({
       臺北市測試非營利幼兒園: {
         搜尋關鍵字: ['測試', '大同區'],
-        '5歲（114學年）': { 正取: 1, 備取: 1 },
-        '4歲（113學年）': { 正取: 2, 備取: 2 },
+        '5歲（114學年）': { 正取: 1, 備取: 3 },
+        '4歲（114學年）': { 正取: 3, 備取: 1 },
+        '3歲（113學年）': { 正取: 4, 備取: 0 },
       },
     } satisfies RawLotteryData);
     const fixture = await renderDashboard(() => of(yearSplitSchools));
@@ -188,6 +209,7 @@ describe('LotteryDashboardComponent', () => {
     const yearCarousel = host.querySelector('.year-carousel') as HTMLElement;
     const stickyHeader = host.querySelector('.year-section-header-viewport') as HTMLElement;
     const yearContainer = host.querySelector('.year-sections') as HTMLElement;
+    const yearHeaders = Array.from(host.querySelectorAll('.year-section-header')) as HTMLElement[];
     const yearSections = Array.from(host.querySelectorAll('.year-section')) as HTMLElement[];
     const yearLabels = Array.from(host.querySelectorAll('.year-tag')).map((element) =>
       element.textContent?.trim(),
@@ -196,6 +218,10 @@ describe('LotteryDashboardComponent', () => {
       (element) => element.textContent?.trim(),
     );
 
+    stubElementHeight(yearSections[0] as HTMLElement, 640);
+    stubElementHeight(yearSections[1] as HTMLElement, 280);
+    await flushCarouselMeasurements(fixture);
+
     expect(yearContainer.getAttribute('role')).toBe('list');
     expect(yearContainer.getAttribute('tabindex')).toBe('0');
     expect(yearContainer.getAttribute('aria-label')).toContain('可水平滑動查看');
@@ -203,6 +229,7 @@ describe('LotteryDashboardComponent', () => {
     expect(yearCarousel.contains(stickyHeader)).toBe(true);
     expect(yearContainer.contains(stickyHeader)).toBe(false);
     expect(yearSections).toHaveLength(2);
+    expect(yearContainer.style.height).toBe('640px');
     expect(yearSections.map((section) => section.getAttribute('role'))).toEqual([
       'listitem',
       'listitem',
@@ -213,17 +240,59 @@ describe('LotteryDashboardComponent', () => {
     ]);
     expect(yearLabels).toEqual(['114學年', '113學年']);
     expect(contextSchools).toEqual(['臺北市測試非營利幼兒園', '臺北市測試非營利幼兒園']);
-    expect(yearSections[0]?.textContent).toContain('5歲');
-    expect(yearSections[1]?.textContent).toContain('4歲');
+    expect(yearHeaders[0]?.classList.contains('is-active-year')).toBe(true);
+    expect(yearHeaders[0]?.getAttribute('data-active-year')).toBe('true');
+    expect(yearHeaders[1]?.classList.contains('is-active-year')).toBe(false);
+    expect(yearHeaders[1]?.getAttribute('data-active-year')).toBeNull();
+    expect(yearSections[0]?.classList.contains('is-active-year')).toBe(true);
+    expect(yearSections[0]?.getAttribute('data-active-year')).toBe('true');
+    expect(yearSections[0]?.getAttribute('aria-hidden')).toBeNull();
+    expect(yearSections[0]?.hasAttribute('inert')).toBe(false);
+    expect(yearSections[1]?.classList.contains('is-active-year')).toBe(false);
+    expect(yearSections[1]?.getAttribute('data-active-year')).toBeNull();
+    expect(yearSections[1]?.getAttribute('aria-hidden')).toBe('true');
+    expect(yearSections[1]?.hasAttribute('inert')).toBe(true);
+
+    const initialActiveAgeCards = Array.from(
+      (yearSections[0] as HTMLElement).querySelectorAll('.age-card'),
+    ) as HTMLElement[];
+
+    expect(initialActiveAgeCards).toHaveLength(2);
+    expect(initialActiveAgeCards[0]?.textContent).toContain('5歲');
+    expect(initialActiveAgeCards[0]?.textContent).toContain('25.0%');
+    expect(initialActiveAgeCards[1]?.textContent).toContain('4歲');
+    expect(initialActiveAgeCards[1]?.textContent).toContain('75.0%');
+    expect(yearSections[0]?.textContent).not.toContain('3歲');
 
     Object.defineProperty(yearContainer, 'clientWidth', { configurable: true, value: 360 });
     yearContainer.scrollLeft = 360;
     yearContainer.dispatchEvent(new Event('scroll'));
     fixture.detectChanges();
+    await flushCarouselMeasurements(fixture);
 
     const headerTrack = host.querySelector('.year-section-header-track') as HTMLElement;
 
     expect(headerTrack.style.transform).toBe('translateX(-100%)');
+    expect(yearContainer.style.height).toBe('280px');
+    expect(yearHeaders[0]?.classList.contains('is-active-year')).toBe(false);
+    expect(yearHeaders[0]?.getAttribute('data-active-year')).toBeNull();
+    expect(yearHeaders[1]?.classList.contains('is-active-year')).toBe(true);
+    expect(yearHeaders[1]?.getAttribute('data-active-year')).toBe('true');
+    expect(yearSections[0]?.classList.contains('is-active-year')).toBe(false);
+    expect(yearSections[0]?.getAttribute('aria-hidden')).toBe('true');
+    expect(yearSections[0]?.hasAttribute('inert')).toBe(true);
+    expect(yearSections[1]?.classList.contains('is-active-year')).toBe(true);
+    expect(yearSections[1]?.getAttribute('aria-hidden')).toBeNull();
+    expect(yearSections[1]?.hasAttribute('inert')).toBe(false);
+
+    const nextActiveAgeCards = Array.from(
+      (yearSections[1] as HTMLElement).querySelectorAll('.age-card'),
+    ) as HTMLElement[];
+
+    expect(nextActiveAgeCards).toHaveLength(1);
+    expect(nextActiveAgeCards[0]?.textContent).toContain('3歲');
+    expect(nextActiveAgeCards[0]?.textContent).toContain('100.0%');
+    expect(yearSections[1]?.textContent).not.toContain('5歲');
   });
 
   it('公告缺額在特定順序達標時應高亮該順序', async () => {

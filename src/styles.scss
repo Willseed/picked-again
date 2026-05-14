@@ -436,17 +436,20 @@ app-lottery-dashboard {
 
   .year-sections {
     display: flex;
+    align-items: flex-start;
     gap: 0;
     width: 100%;
     max-width: 100%;
     min-width: 0;
     overflow-x: auto;
+    overflow-y: hidden;
     overscroll-behavior-inline: contain;
     padding: 0 0 12px;
     scroll-padding-inline: 0;
     scroll-snap-type: x mandatory;
     scrollbar-color: var(--pa-hairline-strong) transparent;
     scrollbar-width: thin;
+    transition: height 180ms ease;
     -webkit-overflow-scrolling: touch;
   }
 
@@ -487,6 +490,10 @@ app-lottery-dashboard {
     scroll-snap-stop: always;
   }
 
+  .year-section[aria-hidden='true'] {
+    pointer-events: none;
+  }
+
   .year-section-header {
     display: flex;
     flex: 0 0 100%;
@@ -512,7 +519,8 @@ app-lottery-dashboard {
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .year-section-header-track {
+    .year-section-header-track,
+    .year-sections {
       transition: none;
     }
   }
