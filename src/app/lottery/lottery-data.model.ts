@@ -72,6 +72,16 @@ export interface LotterySequenceCount {
   readonly count: number;
 }
 
+export interface LotterySequenceRate {
+  readonly sequenceLabel: string;
+  readonly sequenceApplicantCount: number;
+  readonly cumulativeApplicantCountBefore: number;
+  readonly remainingVacancyCount: number | null;
+  readonly selectedAcceptedCount: number | null;
+  readonly lotteryRate: number | null;
+  readonly lotteryRatePercent: number | null;
+}
+
 export interface SchoolLotteryRates {
   readonly schoolName: string;
   readonly normalizedSchoolName: string;

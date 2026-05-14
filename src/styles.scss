@@ -700,25 +700,47 @@ app-lottery-dashboard {
   }
 
   .sequence-list {
-    display: flex;
-    flex-wrap: wrap;
+    display: block;
+  }
+
+  .sequence-list .mdc-evolution-chip-set__chips {
     gap: 6px;
+    margin: 0;
+    min-width: 0;
   }
 
   .sequence-chip {
+    --mdc-chip-container-height: 28px;
+    --mdc-chip-container-shape-radius: var(--pa-radius-sm);
+    --mdc-chip-label-text-color: var(--pa-muted);
+    --mdc-chip-selected-label-text-color: var(--pa-ink);
+    --mdc-chip-with-icon-selected-icon-color: currentColor;
+
     display: inline-flex;
     align-items: center;
-    gap: 6px;
     min-height: 26px;
+    margin: 0 !important;
     border: 1px solid var(--pa-hairline);
     border-radius: var(--pa-radius-sm);
     background: var(--pa-surface-card);
     color: var(--pa-muted);
-    padding: 0 8px;
     font-size: 12px;
   }
 
-  .sequence-chip.is-fill-threshold {
+  .sequence-chip .mat-mdc-chip-action-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .sequence-chip.is-selected {
+    border-color: var(--pa-ink);
+    background: color-mix(in srgb, var(--pa-ink) 12%, var(--pa-surface-card));
+    color: var(--pa-ink);
+  }
+
+  .sequence-chip.is-fill-threshold:not(.is-selected),
+  .sequence-chip.is-fill-threshold.is-selected {
     border-color: var(--pa-ink);
     background: var(--pa-ink);
     color: var(--pa-canvas);
@@ -730,6 +752,7 @@ app-lottery-dashboard {
     font-weight: 700;
   }
 
+  .sequence-chip.is-selected strong,
   .sequence-chip.is-fill-threshold strong {
     color: inherit;
   }

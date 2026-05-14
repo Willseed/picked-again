@@ -255,6 +255,194 @@ describe('LotteryDashboardComponent', () => {
     );
   });
 
+  it('序位選項應以可點選 listbox 呈現，公立資料預設選取一般生順序8', async () => {
+    const publicSequenceSchools = buildSchoolLotteryRates({
+      臺北市公立序位測試幼兒園: {
+        搜尋關鍵字: ['公立序位'],
+        '4歲': {
+          正取: 10,
+          備取: 20,
+          公告缺額: 10,
+          一般順序: 20,
+          一般順序中籤率: 0.5,
+          各序位: {
+            順序1: 4,
+            順序2: 4,
+            順序8: 20,
+          },
+        },
+      },
+    } satisfies RawLotteryData);
+    const fixture = await renderDashboard(() => of(publicSequenceSchools));
+    const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
+
+    input.value = '公立序位';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    const listbox = host.querySelector('mat-chip-listbox.sequence-list') as HTMLElement;
+    const selectedChip = host.querySelector(
+      'mat-chip-option.sequence-chip.is-selected',
+    ) as HTMLElement;
+    const selectedOption = selectedChip.querySelector('[role="option"]') as HTMLElement;
+    const decisionRate = host.querySelector('.decision-rate') as HTMLElement;
+
+    expect(listbox.getAttribute('role')).toBe('listbox');
+    expect(listbox.getAttribute('aria-label')).toContain('選擇序位');
+    expect(selectedChip.textContent).toContain('順序8');
+    expect(selectedOption.getAttribute('aria-selected')).toBe('true');
+    expect(selectedOption.getAttribute('aria-label')).toContain('目前選取');
+    expect(decisionRate.textContent).toContain('一般生中籤率');
+    expect(decisionRate.textContent).toContain('10.0%');
+  });
+
+  it('非營利資料預設一般生為最後一個順序9', async () => {
+    const nonprofitSequenceSchools = buildSchoolLotteryRates({
+      臺北市非營利序位測試幼兒園: {
+        搜尋關鍵字: ['非營利序位'],
+        '4歲': {
+          正取: 10,
+          備取: 20,
+          公告缺額: 10,
+          一般順序: 20,
+          一般順序中籤率: 0.5,
+          各序位: {
+            順序1: 3,
+            順序8: 4,
+            順序9: 20,
+          },
+        },
+      },
+    } satisfies RawLotteryData);
+    const fixture = await renderDashboard(() => of(nonprofitSequenceSchools));
+    const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
+
+    input.value = '非營利序位';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    const selectedChip = host.querySelector(
+      'mat-chip-option.sequence-chip.is-selected',
+    ) as HTMLElement;
+    const decisionRate = host.querySelector('.decision-rate') as HTMLElement;
+
+    expect(selectedChip.textContent).toContain('順序9');
+    expect(decisionRate.textContent).toContain('一般生中籤率');
+    expect(decisionRate.textContent).toContain('15.0%');
+  });
+
+  it('點選序位應只更新該班齡的中籤率、進度與選取狀態', async () => {
+    const selectableSequenceSchools = buildSchoolLotteryRates({
+      臺北市點選序位測試幼兒園: {
+        搜尋關鍵字: ['點選序位'],
+        '4歲': {
+          正取: 10,
+          備取: 20,
+          公告缺額: 10,
+          各序位: {
+            順序1: 4,
+            順序2: 4,
+            順序8: 20,
+          },
+        },
+        '3歲': {
+          正取: 8,
+          備取: 10,
+          公告缺額: 8,
+          各序位: {
+            順序1: 2,
+            順序2: 2,
+            順序8: 10,
+          },
+        },
+      },
+    } satisfies RawLotteryData);
+    const fixture = await renderDashboard(() => of(selectableSequenceSchools));
+    const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
+
+    input.value = '點選序位';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    const ageCards = Array.from(host.querySelectorAll('.age-card')) as HTMLElement[];
+    const firstAgeCard = ageCards[0] as HTMLElement;
+    const secondAgeCard = ageCards[1] as HTMLElement;
+    const sequenceTwoChip = Array.from(
+      firstAgeCard.querySelectorAll('mat-chip-option.sequence-chip'),
+    ).find((chip) => chip.textContent?.includes('順序2')) as HTMLElement;
+    const sequenceTwoOption = sequenceTwoChip.querySelector('[role="option"]') as HTMLElement;
+
+    expect(firstAgeCard.querySelector('.decision-rate')?.textContent).toContain('10.0%');
+    expect(secondAgeCard.querySelector('.decision-rate')?.textContent).toContain('40.0%');
+
+    sequenceTwoOption.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const firstSelectedChip = firstAgeCard.querySelector(
+      'mat-chip-option.sequence-chip.is-selected',
+    ) as HTMLElement;
+    const secondSelectedChip = secondAgeCard.querySelector(
+      'mat-chip-option.sequence-chip.is-selected',
+    ) as HTMLElement;
+    const firstProgressBar = firstAgeCard.querySelector('mat-progress-bar') as HTMLElement;
+
+    expect(firstAgeCard.querySelector('.decision-rate')?.textContent).toContain('順序2 中籤率');
+    expect(firstAgeCard.querySelector('.decision-rate')?.textContent).toContain('100.0%');
+    expect(firstProgressBar.getAttribute('aria-valuenow')).toBe('100');
+    expect(firstSelectedChip.textContent).toContain('順序2');
+    expect(firstSelectedChip.querySelector('[role="option"]')?.getAttribute('aria-selected')).toBe(
+      'true',
+    );
+    expect(secondAgeCard.querySelector('.decision-rate')?.textContent).toContain('一般生中籤率');
+    expect(secondAgeCard.querySelector('.decision-rate')?.textContent).toContain('40.0%');
+    expect(secondSelectedChip.textContent).toContain('順序8');
+  });
+
+  it('缺少一般生序位時應保留既有一般中籤率作為預設顯示', async () => {
+    const missingGeneralSequenceSchools = buildSchoolLotteryRates({
+      臺北市舊序位測試幼兒園: {
+        搜尋關鍵字: ['舊序位'],
+        '4歲': {
+          正取: 5,
+          備取: 15,
+          公告缺額: 10,
+          一般順序: 20,
+          一般順序中籤率: 0.25,
+          各序位: {
+            順序1: 2,
+            順序15: 20,
+          },
+        },
+      },
+    } satisfies RawLotteryData);
+    const fixture = await renderDashboard(() => of(missingGeneralSequenceSchools));
+    const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
+
+    input.value = '舊序位';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    const decisionRate = host.querySelector('.decision-rate') as HTMLElement;
+
+    expect(decisionRate.textContent).toContain('一般生中籤率');
+    expect(decisionRate.textContent).toContain('25.0%');
+    expect(host.querySelector('mat-chip-option.sequence-chip.is-selected')).toBeNull();
+  });
+
   it('按下全域快搜快捷鍵時應聚焦搜尋欄', async () => {
     const fixture = await renderDashboard();
     const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;

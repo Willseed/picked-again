@@ -2,6 +2,9 @@ import { ESTIMATED_LOTTERY_RATE_LABEL, type RawLotteryData } from './lottery-dat
 import {
   buildLotteryRateRecords,
   buildSchoolLotteryRates,
+  calculateSelectedSequenceLotteryRate,
+  findDefaultGeneralSequenceLabel,
+  getGeneralSequenceLabel,
   normalizeSearchText,
   searchSchoolLotteryRates,
 } from './lottery-data.utils';
@@ -254,5 +257,110 @@ describe('抽籤資料工具', () => {
     } satisfies RawLotteryData);
 
     expect(record?.sequenceCounts).toEqual([]);
+  });
+
+  it('應以選取序位與剩餘缺額計算收滿前、收滿當下與收滿後中籤率', () => {
+    const sequenceCounts = [
+      { label: '順序1', count: 3 },
+      { label: '順序2', count: 4 },
+      { label: '順序3', count: 6 },
+      { label: '順序4', count: 5 },
+    ];
+
+    const beforeThreshold = calculateSelectedSequenceLotteryRate({
+      announcedVacancyCount: 10,
+      sequenceCounts,
+      selectedSequenceLabel: '順序2',
+    });
+    const fillThreshold = calculateSelectedSequenceLotteryRate({
+      announcedVacancyCount: 10,
+      sequenceCounts,
+      selectedSequenceLabel: '順序3',
+    });
+    const afterThreshold = calculateSelectedSequenceLotteryRate({
+      announcedVacancyCount: 10,
+      sequenceCounts,
+      selectedSequenceLabel: '順序4',
+    });
+
+    expect(beforeThreshold?.cumulativeApplicantCountBefore).toBe(3);
+    expect(beforeThreshold?.remainingVacancyCount).toBe(7);
+    expect(beforeThreshold?.selectedAcceptedCount).toBe(4);
+    expect(beforeThreshold?.lotteryRatePercent).toBeCloseTo(100);
+    expect(fillThreshold?.cumulativeApplicantCountBefore).toBe(7);
+    expect(fillThreshold?.remainingVacancyCount).toBe(3);
+    expect(fillThreshold?.selectedAcceptedCount).toBe(3);
+    expect(fillThreshold?.lotteryRatePercent).toBeCloseTo(50);
+    expect(afterThreshold?.cumulativeApplicantCountBefore).toBe(13);
+    expect(afterThreshold?.remainingVacancyCount).toBe(0);
+    expect(afterThreshold?.selectedAcceptedCount).toBe(0);
+    expect(afterThreshold?.lotteryRatePercent).toBeCloseTo(0);
+  });
+
+  it('一般生序位應固定為公立順序8、非營利順序9且不被舊的一般順序覆蓋', () => {
+    const records = buildLotteryRateRecords({
+      臺北市公立測試幼兒園: {
+        '4歲': {
+          正取: 8,
+          備取: 20,
+          公告缺額: 8,
+          一般順序: 20,
+          各序位: {
+            順序1: 4,
+            順序8: 6,
+            順序15: 20,
+          },
+        },
+      },
+      臺北市非營利測試幼兒園: {
+        '4歲': {
+          正取: 9,
+          備取: 20,
+          公告缺額: 9,
+          一般順序: 20,
+          各序位: {
+            順序1: 4,
+            順序8: 6,
+            順序9: 20,
+          },
+        },
+      },
+    } satisfies RawLotteryData);
+    const publicRecord = records.find((record) => record.schoolName.includes('公立'));
+    const nonprofitRecord = records.find((record) => record.schoolName.includes('非營利'));
+
+    expect(getGeneralSequenceLabel('臺北市公立測試幼兒園')).toBe('順序8');
+    expect(getGeneralSequenceLabel('臺北市非營利測試幼兒園')).toBe('順序9');
+    expect(publicRecord?.generalApplicantCount).toBe(20);
+    expect(nonprofitRecord?.generalApplicantCount).toBe(20);
+    expect(publicRecord ? findDefaultGeneralSequenceLabel(publicRecord) : null).toBe('順序8');
+    expect(nonprofitRecord ? findDefaultGeneralSequenceLabel(nonprofitRecord) : null).toBe('順序9');
+  });
+
+  it('選取序位遇到缺少公告缺額、零申請或不存在標籤時應回傳 null 比率', () => {
+    const zeroApplicantRate = calculateSelectedSequenceLotteryRate({
+      announcedVacancyCount: 10,
+      sequenceCounts: [{ label: '順序8', count: 0 }],
+      selectedSequenceLabel: '順序8',
+    });
+    const missingVacancyRate = calculateSelectedSequenceLotteryRate({
+      announcedVacancyCount: null,
+      sequenceCounts: [{ label: '順序8', count: 3 }],
+      selectedSequenceLabel: '順序8',
+    });
+
+    expect(zeroApplicantRate?.selectedAcceptedCount).toBe(0);
+    expect(zeroApplicantRate?.lotteryRate).toBeNull();
+    expect(zeroApplicantRate?.lotteryRatePercent).toBeNull();
+    expect(missingVacancyRate?.remainingVacancyCount).toBeNull();
+    expect(missingVacancyRate?.selectedAcceptedCount).toBeNull();
+    expect(missingVacancyRate?.lotteryRate).toBeNull();
+    expect(
+      calculateSelectedSequenceLotteryRate({
+        announcedVacancyCount: 10,
+        sequenceCounts: [{ label: '順序8', count: 3 }],
+        selectedSequenceLabel: '順序9',
+      }),
+    ).toBeNull();
   });
 });

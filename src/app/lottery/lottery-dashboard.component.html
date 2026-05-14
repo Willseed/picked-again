@@ -150,8 +150,9 @@
                         </mat-card-header>
 
                         <mat-card-content>
-                          <div class="decision-panel" aria-label="一般生主要決策資訊">
+                          <div class="decision-panel" aria-label="序位主要決策資訊">
                             @let displayRate = displayRatePercent(record);
+                            @let rateLabel = displayRateLabel(record);
                             <dl class="decision-context" aria-label="公告報名資訊">
                               <div>
                                 <dt>公告缺額</dt>
@@ -178,7 +179,7 @@
                               </div>
                             </section>
                             <div class="decision-rate">
-                              <span>一般生中籤率</span>
+                              <span>{{ rateLabel }}</span>
                               <div class="rate-value">
                                 <strong [class.is-unavailable]="displayRate === null">{{
                                   formatPercent(displayRate)
@@ -206,27 +207,41 @@
                           <mat-progress-bar
                             mode="determinate"
                             [value]="rateProgressValue(record)"
-                            [attr.aria-label]="record.ageGroup + ' 一般生中籤率'"
+                            [attr.aria-label]="record.ageGroup + ' ' + rateLabel"
                           ></mat-progress-bar>
 
                           @if (record.sequenceCounts.length > 0) {
                             <section class="sequence-panel" aria-label="各序位申請人數">
                               <div class="section-kicker">各序位</div>
                               @let fulfillmentMarker = sequenceFulfillmentMarker(record);
-                              <div class="sequence-list">
+                              <mat-chip-listbox
+                                class="sequence-list"
+                                aria-label="選擇序位重新計算中籤率"
+                                [value]="selectedSequenceLabel(record)"
+                                [multiple]="false"
+                                [hideSingleSelectionIndicator]="true"
+                                (change)="selectSequence(record, $event)"
+                              >
                                 @for (sequence of record.sequenceCounts; track sequence.label) {
-                                  <span
+                                  <mat-chip-option
                                     class="sequence-chip"
-                                    [class.is-fill-threshold]="fulfillmentMarker?.label === sequence.label"
+                                    [value]="sequence.label"
+                                    [class.is-selected]="isSequenceSelected(record, sequence.label)"
+                                    [class.is-fill-threshold]="
+                                      fulfillmentMarker?.label === sequence.label
+                                    "
+                                    [aria-label]="
+                                      sequenceAriaLabel(record, sequence.label, sequence.count)
+                                    "
                                   >
                                     <span>{{ sequence.label }}</span>
                                     <strong>{{ sequence.count }}</strong>
                                     @if (fulfillmentMarker?.label === sequence.label) {
                                       <em class="sequence-hit-badge">收滿點</em>
                                     }
-                                  </span>
+                                  </mat-chip-option>
                                 }
-                              </div>
+                              </mat-chip-listbox>
                               @if (fulfillmentMarker) {
                                 <p class="sequence-fulfillment-hint">
                                   公告缺額 {{ formatCount(record.announcedVacancyCount) }} 人，在{{ fulfillmentMarker.label }}已達收滿門檻（累計

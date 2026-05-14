@@ -13,6 +13,7 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import type { MatChipListboxChange } from '@angular/material/chips';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -26,6 +27,12 @@ import {
   type SchoolLotteryRates,
 } from './lottery-data.model';
 import { LotteryDataService } from './lottery-data.service';
+import {
+  calculateSelectedSequenceLotteryRate,
+  findDefaultGeneralSequenceLabel,
+  hasLotterySequenceLabel,
+  isGeneralSequenceLabel,
+} from './lottery-data.utils';
 
 interface SchoolYearLotteryGroup {
   readonly schoolYear: string;
@@ -67,6 +74,9 @@ export class LotteryDashboardComponent {
   protected readonly loading = signal(true);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly schools = signal<readonly SchoolLotteryRates[]>([]);
+  private readonly selectedSequenceLabelsByRecordKey = signal<ReadonlyMap<string, string>>(
+    new Map(),
+  );
   protected readonly keyword = toSignal(
     this.searchControl.valueChanges.pipe(
       startWith(this.searchControl.value),
@@ -109,7 +119,7 @@ export class LotteryDashboardComponent {
   }
 
   protected formatPercentHint(value: number | null): string | null {
-    return value === null ? '缺少有效分母（一般申請為 0）' : null;
+    return value === null ? '缺少有效分母或公告缺額，暫時無法估算' : null;
   }
 
   protected formatMatchScore(value: number): string {
@@ -128,7 +138,81 @@ export class LotteryDashboardComponent {
     return findSequenceFulfillmentMarker(record);
   }
 
+  protected selectedSequenceLabel(record: LotteryRateRecord): string | null {
+    const explicitSequenceLabel = this.selectedSequenceLabelsByRecordKey().get(
+      getLotteryRateRecordKey(record),
+    );
+
+    if (
+      explicitSequenceLabel &&
+      hasLotterySequenceLabel(record.sequenceCounts, explicitSequenceLabel)
+    ) {
+      return explicitSequenceLabel;
+    }
+
+    return findDefaultGeneralSequenceLabel(record);
+  }
+
+  protected isSequenceSelected(record: LotteryRateRecord, sequenceLabel: string): boolean {
+    return this.selectedSequenceLabel(record) === sequenceLabel;
+  }
+
+  protected selectSequence(record: LotteryRateRecord, event: MatChipListboxChange): void {
+    if (typeof event.value !== 'string') {
+      return;
+    }
+
+    this.selectedSequenceLabelsByRecordKey.update((selectedSequenceLabels) => {
+      const nextSelection = new Map(selectedSequenceLabels);
+
+      nextSelection.set(getLotteryRateRecordKey(record), event.value);
+
+      return nextSelection;
+    });
+  }
+
+  protected displayRateLabel(record: LotteryRateRecord): string {
+    const selectedSequenceLabel = this.selectedSequenceLabel(record);
+
+    if (
+      !selectedSequenceLabel ||
+      isGeneralSequenceLabel(record.schoolName, selectedSequenceLabel)
+    ) {
+      return '一般生中籤率';
+    }
+
+    return `${selectedSequenceLabel} 中籤率`;
+  }
+
+  protected sequenceAriaLabel(
+    record: LotteryRateRecord,
+    sequenceLabel: string,
+    sequenceCount: number,
+  ): string {
+    const selectedPrefix = this.isSequenceSelected(record, sequenceLabel) ? '目前選取，' : '';
+
+    return `${selectedPrefix}${sequenceLabel}，${sequenceCount} 人，選取後顯示${this.displaySequenceRateLabel(record, sequenceLabel)}`;
+  }
+
   protected displayRatePercent(record: LotteryRateRecord): number | null {
+    const selectedSequenceLabel = this.selectedSequenceLabel(record);
+
+    if (selectedSequenceLabel) {
+      const selectedSequenceRate = calculateSelectedSequenceLotteryRate({
+        announcedVacancyCount: record.announcedVacancyCount,
+        sequenceCounts: record.sequenceCounts,
+        selectedSequenceLabel,
+      });
+
+      if (selectedSequenceRate !== null && selectedSequenceRate.lotteryRatePercent !== null) {
+        return selectedSequenceRate.lotteryRatePercent;
+      }
+
+      if (this.hasExplicitSequenceSelection(record)) {
+        return null;
+      }
+    }
+
     return record.generalLotteryRatePercent ?? record.estimatedLotteryRatePercent;
   }
 
@@ -160,17 +244,33 @@ export class LotteryDashboardComponent {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (schools) => {
+          this.selectedSequenceLabelsByRecordKey.set(new Map());
           this.schools.set(schools);
           this.loading.set(false);
         },
         error: () => {
           this.schools.set([]);
-          this.errorMessage.set(
-            `無法載入 ${this.dataUrl}。請確認資料檔存在且格式正確後再試一次。`,
-          );
+          this.errorMessage.set(`無法載入 ${this.dataUrl}。請確認資料檔存在且格式正確後再試一次。`);
           this.loading.set(false);
         },
       });
+  }
+
+  private hasExplicitSequenceSelection(record: LotteryRateRecord): boolean {
+    const explicitSequenceLabel = this.selectedSequenceLabelsByRecordKey().get(
+      getLotteryRateRecordKey(record),
+    );
+
+    return (
+      explicitSequenceLabel !== undefined &&
+      hasLotterySequenceLabel(record.sequenceCounts, explicitSequenceLabel)
+    );
+  }
+
+  private displaySequenceRateLabel(record: LotteryRateRecord, sequenceLabel: string): string {
+    return isGeneralSequenceLabel(record.schoolName, sequenceLabel)
+      ? '一般生中籤率'
+      : `${sequenceLabel} 中籤率`;
   }
 }
 
@@ -195,13 +295,24 @@ function compareSchoolYearLabels(left: string, right: string): number {
 
 function extractNumericYear(label: string): number | null {
   const match = label.match(/\d+/u);
+
   return match ? Number(match[0]) : null;
 }
 
-function findSequenceFulfillmentMarker(record: LotteryRateRecord): SequenceFulfillmentMarker | null {
+function getLotteryRateRecordKey(record: LotteryRateRecord): string {
+  return `${record.schoolName}\u0000${record.ageGroup}`;
+}
+
+function findSequenceFulfillmentMarker(
+  record: LotteryRateRecord,
+): SequenceFulfillmentMarker | null {
   const announcedVacancyCount = record.announcedVacancyCount;
 
-  if (announcedVacancyCount === null || announcedVacancyCount <= 0 || record.sequenceCounts.length === 0) {
+  if (
+    announcedVacancyCount === null ||
+    announcedVacancyCount <= 0 ||
+    record.sequenceCounts.length === 0
+  ) {
     return null;
   }
 

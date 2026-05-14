@@ -6,11 +6,21 @@ import {
   type LotteryDataIssue,
   type LotteryRateRecord,
   type LotterySearchResult,
+  type LotterySequenceCount,
+  type LotterySequenceRate,
   type SchoolLotteryRates,
 } from './lottery-data.model';
 
 const ACCEPTED_FIELD: LotteryCountField = '正取';
 const WAITLISTED_FIELD: LotteryCountField = '備取';
+const PUBLIC_GENERAL_SEQUENCE_NUMBER = 8;
+const NONPROFIT_GENERAL_SEQUENCE_NUMBER = 9;
+
+interface CalculateSelectedSequenceLotteryRateOptions {
+  readonly announcedVacancyCount: number | null;
+  readonly sequenceCounts: readonly LotterySequenceCount[];
+  readonly selectedSequenceLabel: string;
+}
 
 export function buildLotteryRateRecords(data: unknown): readonly LotteryRateRecord[] {
   if (!isRecord(data)) {
@@ -142,6 +152,86 @@ export function compareAgeGroupLabels(left: string, right: string): number {
   }
 
   return left.localeCompare(right, 'zh-Hant');
+}
+
+export function getGeneralSequenceLabel(schoolName: string): string {
+  const sequenceNumber = schoolName.includes('非營利')
+    ? NONPROFIT_GENERAL_SEQUENCE_NUMBER
+    : PUBLIC_GENERAL_SEQUENCE_NUMBER;
+
+  return `順序${sequenceNumber}`;
+}
+
+export function isGeneralSequenceLabel(schoolName: string, sequenceLabel: string): boolean {
+  return (
+    normalizeSequenceLabel(sequenceLabel) ===
+    normalizeSequenceLabel(getGeneralSequenceLabel(schoolName))
+  );
+}
+
+export function hasLotterySequenceLabel(
+  sequenceCounts: readonly LotterySequenceCount[],
+  sequenceLabel: string,
+): boolean {
+  const normalizedSequenceLabel = normalizeSequenceLabel(sequenceLabel);
+
+  return sequenceCounts.some(
+    (sequence) => normalizeSequenceLabel(sequence.label) === normalizedSequenceLabel,
+  );
+}
+
+export function findDefaultGeneralSequenceLabel(record: LotteryRateRecord): string | null {
+  const generalSequenceLabel = getGeneralSequenceLabel(record.schoolName);
+
+  return hasLotterySequenceLabel(record.sequenceCounts, generalSequenceLabel)
+    ? generalSequenceLabel
+    : null;
+}
+
+export function calculateSelectedSequenceLotteryRate(
+  options: CalculateSelectedSequenceLotteryRateOptions,
+): LotterySequenceRate | null {
+  const selectedSequenceLabel = normalizeSequenceLabel(options.selectedSequenceLabel);
+  let cumulativeApplicantCountBefore = 0;
+
+  for (const sequence of options.sequenceCounts) {
+    const sequenceApplicantCount = normalizeSequenceCount(sequence.count);
+
+    if (normalizeSequenceLabel(sequence.label) === selectedSequenceLabel) {
+      const vacancyCount = normalizeVacancyCount(options.announcedVacancyCount);
+
+      if (vacancyCount === null) {
+        return {
+          sequenceLabel: sequence.label,
+          sequenceApplicantCount,
+          cumulativeApplicantCountBefore,
+          remainingVacancyCount: null,
+          selectedAcceptedCount: null,
+          lotteryRate: null,
+          lotteryRatePercent: null,
+        };
+      }
+
+      const remainingVacancyCount = Math.max(vacancyCount - cumulativeApplicantCountBefore, 0);
+      const selectedAcceptedCount = Math.min(sequenceApplicantCount, remainingVacancyCount);
+      const lotteryRate =
+        sequenceApplicantCount > 0 ? selectedAcceptedCount / sequenceApplicantCount : null;
+
+      return {
+        sequenceLabel: sequence.label,
+        sequenceApplicantCount,
+        cumulativeApplicantCountBefore,
+        remainingVacancyCount,
+        selectedAcceptedCount,
+        lotteryRate,
+        lotteryRatePercent: lotteryRate === null ? null : lotteryRate * 100,
+      };
+    }
+
+    cumulativeApplicantCountBefore += sequenceApplicantCount;
+  }
+
+  return null;
 }
 
 function buildSchoolRecords(schoolName: string, ageGroups: unknown): readonly LotteryRateRecord[] {
@@ -305,6 +395,18 @@ function splitAgeYearLabel(ageGroup: string): {
     ageLabel: match.groups['age']?.trim() || normalizedAgeGroup,
     schoolYear: match.groups['year']?.trim() || null,
   };
+}
+
+function normalizeSequenceLabel(label: string): string {
+  return label.normalize('NFKC').replace(/\s+/gu, '');
+}
+
+function normalizeSequenceCount(count: number): number {
+  return Number.isFinite(count) && count > 0 ? count : 0;
+}
+
+function normalizeVacancyCount(count: number | null): number | null {
+  return count !== null && Number.isFinite(count) && count >= 0 ? count : null;
 }
 
 function readSequenceCounts(
