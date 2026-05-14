@@ -76,7 +76,7 @@ describe('LotteryDashboardComponent', () => {
     expect(footerText).toContain('資料提供：米粒');
   });
 
-  it('應顯示符合幼兒園的中籤率並保留每班齡正取／備取資料', async () => {
+  it('應顯示符合幼兒園的中籤率並移除重複的正取／備取明細', async () => {
     const fixture = await renderDashboard();
     const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
 
@@ -88,7 +88,6 @@ describe('LotteryDashboardComponent', () => {
 
     const host = fixture.nativeElement as HTMLElement;
     const text = host.textContent ?? '';
-    const detailGridText = host.querySelector('.detail-grid')?.textContent ?? '';
 
     expect(text).toContain('臺北市蘭州非營利幼兒園');
     expect(text).toContain('5歲');
@@ -96,9 +95,10 @@ describe('LotteryDashboardComponent', () => {
     expect(text).toContain('班齡組別');
     expect(text).not.toContain('正取名額');
     expect(text).not.toContain('備取人數');
+    expect(text).not.toContain('正取／備取');
+    expect(text).not.toContain('1／3');
     expect(host.querySelector('.metric-grid')).toBeNull();
-    expect(detailGridText).toContain('正取／備取');
-    expect(detailGridText).toContain('1／3');
+    expect(host.querySelector('.detail-grid')).toBeNull();
     expect(host.querySelector('.district-chips')?.textContent).toContain('大同區');
   });
 
@@ -130,7 +130,6 @@ describe('LotteryDashboardComponent', () => {
     const decisionContext = host.querySelector('.decision-context') as HTMLElement;
     const identityPanel = host.querySelector('.identity-panel') as HTMLElement;
     const decisionRate = host.querySelector('.decision-rate') as HTMLElement;
-    const detailGrid = host.querySelector('.detail-grid') as HTMLElement;
 
     expect(decisionPanel.contains(identityPanel)).toBe(true);
     expect(decisionContext.textContent).toContain('公告缺額');
@@ -150,8 +149,8 @@ describe('LotteryDashboardComponent', () => {
     expect(
       decisionContext.compareDocumentPosition(decisionRate) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
-    expect(detailGrid.textContent).not.toContain('公告缺額');
-    expect(detailGrid.textContent).not.toContain('總登記');
+    expect(host.querySelector('.detail-grid')).toBeNull();
+    expect(host.textContent).not.toContain('正取／備取');
   });
 
   it('可用行政區關鍵字搜尋幼兒園', async () => {
@@ -170,7 +169,7 @@ describe('LotteryDashboardComponent', () => {
     );
   });
 
-  it('應依學年度拆開班齡資料並醒目顯示年度標籤', async () => {
+  it('應依學年度拆開班齡資料並放入可水平滑動的年度卡片', async () => {
     const yearSplitSchools = buildSchoolLotteryRates({
       臺北市測試非營利幼兒園: {
         搜尋關鍵字: ['測試', '大同區'],
@@ -188,6 +187,7 @@ describe('LotteryDashboardComponent', () => {
     fixture.detectChanges();
 
     const host = fixture.nativeElement as HTMLElement;
+    const yearContainer = host.querySelector('.year-sections') as HTMLElement;
     const yearSections = Array.from(host.querySelectorAll('.year-section')) as HTMLElement[];
     const yearLabels = Array.from(host.querySelectorAll('.year-tag')).map((element) =>
       element.textContent?.trim(),
@@ -196,7 +196,15 @@ describe('LotteryDashboardComponent', () => {
       (element) => element.textContent?.trim(),
     );
 
+    expect(yearContainer.getAttribute('role')).toBe('list');
+    expect(yearContainer.getAttribute('tabindex')).toBe('0');
+    expect(yearContainer.getAttribute('aria-label')).toContain('可水平滑動查看');
+    expect(yearContainer.getAttribute('aria-label')).toContain('臺北市測試非營利幼兒園');
     expect(yearSections).toHaveLength(2);
+    expect(yearSections.map((section) => section.getAttribute('role'))).toEqual([
+      'listitem',
+      'listitem',
+    ]);
     expect(yearLabels).toEqual(['114學年', '113學年']);
     expect(contextSchools).toEqual([
       '臺北市測試非營利幼兒園',

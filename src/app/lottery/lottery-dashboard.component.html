@@ -124,10 +124,16 @@
           </mat-card-header>
 
           <mat-card-content>
-            <div class="year-sections" aria-label="依學年分組的班齡資料">
+            <div
+              class="year-sections"
+              role="list"
+              tabindex="0"
+              [attr.aria-label]="result.schoolName + ' 各學年度班齡資料，可水平滑動查看'"
+            >
               @for (yearGroup of groupedAgeGroups(result); track yearGroup.schoolYear) {
                 <section
                   class="year-section"
+                  role="listitem"
                   [attr.aria-label]="result.schoolName + ' ' + yearGroup.schoolYear + '資料'"
                 >
                   <header class="year-section-header">
@@ -250,13 +256,6 @@
                               }
                             </section>
                           }
-
-                          <dl class="detail-grid">
-                            <div>
-                              <dt>正取／備取</dt>
-                              <dd>{{ record.acceptedCount }}／{{ record.waitlistedCount }}</dd>
-                            </div>
-                          </dl>
 
                           @if (record.note) {
                             <p class="record-note">{{ record.note }}</p>
