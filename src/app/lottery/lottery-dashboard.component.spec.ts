@@ -102,7 +102,7 @@ describe('LotteryDashboardComponent', () => {
     );
   });
 
-  it('公告缺額與總登記人數應以小字顯示在一般中籤率上方', async () => {
+  it('公告缺額、總登記人數與身份別應顯示在一般中籤率上方', async () => {
     const announcedCountSchools = buildSchoolLotteryRates({
       臺北市公告資訊測試幼兒園: {
         搜尋關鍵字: ['公告資訊測試'],
@@ -111,6 +111,8 @@ describe('LotteryDashboardComponent', () => {
           備取: 5,
           公告缺額: 8,
           總登記人數: 20,
+          優先順序: 4,
+          一般順序: 12,
         },
       },
     } satisfies RawLotteryData);
@@ -124,14 +126,27 @@ describe('LotteryDashboardComponent', () => {
     fixture.detectChanges();
 
     const host = fixture.nativeElement as HTMLElement;
+    const decisionPanel = host.querySelector('.decision-panel') as HTMLElement;
     const decisionContext = host.querySelector('.decision-context') as HTMLElement;
+    const identityPanel = host.querySelector('.identity-panel') as HTMLElement;
     const decisionRate = host.querySelector('.decision-rate') as HTMLElement;
     const detailGrid = host.querySelector('.detail-grid') as HTMLElement;
 
+    expect(decisionPanel.contains(identityPanel)).toBe(true);
     expect(decisionContext.textContent).toContain('公告缺額');
     expect(decisionContext.textContent).toContain('8');
     expect(decisionContext.textContent).toContain('總登記人數');
     expect(decisionContext.textContent).toContain('20');
+    expect(identityPanel.textContent).toContain('優先順序');
+    expect(identityPanel.textContent).toContain('4');
+    expect(identityPanel.textContent).toContain('一般生');
+    expect(identityPanel.textContent).toContain('12');
+    expect(identityPanel.textContent).toContain('正取');
+    expect(identityPanel.textContent).toContain('10');
+    expect(
+      decisionContext.compareDocumentPosition(identityPanel) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(identityPanel.nextElementSibling).toBe(decisionRate);
     expect(
       decisionContext.compareDocumentPosition(decisionRate) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
@@ -228,10 +243,10 @@ describe('LotteryDashboardComponent', () => {
     const highlightedChip = host.querySelector('.sequence-chip.is-fill-threshold');
 
     expect(
-      progressBar.compareDocumentPosition(sequencePanel) & Node.DOCUMENT_POSITION_FOLLOWING,
+      identityPanel.compareDocumentPosition(progressBar) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     expect(
-      sequencePanel.compareDocumentPosition(identityPanel) & Node.DOCUMENT_POSITION_FOLLOWING,
+      progressBar.compareDocumentPosition(sequencePanel) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     expect(highlightedChip?.textContent).toContain('順序7');
     expect(highlightedChip?.textContent).toContain('收滿點');

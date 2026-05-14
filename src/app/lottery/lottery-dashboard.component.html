@@ -177,6 +177,21 @@
                                 <dd>{{ formatCount(record.registrationCount) }}</dd>
                               </div>
                             </dl>
+                            <section class="identity-panel" aria-label="身份別人數">
+                              <div class="identity-row priority">
+                                <span class="identity-label">優先順序</span>
+                                <strong>{{ formatCount(record.priorityApplicantCount) }}</strong>
+                                <small>申請</small>
+                              </div>
+                              <div class="identity-row general">
+                                <span class="identity-label">一般生</span>
+                                <strong>{{ formatCount(record.generalApplicantCount) }}</strong>
+                                <small>
+                                  申請 · 正取
+                                  {{ formatCount(record.generalAcceptedCount ?? record.acceptedCount) }}
+                                </small>
+                              </div>
+                            </section>
                             <div class="decision-rate">
                               <span>一般生中籤率</span>
                               <div class="rate-value">
@@ -235,22 +250,6 @@
                               }
                             </section>
                           }
-
-                          <section class="identity-panel" aria-label="身份別人數">
-                            <div class="identity-row priority">
-                              <span class="identity-label">優先順序</span>
-                              <strong>{{ formatCount(record.priorityApplicantCount) }}</strong>
-                              <small>申請</small>
-                            </div>
-                            <div class="identity-row general">
-                              <span class="identity-label">一般生</span>
-                              <strong>{{ formatCount(record.generalApplicantCount) }}</strong>
-                              <small>
-                                申請 · 正取
-                                {{ formatCount(record.generalAcceptedCount ?? record.acceptedCount) }}
-                              </small>
-                            </div>
-                          </section>
 
                           <dl class="detail-grid">
                             <div>
