@@ -58,6 +58,19 @@ async function extractScssRule(selector: string): Promise<string> {
   return match?.[1] ?? '';
 }
 
+async function extractExactScssRule(selector: string): Promise<string> {
+  const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+  const stylesText = await getStylesScssText();
+  const match = stylesText.match(
+    new RegExp(`(?:^|\\})\\s*${escapedSelector}\\s*\\{([^}]*)\\}`, 'u'),
+  );
+
+  expect(stylesText.includes(selector)).toBe(true);
+  expect(match !== null).toBe(true);
+
+  return match?.[1] ?? '';
+}
+
 function createServiceMock(loadSchoolRates: () => Observable<readonly SchoolLotteryRates[]>) {
   return {
     dataUrl: 'assets/data.json',
@@ -558,11 +571,24 @@ describe('LotteryDashboardComponent', () => {
     expect(getProgressValue(generalRateCard)).toBe('50');
 
     const selectedSequenceRate = rateRail.querySelector('.selected-sequence-rate') as HTMLElement;
+    const selectedSequenceRateRule = await extractExactScssRule('.selected-sequence-rate');
+    const stylesText = await getStylesScssText();
 
+    expect(selectedSequenceRate.getAttribute('aria-live')).toBe('polite');
     expect(selectedSequenceRate.textContent).toContain('選取序位中籤率');
     expect(selectedSequenceRate.textContent).toContain('順序8');
     expect(selectedSequenceRate.textContent).toContain('10.0%');
     expect(getProgressValue(selectedSequenceRate)).toBe('10');
+    expect(selectedSequenceRateRule).toMatch(
+      /animation:\s*selected-sequence-rate-reveal\s+\d+ms\s+cubic-bezier\([^)]*\)\s+both;/u,
+    );
+    expect(stylesText).toMatch(/@keyframes\s+selected-sequence-rate-reveal/u);
+    expect(stylesText).toMatch(
+      /@keyframes\s+selected-sequence-rate-reveal\s*\{[\s\S]*opacity:\s*0;[\s\S]*transform:\s*translateY\(-6px\)\s+scale\(0\.985\);[\s\S]*border-color:[\s\S]*background-color:/u,
+    );
+    expect(stylesText).toMatch(
+      /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*\.selected-sequence-rate\s*\{[\s\S]*animation:\s*none;[\s\S]*transform:\s*none;/u,
+    );
 
     selectedOption.click();
     fixture.detectChanges();
