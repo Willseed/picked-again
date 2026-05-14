@@ -240,7 +240,10 @@ describe('LotteryDashboardComponent', () => {
     const progressBar = host.querySelector('mat-progress-bar') as HTMLElement;
     const sequencePanel = host.querySelector('.sequence-panel') as HTMLElement;
     const identityPanel = host.querySelector('.identity-panel') as HTMLElement;
-    const highlightedChip = host.querySelector('.sequence-chip.is-fill-threshold');
+    const highlightedChip = host.querySelector(
+      'mat-chip-option.sequence-chip.is-fill-threshold',
+    ) as HTMLElement;
+    const highlightedOption = highlightedChip.querySelector('[role="option"]') as HTMLElement;
 
     expect(
       identityPanel.compareDocumentPosition(progressBar) & Node.DOCUMENT_POSITION_FOLLOWING,
@@ -248,10 +251,28 @@ describe('LotteryDashboardComponent', () => {
     expect(
       progressBar.compareDocumentPosition(sequencePanel) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
-    expect(highlightedChip?.textContent).toContain('順序7');
-    expect(highlightedChip?.textContent).toContain('收滿點');
+    expect(highlightedChip.textContent).toContain('順序7');
+    expect(highlightedChip.textContent).toContain('收滿點');
     expect(host.querySelector('.sequence-fulfillment-hint')?.textContent).toContain(
       '在順序7已達收滿門檻',
+    );
+
+    highlightedOption.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const selectedFillThresholdChip = host.querySelector(
+      'mat-chip-option.sequence-chip.is-fill-threshold.is-selected',
+    ) as HTMLElement;
+    const selectedFillThresholdOption = selectedFillThresholdChip.querySelector(
+      '[role="option"]',
+    ) as HTMLElement | null;
+
+    expect(selectedFillThresholdChip).toBeTruthy();
+    expect(selectedFillThresholdOption?.getAttribute('aria-selected')).toBe('true');
+    expect(selectedFillThresholdChip.querySelector('.sequence-hit-badge')?.textContent).toContain(
+      '收滿點',
     );
   });
 
