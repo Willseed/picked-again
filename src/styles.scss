@@ -835,6 +835,11 @@ app-lottery-dashboard {
   .sequence-panel {
     display: grid;
     gap: 8px;
+    min-width: 0;
+    background: var(--pa-surface-card);
+    border: 1px solid var(--pa-hairline);
+    border-radius: var(--pa-radius-md);
+    padding: 12px 16px;
   }
 
   .section-kicker {

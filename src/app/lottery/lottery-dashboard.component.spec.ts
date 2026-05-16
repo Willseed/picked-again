@@ -456,6 +456,7 @@ describe('LotteryDashboardComponent', () => {
     const host = fixture.nativeElement as HTMLElement;
     const ageCard = host.querySelector('.age-card') as HTMLElement;
     const ageCardLayout = ageCard.querySelector('.age-card-layout') as HTMLElement;
+    const decisionPanel = ageCard.querySelector('.decision-panel') as HTMLElement;
     const rateRail = getRateRail(ageCard);
     const sequencePanel = host.querySelector('.sequence-panel') as HTMLElement;
     const identityRateGrid = rateRail.querySelector('.identity-rate-grid') as HTMLElement;
@@ -467,9 +468,11 @@ describe('LotteryDashboardComponent', () => {
     expect(rateRail.contains(identityRateGrid)).toBe(true);
     expect(rateRail.querySelectorAll('.identity-rate-card mat-progress-bar')).toHaveLength(2);
     expect(ageCard.querySelector('.decision-panel .decision-rate')).toBeNull();
-    expect(
-      ageCardLayout.compareDocumentPosition(sequencePanel) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
+    expect(ageCardLayout.contains(sequencePanel)).toBe(false);
+    expect(decisionPanel.contains(sequencePanel)).toBe(false);
+    expect(rateRail.contains(sequencePanel)).toBe(false);
+    expect(sequencePanel.parentElement).toBe(ageCardLayout.parentElement);
+    expect(sequencePanel.nextElementSibling).toBe(ageCardLayout);
     expect(highlightedChip.textContent).toContain('順序7');
     expect(highlightedChip.textContent).toContain('收滿點');
     expect(host.querySelector('.sequence-fulfillment-hint')?.textContent).toContain(
