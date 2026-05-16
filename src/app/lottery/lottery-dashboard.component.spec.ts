@@ -190,7 +190,7 @@ describe('LotteryDashboardComponent', () => {
     const yearContainer = host.querySelector('.year-sections') as HTMLElement;
     const singleYearAriaLabel = yearContainer.getAttribute('aria-label') ?? '';
 
-    expect(yearCarousel.querySelector('.year-swipe-hint')).toBeNull();
+    expect(yearCarousel.querySelector('.year-nav-btn')).toBeNull();
     expect(yearContainer.getAttribute('aria-describedby')).toBeNull();
     expect(singleYearAriaLabel).toContain('臺北市蘭州非營利幼兒園');
     expect(singleYearAriaLabel).not.toMatch(/左右滑動|水平滑動/u);
@@ -245,8 +245,8 @@ describe('LotteryDashboardComponent', () => {
     const ageCardLayoutRule = await extractScssRule('.age-card-layout');
     const decisionGridRule = await extractScssRule('.decision-grid');
 
-    expect(ageCardLayout.firstElementChild).toBe(rateRail);
-    expect(rateRail.nextElementSibling).toBe(decisionPanel);
+    expect(ageCardLayout.firstElementChild).toBe(decisionPanel);
+    expect(decisionPanel.nextElementSibling).toBe(rateRail);
     expect(ageCardLayout.contains(decisionPanel)).toBe(true);
     expect(ageCardLayoutRule).toMatch(
       /grid-template-columns:\s*minmax\(0,\s*1fr\)\s+minmax\(0,\s*1fr\);/u,
@@ -319,7 +319,9 @@ describe('LotteryDashboardComponent', () => {
     const stickyHeader = host.querySelector('.year-section-header-viewport') as HTMLElement;
     const headerTrack = stickyHeader.querySelector('.year-section-header-track') as HTMLElement;
     const yearContainer = host.querySelector('.year-sections') as HTMLElement;
-    const swipeHint = yearCarousel.querySelector('.year-swipe-hint') as HTMLElement;
+    const yearNavRow = yearCarousel.querySelector('.year-nav-row') as HTMLElement;
+    const prevBtn = yearCarousel.querySelector('.year-nav-btn--prev') as HTMLElement;
+    const nextBtn = yearCarousel.querySelector('.year-nav-btn--next') as HTMLElement;
     const yearHeaders = Array.from(host.querySelectorAll('.year-section-header')) as HTMLElement[];
     const yearSections = Array.from(host.querySelectorAll('.year-section')) as HTMLElement[];
     const yearKickers = Array.from(host.querySelectorAll('.year-kicker')).map((element) =>
@@ -339,22 +341,16 @@ describe('LotteryDashboardComponent', () => {
     stubElementHeight(yearSections[1] as HTMLElement, 280);
     await flushCarouselMeasurements(fixture);
 
-    const swipeCue = swipeHint.querySelector('.year-swipe-cue') as HTMLElement;
-
-    expect(swipeHint).toBeTruthy();
-    expect(swipeCue).toBeTruthy();
-    expect(swipeCue.textContent?.trim()).toBe('>>>');
-    expect(swipeCue.getAttribute('aria-hidden')).toBe('true');
-    expect(swipeHint.textContent?.trim()).toBe('>>>');
-    expect(swipeHint.textContent).not.toMatch(/左右滑動|水平滑動/u);
-    expect(swipeHint.classList.contains('year-swipe-hint--right')).toBe(true);
-    expect(swipeHint.getAttribute('aria-label')).toMatch(/左右滑動|水平滑動/u);
-    expect(swipeHint.id).toBeTruthy();
-    expect(stickyHeader.nextElementSibling).toBe(swipeHint);
-    expect(swipeHint.nextElementSibling).toBe(yearContainer);
+    expect(yearNavRow).toBeTruthy();
+    expect(prevBtn).toBeTruthy();
+    expect(nextBtn).toBeTruthy();
+    expect(prevBtn.getAttribute('aria-label')).toBeTruthy();
+    expect(nextBtn.getAttribute('aria-label')).toBeTruthy();
+    expect(yearNavRow.contains(yearContainer)).toBe(true);
+    expect(stickyHeader.nextElementSibling).toBe(yearNavRow);
     expect(yearContainer.getAttribute('role')).toBe('list');
     expect(yearContainer.getAttribute('tabindex')).toBe('0');
-    expect(yearContainer.getAttribute('aria-describedby')).toBe(swipeHint.id);
+    expect(yearContainer.getAttribute('aria-describedby')).toBeNull();
     expect(yearContainer.getAttribute('aria-label')).toContain('可水平滑動查看');
     expect(yearContainer.getAttribute('aria-label')).toContain('臺北市測試非營利幼兒園');
     expect(yearCarousel.contains(stickyHeader)).toBe(true);

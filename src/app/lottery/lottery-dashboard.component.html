@@ -158,33 +158,34 @@
                 </div>
               </div>
 
-              @if (yearGroups.length > 1) {
-                <p
-                  class="year-swipe-hint year-swipe-hint--right"
-                  [id]="'year-swipe-hint-' + resultIndex"
-                  aria-label="可左右滑動查看不同學年度資料"
-                >
-                  <span class="year-swipe-cue" aria-hidden="true">&gt;&gt;&gt;</span>
-                </p>
-              }
+              <div class="year-nav-row">
+                @if (yearGroups.length > 1) {
+                  <button
+                    mat-icon-button
+                    class="year-nav-btn year-nav-btn--prev"
+                    type="button"
+                    aria-label="查看上一學年度"
+                    [disabled]="!canNavigateYear(result.schoolName, yearGroups.length, -1)"
+                    (click)="navigateYear(result.schoolName, yearGroups.length, -1)"
+                  >
+                    <mat-icon aria-hidden="true">chevron_left</mat-icon>
+                  </button>
+                }
 
-              <div
-                #yearSections
-                class="year-sections"
-                role="list"
-                tabindex="0"
-                [style.height]="yearSectionsHeight(result.schoolName)"
-                [attr.data-school-name]="result.schoolName"
-                [attr.aria-describedby]="
-                  yearGroups.length > 1 ? 'year-swipe-hint-' + resultIndex : null
-                "
-                [attr.aria-label]="
-                  yearGroups.length > 1
-                    ? result.schoolName + ' 各學年度班齡資料，可水平滑動查看'
-                    : result.schoolName + ' 各學年度班齡資料'
-                "
-                (scroll)="updateActiveYearIndex(result.schoolName, yearGroups.length, $event)"
-              >
+                <div
+                  #yearSections
+                  class="year-sections"
+                  role="list"
+                  tabindex="0"
+                  [style.height]="yearSectionsHeight(result.schoolName)"
+                  [attr.data-school-name]="result.schoolName"
+                  [attr.aria-label]="
+                    yearGroups.length > 1
+                      ? result.schoolName + ' 各學年度班齡資料，可水平滑動查看'
+                      : result.schoolName + ' 各學年度班齡資料'
+                  "
+                  (scroll)="updateActiveYearIndex(result.schoolName, yearGroups.length, $event)"
+                >
                 @for (yearGroup of yearGroups; track yearGroup.schoolYear; let yearIndex = $index) {
                   <section
                     #yearSection
@@ -220,6 +221,32 @@
                             @let priorityRatePercent = record.priorityLotteryRatePercent;
                             @let generalRatePercent = generalDisplayRatePercent(record);
                             <div class="age-card-layout">
+                              <div class="decision-panel" aria-label="公告與一般缺額資訊">
+                                <dl class="decision-context" aria-label="公告報名資訊">
+                                  <div>
+                                    <dt>公告缺額</dt>
+                                    <dd>{{ formatCount(record.announcedVacancyCount) }}</dd>
+                                  </div>
+                                  <div>
+                                    <dt>總登記人數</dt>
+                                    <dd>{{ formatCount(record.registrationCount) }}</dd>
+                                  </div>
+                                </dl>
+                                <dl class="decision-grid">
+                                  <div>
+                                    <dt>一般缺額</dt>
+                                    <dd>{{ formatCount(record.generalVacancyCount) }}</dd>
+                                  </div>
+                                  <div>
+                                    <dt>一般申請</dt>
+                                    <dd>{{ formatCount(record.generalApplicantCount) }}</dd>
+                                  </div>
+                                  <div>
+                                    <dt>備取／未中</dt>
+                                    <dd>{{ formatCount(record.generalWaitlistedCount) }}</dd>
+                                  </div>
+                                </dl>
+                              </div>
                               <aside class="rate-rail" aria-label="一般生與優先生中籤率摘要">
                                 <section class="identity-rate-grid" aria-label="身份別中籤率">
                                   <article
@@ -314,80 +341,53 @@
                                     ></mat-progress-bar>
                                   </section>
                                 }
-                              </aside>
-                              <div class="decision-panel" aria-label="公告與一般缺額資訊">
-                                <dl class="decision-context" aria-label="公告報名資訊">
-                                  <div>
-                                    <dt>公告缺額</dt>
-                                    <dd>{{ formatCount(record.announcedVacancyCount) }}</dd>
-                                  </div>
-                                  <div>
-                                    <dt>總登記人數</dt>
-                                    <dd>{{ formatCount(record.registrationCount) }}</dd>
-                                  </div>
-                                </dl>
-                                <dl class="decision-grid">
-                                  <div>
-                                    <dt>一般缺額</dt>
-                                    <dd>{{ formatCount(record.generalVacancyCount) }}</dd>
-                                  </div>
-                                  <div>
-                                    <dt>一般申請</dt>
-                                    <dd>{{ formatCount(record.generalApplicantCount) }}</dd>
-                                  </div>
-                                  <div>
-                                    <dt>備取／未中</dt>
-                                    <dd>{{ formatCount(record.generalWaitlistedCount) }}</dd>
-                                  </div>
-                                </dl>
-                              </div>
-                            </div>
-
-                            @if (record.sequenceCounts.length > 0) {
-                              <section class="sequence-panel" aria-label="各序位申請人數">
-                                <div class="section-kicker">各序位</div>
-                                @let fulfillmentMarker = sequenceFulfillmentMarker(record);
-                                <mat-chip-listbox
-                                  class="sequence-list"
-                                  aria-label="選擇後顯示選取序位中籤率"
-                                  [value]="selectedSequenceLabel(record)"
-                                  [multiple]="false"
-                                  [hideSingleSelectionIndicator]="true"
-                                  (change)="selectSequence(record, $event)"
-                                >
-                                  @for (sequence of record.sequenceCounts; track sequence.label) {
-                                    <mat-chip-option
-                                      class="sequence-chip"
-                                      [value]="sequence.label"
-                                      [class.is-selected]="
-                                        isSequenceSelected(record, sequence.label)
-                                      "
-                                      [class.is-fill-threshold]="
-                                        fulfillmentMarker?.label === sequence.label
-                                      "
-                                      [aria-label]="
-                                        sequenceAriaLabel(record, sequence.label, sequence.count)
-                                      "
+                                @if (record.sequenceCounts.length > 0) {
+                                  <section class="sequence-panel" aria-label="各序位申請人數">
+                                    <div class="section-kicker">各序位</div>
+                                    @let fulfillmentMarker = sequenceFulfillmentMarker(record);
+                                    <mat-chip-listbox
+                                      class="sequence-list"
+                                      aria-label="選擇後顯示選取序位中籤率"
+                                      [value]="selectedSequenceLabel(record)"
+                                      [multiple]="false"
+                                      [hideSingleSelectionIndicator]="true"
+                                      (change)="selectSequence(record, $event)"
                                     >
-                                      <span>{{ sequence.label }}</span>
-                                      <strong>{{ sequence.count }}</strong>
-                                      @if (fulfillmentMarker?.label === sequence.label) {
-                                        <em class="sequence-hit-badge">收滿點</em>
+                                      @for (sequence of record.sequenceCounts; track sequence.label) {
+                                        <mat-chip-option
+                                          class="sequence-chip"
+                                          [value]="sequence.label"
+                                          [class.is-selected]="
+                                            isSequenceSelected(record, sequence.label)
+                                          "
+                                          [class.is-fill-threshold]="
+                                            fulfillmentMarker?.label === sequence.label
+                                          "
+                                          [aria-label]="
+                                            sequenceAriaLabel(record, sequence.label, sequence.count)
+                                          "
+                                        >
+                                          <span>{{ sequence.label }}</span>
+                                          <strong>{{ sequence.count }}</strong>
+                                          @if (fulfillmentMarker?.label === sequence.label) {
+                                            <em class="sequence-hit-badge">收滿點</em>
+                                          }
+                                        </mat-chip-option>
                                       }
-                                    </mat-chip-option>
-                                  }
-                                </mat-chip-listbox>
-                                @if (fulfillmentMarker) {
-                                  <p class="sequence-fulfillment-hint">
-                                    公告缺額
-                                    {{ formatCount(record.announcedVacancyCount) }} 人，在{{
-                                      fulfillmentMarker.label
-                                    }}已達收滿門檻（累計
-                                    {{ fulfillmentMarker.cumulativeCount }} 人）。
-                                  </p>
+                                    </mat-chip-listbox>
+                                    @if (fulfillmentMarker) {
+                                      <p class="sequence-fulfillment-hint">
+                                        公告缺額
+                                        {{ formatCount(record.announcedVacancyCount) }} 人，在{{
+                                          fulfillmentMarker.label
+                                        }}已達收滿門檻（累計
+                                        {{ fulfillmentMarker.cumulativeCount }} 人）。
+                                      </p>
+                                    }
+                                  </section>
                                 }
-                              </section>
-                            }
+                              </aside>
+                            </div>
 
                             @if (record.note) {
                               <p class="record-note">{{ record.note }}</p>
@@ -411,6 +411,19 @@
                       }
                     </div>
                   </section>
+                }
+              </div>
+                @if (yearGroups.length > 1) {
+                  <button
+                    mat-icon-button
+                    class="year-nav-btn year-nav-btn--next"
+                    type="button"
+                    aria-label="查看下一學年度"
+                    [disabled]="!canNavigateYear(result.schoolName, yearGroups.length, 1)"
+                    (click)="navigateYear(result.schoolName, yearGroups.length, 1)"
+                  >
+                    <mat-icon aria-hidden="true">chevron_right</mat-icon>
+                  </button>
                 }
               </div>
             </div>

@@ -315,6 +315,27 @@ export class LotteryDashboardComponent implements AfterViewInit {
     return this.activeYearIndex(schoolName, yearGroupCount) === yearIndex;
   }
 
+  protected canNavigateYear(schoolName: string, yearGroupCount: number, direction: number): boolean {
+    const current = this.activeYearIndex(schoolName, yearGroupCount);
+    const next = current + direction;
+    return next >= 0 && next < yearGroupCount;
+  }
+
+  protected navigateYear(schoolName: string, yearGroupCount: number, direction: number): void {
+    const current = this.activeYearIndex(schoolName, yearGroupCount);
+    const nextIndex = clampIndex(current + direction, yearGroupCount);
+    if (nextIndex === current) return;
+    const containers = this.yearSectionContainers?.toArray() ?? [];
+    const container = containers.find(
+      (el) => el.nativeElement.getAttribute('data-school-name') === schoolName,
+    );
+    if (!container) return;
+    container.nativeElement.scrollTo({
+      left: nextIndex * container.nativeElement.clientWidth,
+      behavior: 'smooth',
+    });
+  }
+
   private loadData(): void {
     this.loading.set(true);
     this.errorMessage.set(null);
