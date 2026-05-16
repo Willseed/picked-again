@@ -619,6 +619,16 @@ describe('LotteryDashboardComponent', () => {
     expect(sequencePanel.querySelector('.selected-sequence-rate')).toBeNull();
   });
 
+  it('手機版 SCSS 中 age-card-layout 和 sequence-panel 的排列順序', async () => {
+    const stylesText = await getStylesScssText();
+    expect(stylesText).toMatch(
+      /@media\s*\(width\s*<=\s*640px\)[\s\S]*\.age-card\s+mat-card-content\s*>\s*\.age-card-layout\s*\{[^}]*order\s*:\s*1/u,
+    );
+    expect(stylesText).toMatch(
+      /@media\s*\(width\s*<=\s*640px\)[\s\S]*\.age-card\s+mat-card-content\s*>\s*\.sequence-panel\s*\{[^}]*order\s*:\s*2/u,
+    );
+  });
+
   it('非營利資料點選順序9後才以一般生序位重新計算', async () => {
     const nonprofitSequenceSchools = buildSchoolLotteryRates({
       臺北市非營利序位測試幼兒園: {

@@ -1163,5 +1163,9 @@ app-lottery-dashboard {
       justify-items: start;
       text-align: left;
     }
+
+    .age-card mat-card-content > * { order: 3; }
+    .age-card mat-card-content > .age-card-layout { order: 1; }
+    .age-card mat-card-content > .sequence-panel { order: 2; }
   }
 }
