@@ -496,9 +496,12 @@ describe('LotteryDashboardComponent', () => {
     expect(selectedFillThresholdChip.querySelector('.sequence-hit-badge')?.textContent).toContain(
       '收滿點',
     );
-    expect(rateRail.querySelector('.selected-sequence-rate')?.textContent).toContain(
-      '選取序位中籤率',
-    );
+    const selectedSequenceRate = sequencePanel.querySelector(
+      '.selected-sequence-rate',
+    ) as HTMLElement;
+    expect(selectedSequenceRate?.textContent).toContain('選取序位中籤率');
+    expect(rateRail.querySelector('.selected-sequence-rate')).toBeNull();
+    expect(sequencePanel.contains(selectedSequenceRate)).toBe(true);
   });
 
   it('序位選項應以可點選 listbox 呈現，且再次點選已選序位會取消選取', async () => {
@@ -536,6 +539,7 @@ describe('LotteryDashboardComponent', () => {
     const sequenceEightOption = sequenceEightChip.querySelector('[role="option"]') as HTMLElement;
     const ageCard = host.querySelector('.age-card') as HTMLElement;
     const rateRail = getRateRail(ageCard);
+    const sequencePanel = ageCard.querySelector('.sequence-panel') as HTMLElement;
     const generalRateCard = getIdentityRateCard(ageCard, '.general-rate');
 
     expect(listbox.getAttribute('role')).toBe('listbox');
@@ -551,6 +555,7 @@ describe('LotteryDashboardComponent', () => {
     expect(generalRateCard.textContent).toContain('50.0%');
     expect(getProgressValue(generalRateCard)).toBe('50');
     expect(rateRail.querySelector('.selected-sequence-rate')).toBeNull();
+    expect(sequencePanel.querySelector('.selected-sequence-rate')).toBeNull();
 
     sequenceEightOption.click();
     fixture.detectChanges();
@@ -569,7 +574,9 @@ describe('LotteryDashboardComponent', () => {
     expect(generalRateCard.textContent).toContain('50.0%');
     expect(getProgressValue(generalRateCard)).toBe('50');
 
-    const selectedSequenceRate = rateRail.querySelector('.selected-sequence-rate') as HTMLElement;
+    const selectedSequenceRate = sequencePanel.querySelector(
+      '.selected-sequence-rate',
+    ) as HTMLElement;
     const selectedSequenceRateRule = await extractExactScssRule('.selected-sequence-rate');
     const stylesText = await getStylesScssText();
 
@@ -578,6 +585,8 @@ describe('LotteryDashboardComponent', () => {
     expect(selectedSequenceRate.textContent).toContain('順序8');
     expect(selectedSequenceRate.textContent).toContain('10.0%');
     expect(getProgressValue(selectedSequenceRate)).toBe('10');
+    expect(rateRail.querySelector('.selected-sequence-rate')).toBeNull();
+    expect(sequencePanel.contains(selectedSequenceRate)).toBe(true);
     expect(selectedSequenceRateRule).toMatch(
       /animation:\s*selected-sequence-rate-reveal\s+\d+ms\s+cubic-bezier\([^)]*\)\s+both;/u,
     );
@@ -607,6 +616,7 @@ describe('LotteryDashboardComponent', () => {
     ).toBeNull();
     expect(toggledSequenceEightOption.getAttribute('aria-label')).not.toContain('目前選取');
     expect(rateRail.querySelector('.selected-sequence-rate')).toBeNull();
+    expect(sequencePanel.querySelector('.selected-sequence-rate')).toBeNull();
   });
 
   it('非營利資料點選順序9後才以一般生序位重新計算', async () => {
@@ -643,6 +653,7 @@ describe('LotteryDashboardComponent', () => {
     const sequenceNineOption = sequenceNineChip.querySelector('[role="option"]') as HTMLElement;
     const ageCard = host.querySelector('.age-card') as HTMLElement;
     const rateRail = getRateRail(ageCard);
+    const sequencePanel = ageCard.querySelector('.sequence-panel') as HTMLElement;
     const generalRateCard = getIdentityRateCard(ageCard, '.general-rate');
 
     expect(host.querySelector('mat-chip-option.sequence-chip.is-selected')).toBeNull();
@@ -671,12 +682,16 @@ describe('LotteryDashboardComponent', () => {
     expect(generalRateCard.textContent).toContain('50.0%');
     expect(getProgressValue(generalRateCard)).toBe('50');
 
-    const selectedSequenceRate = rateRail.querySelector('.selected-sequence-rate') as HTMLElement;
+    const selectedSequenceRate = sequencePanel.querySelector(
+      '.selected-sequence-rate',
+    ) as HTMLElement;
 
     expect(selectedSequenceRate.textContent).toContain('選取序位中籤率');
     expect(selectedSequenceRate.textContent).toContain('順序9');
     expect(selectedSequenceRate.textContent).toContain('15.0%');
     expect(getProgressValue(selectedSequenceRate)).toBe('15');
+    expect(rateRail.querySelector('.selected-sequence-rate')).toBeNull();
+    expect(sequencePanel.contains(selectedSequenceRate)).toBe(true);
   });
 
   it('點選序位應只更新該班齡的中籤率、進度與選取狀態', async () => {

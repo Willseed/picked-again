@@ -787,7 +787,7 @@ app-lottery-dashboard {
 
   .selected-sequence-rate {
     border-color: rgba(87, 193, 255, 0.30);
-    background: var(--pa-accent-blue-soft);
+    background: var(--pa-surface-elevated);
     animation: selected-sequence-rate-reveal 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
@@ -834,12 +834,12 @@ app-lottery-dashboard {
 
   .sequence-panel {
     display: grid;
-    gap: 8px;
+    gap: 12px;
     min-width: 0;
     background: var(--pa-surface-card);
     border: 1px solid var(--pa-hairline);
     border-radius: var(--pa-radius-md);
-    padding: 12px 16px;
+    padding: 16px;
   }
 
   .section-kicker {
@@ -1147,6 +1147,16 @@ app-lottery-dashboard {
     .identity-rate-card,
     .selected-sequence-rate {
       gap: 8px;
+    }
+
+    .sequence-list .mdc-evolution-chip-set__chips {
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .sequence-chip {
+      flex: 1 1 7.5rem;
+      min-height: 36px;
     }
 
     .rate-value {

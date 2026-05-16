@@ -254,6 +254,43 @@
                                     </mat-chip-option>
                                   }
                                 </mat-chip-listbox>
+                                @if (selectedSequenceRate(record); as sequenceRate) {
+                                  <section class="selected-sequence-rate" aria-live="polite">
+                                    <div class="selected-sequence-rate-header">
+                                      <span class="rate-scope">選取序位中籤率</span>
+                                      <strong>{{ sequenceRate.sequenceLabel }}</strong>
+                                    </div>
+                                    <div class="rate-value">
+                                      <strong
+                                        [class.is-unavailable]="
+                                          sequenceRate.lotteryRatePercent === null
+                                        "
+                                        >{{
+                                          formatPercent(sequenceRate.lotteryRatePercent)
+                                        }}</strong
+                                      >
+                                      @if (
+                                        formatPercentHint(sequenceRate.lotteryRatePercent);
+                                        as percentHint
+                                      ) {
+                                        <small>{{ percentHint }}</small>
+                                      }
+                                    </div>
+                                    <p class="rate-counts">
+                                      申請 {{ formatCount(sequenceRate.sequenceApplicantCount) }} ·
+                                      可中籤 {{ formatCount(sequenceRate.selectedAcceptedCount) }}
+                                    </p>
+                                    <mat-progress-bar
+                                      mode="determinate"
+                                      [value]="progressValue(sequenceRate.lotteryRatePercent)"
+                                      [attr.aria-label]="
+                                        record.ageGroup +
+                                        ' 選取序位中籤率 ' +
+                                        sequenceRate.sequenceLabel
+                                      "
+                                    ></mat-progress-bar>
+                                  </section>
+                                }
                                 @if (fulfillmentMarker) {
                                   <p class="sequence-fulfillment-hint">
                                     公告缺額
@@ -350,43 +387,6 @@
                                     ></mat-progress-bar>
                                   </article>
                                 </section>
-                                @if (selectedSequenceRate(record); as sequenceRate) {
-                                  <section class="selected-sequence-rate" aria-live="polite">
-                                    <div class="selected-sequence-rate-header">
-                                      <span class="rate-scope">選取序位中籤率</span>
-                                      <strong>{{ sequenceRate.sequenceLabel }}</strong>
-                                    </div>
-                                    <div class="rate-value">
-                                      <strong
-                                        [class.is-unavailable]="
-                                          sequenceRate.lotteryRatePercent === null
-                                        "
-                                        >{{
-                                          formatPercent(sequenceRate.lotteryRatePercent)
-                                        }}</strong
-                                      >
-                                      @if (
-                                        formatPercentHint(sequenceRate.lotteryRatePercent);
-                                        as percentHint
-                                      ) {
-                                        <small>{{ percentHint }}</small>
-                                      }
-                                    </div>
-                                    <p class="rate-counts">
-                                      申請 {{ formatCount(sequenceRate.sequenceApplicantCount) }} ·
-                                      可中籤 {{ formatCount(sequenceRate.selectedAcceptedCount) }}
-                                    </p>
-                                    <mat-progress-bar
-                                      mode="determinate"
-                                      [value]="progressValue(sequenceRate.lotteryRatePercent)"
-                                      [attr.aria-label]="
-                                        record.ageGroup +
-                                        ' 選取序位中籤率 ' +
-                                        sequenceRate.sequenceLabel
-                                      "
-                                    ></mat-progress-bar>
-                                  </section>
-                                }
                               </aside>
                             </div>
 
