@@ -161,7 +161,6 @@
               <div class="year-nav-row">
                 @if (yearGroups.length > 1) {
                   <button
-                    mat-icon-button
                     class="year-nav-btn year-nav-btn--prev"
                     type="button"
                     aria-label="查看上一學年度"
@@ -169,6 +168,7 @@
                     (click)="navigateYear(result.schoolName, yearGroups.length, -1)"
                   >
                     <mat-icon aria-hidden="true">chevron_left</mat-icon>
+                    <span class="year-nav-btn__label">上一年</span>
                   </button>
                 }
 
@@ -259,6 +259,15 @@
                                     <div class="selected-sequence-rate-header">
                                       <span class="rate-scope">選取序位中籤率</span>
                                       <strong>{{ sequenceRate.sequenceLabel }}</strong>
+                                      <button
+                                        type="button"
+                                        class="sequence-cancel-btn"
+                                        [attr.aria-label]="'取消選取序位 ' + sequenceRate.sequenceLabel"
+                                        (pointerdown)="clearSelectedSequence(record, $event)"
+                                        (click)="clearSelectedSequence(record, $event)"
+                                      >
+                                        <mat-icon aria-hidden="true">close</mat-icon>
+                                      </button>
                                     </div>
                                     <div class="rate-value">
                                       <strong
@@ -416,7 +425,6 @@
               </div>
                 @if (yearGroups.length > 1) {
                   <button
-                    mat-icon-button
                     class="year-nav-btn year-nav-btn--next"
                     type="button"
                     aria-label="查看下一學年度"
@@ -424,6 +432,7 @@
                     (click)="navigateYear(result.schoolName, yearGroups.length, 1)"
                   >
                     <mat-icon aria-hidden="true">chevron_right</mat-icon>
+                    <span class="year-nav-btn__label">下一年</span>
                   </button>
                 }
               </div>

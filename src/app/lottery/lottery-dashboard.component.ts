@@ -223,6 +223,28 @@ export class LotteryDashboardComponent implements AfterViewInit {
     this.scheduleYearSectionsMeasurement();
   }
 
+  protected clearSelectedSequence(record: LotteryRateRecord, event: Event): void {
+    if (event.type === 'pointerdown') {
+      const pointerEvent = event as PointerEvent;
+
+      if (pointerEvent.pointerType === 'touch') {
+        event.preventDefault();
+      } else {
+        return;
+      }
+    }
+
+    event.stopPropagation();
+    const recordKey = getLotteryRateRecordKey(record);
+
+    this.selectedSequenceLabelsByRecordKey.update((selectedSequenceLabels) => {
+      const nextSelection = new Map(selectedSequenceLabels);
+      nextSelection.delete(recordKey);
+      return nextSelection;
+    });
+    this.scheduleYearSectionsMeasurement();
+  }
+
   protected sequenceAriaLabel(
     record: LotteryRateRecord,
     sequenceLabel: string,

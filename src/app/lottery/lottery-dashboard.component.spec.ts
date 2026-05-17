@@ -598,24 +598,278 @@ describe('LotteryDashboardComponent', () => {
       /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*\.selected-sequence-rate\s*\{[\s\S]*animation:\s*none;[\s\S]*transform:\s*none;/u,
     );
 
-    selectedOption.click();
+    // Cancel button assertions
+    const cancelBtn = selectedSequenceRate.querySelector('.sequence-cancel-btn') as HTMLElement;
+
+    expect(cancelBtn).toBeTruthy();
+    expect(cancelBtn.getAttribute('type')).toBe('button');
+    expect(cancelBtn.getAttribute('aria-label')).toContain('取消');
+    expect(cancelBtn.getAttribute('aria-label')).toContain('順序8');
+
+    // Touch pointerdown should cancel selection and preventDefault
+    const touchPointerEvent = new PointerEvent('pointerdown', {
+      bubbles: true,
+      cancelable: true,
+      pointerType: 'touch',
+    });
+
+    cancelBtn.dispatchEvent(touchPointerEvent);
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
 
-    const toggledSequenceEightChip = Array.from(
-      host.querySelectorAll('mat-chip-option.sequence-chip'),
-    ).find((chip) => chip.textContent?.includes('順序8')) as HTMLElement;
-    const toggledSequenceEightOption = toggledSequenceEightChip.querySelector(
-      '[role="option"]',
-    ) as HTMLElement;
-
+    expect(touchPointerEvent.defaultPrevented).toBe(true);
     expect(host.querySelector('mat-chip-option.sequence-chip.is-selected')).toBeNull();
     expect(
       host.querySelector('mat-chip-option.sequence-chip [role="option"][aria-selected="true"]'),
     ).toBeNull();
-    expect(toggledSequenceEightOption.getAttribute('aria-label')).not.toContain('目前選取');
-    expect(rateRail.querySelector('.selected-sequence-rate')).toBeNull();
+    expect(sequencePanel.querySelector('.selected-sequence-rate')).toBeNull();
+  });
+
+  it('序位取消按鈕在滑鼠 click 也能清除選取', async () => {
+    const publicSequenceSchools = buildSchoolLotteryRates({
+      臺北市公立序位測試幼兒園: {
+        搜尋關鍵字: ['公立序位'],
+        '4歲': {
+          正取: 10,
+          備取: 20,
+          公告缺額: 10,
+          一般順序: 20,
+          一般順序中籤率: 0.5,
+          各序位: { 順序1: 4, 順序2: 4, 順序8: 20 },
+        },
+      },
+    } satisfies RawLotteryData);
+    const fixture = await renderDashboard(() => of(publicSequenceSchools));
+    const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
+
+    input.value = '公立序位';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    const sequenceEightOption = (
+      Array.from(host.querySelectorAll('mat-chip-option.sequence-chip')).find((chip) =>
+        chip.textContent?.includes('順序8'),
+      ) as HTMLElement
+    ).querySelector('[role="option"]') as HTMLElement;
+    const sequencePanel = host.querySelector('.sequence-panel') as HTMLElement;
+
+    sequenceEightOption.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const selectedSequenceRate = sequencePanel.querySelector(
+      '.selected-sequence-rate',
+    ) as HTMLElement;
+
+    expect(selectedSequenceRate).toBeTruthy();
+
+    const cancelBtn = selectedSequenceRate.querySelector('.sequence-cancel-btn') as HTMLElement;
+
+    cancelBtn.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(host.querySelector('mat-chip-option.sequence-chip.is-selected')).toBeNull();
+    expect(sequencePanel.querySelector('.selected-sequence-rate')).toBeNull();
+  });
+
+  it('序位選項 SCSS 中取消按鈕樣式存在且符合 DESIGN.md', async () => {
+    const stylesText = await getStylesScssText();
+
+    expect(stylesText).toMatch(/\.sequence-cancel-btn\s*\{/u);
+    expect(stylesText).toMatch(/\.sequence-cancel-btn\s*\{[^}]*border:/u);
+    expect(stylesText).toMatch(/\.sequence-cancel-btn\s*\{[^}]*cursor:\s*pointer/u);
+    expect(stylesText).toMatch(/\.sequence-cancel-btn:focus-visible\s*\{[^}]*outline:/u);
+  });
+
+  it('左右換年按鈕符合 DESIGN.md 深色按鍵設計且可操作', async () => {
+    const yearSplitSchools = buildSchoolLotteryRates({
+      臺北市測試非營利幼兒園: {
+        搜尋關鍵字: ['測試', '大同區'],
+        '5歲（114學年）': { 正取: 1, 備取: 3 },
+        '4歲（114學年）': { 正取: 3, 備取: 1 },
+        '3歲（113學年）': { 正取: 4, 備取: 0 },
+      },
+    } satisfies RawLotteryData);
+    const fixture = await renderDashboard(() => of(yearSplitSchools));
+    const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
+
+    input.value = '測試';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    const yearContainer = host.querySelector('.year-sections') as HTMLElement;
+    const prevBtn = host.querySelector('.year-nav-btn--prev') as HTMLButtonElement;
+    const nextBtn = host.querySelector('.year-nav-btn--next') as HTMLButtonElement;
+
+    expect(prevBtn.tagName).toBe('BUTTON');
+    expect(nextBtn.tagName).toBe('BUTTON');
+    expect(prevBtn.getAttribute('aria-label')).toBe('查看上一學年度');
+    expect(nextBtn.getAttribute('aria-label')).toBe('查看下一學年度');
+    expect(prevBtn.disabled).toBe(true);
+    expect(nextBtn.disabled).toBe(false);
+    expect(prevBtn.textContent).toContain('上一年');
+    expect(nextBtn.textContent).toContain('下一年');
+
+    Object.defineProperty(yearContainer, 'clientWidth', { configurable: true, value: 360 });
+
+    let scrollToCallArgs: Parameters<typeof yearContainer.scrollTo> | null = null;
+
+    Object.defineProperty(yearContainer, 'scrollTo', {
+      configurable: true,
+      writable: true,
+      value: (...args: Parameters<typeof yearContainer.scrollTo>) => {
+        scrollToCallArgs = args;
+      },
+    });
+
+    nextBtn.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(scrollToCallArgs).not.toBeNull();
+    expect(scrollToCallArgs?.[0]).toEqual({ left: 360, behavior: 'smooth' });
+
+    yearContainer.scrollLeft = 360;
+    yearContainer.dispatchEvent(new Event('scroll'));
+    fixture.detectChanges();
+    await flushCarouselMeasurements(fixture);
+
+    const nextYearHeaders = Array.from(
+      host.querySelectorAll('.year-section-header'),
+    ) as HTMLElement[];
+
+    expect(nextYearHeaders[0]?.classList.contains('is-active-year')).toBe(false);
+    expect(nextYearHeaders[1]?.classList.contains('is-active-year')).toBe(true);
+    expect(nextBtn.disabled).toBe(true);
+    expect(prevBtn.disabled).toBe(false);
+
+    const navBtnRule = await extractExactScssRule('.year-nav-btn');
+    const stylesText = await getStylesScssText();
+
+    expect(navBtnRule).toMatch(/min-height:\s*44px/u);
+    expect(navBtnRule).toMatch(/border:/u);
+    expect(navBtnRule).toMatch(/pa-hairline-strong/u);
+    expect(navBtnRule).toMatch(/border-radius:\s*var\(--pa-radius-md\)/u);
+    expect(navBtnRule).toMatch(/background:\s*var\(--pa-surface-elevated\)/u);
+    expect(navBtnRule).not.toMatch(/box-shadow/u);
+    expect(navBtnRule).not.toMatch(/opacity/u);
+    expect(stylesText).toMatch(/\.year-nav-btn:focus-visible\s*\{[^}]*outline:/u);
+    expect(stylesText).toMatch(/\.year-nav-btn\[disabled\]\s*\{[^}]*opacity:/u);
+    expect(stylesText).not.toMatch(/\.year-nav-btn\[disabled\][^{]*\{[^}]*opacity:\s*0\.3/u);
+    expect(stylesText).toMatch(
+      /@media\s*\(width\s*<=\s*640px\)[\s\S]*\.year-nav-btn__label\s*\{[^}]*display:\s*none/u,
+    );
+  });
+
+  it('序位選取取消後再次點選相同序位可重新選取', async () => {
+    const refixPublicSchools = buildSchoolLotteryRates({
+      臺北市公立序位測試幼兒園: {
+        搜尋關鍵字: ['公立序位'],
+        '4歲': {
+          正取: 10,
+          備取: 20,
+          公告缺額: 10,
+          一般順序: 20,
+          一般順序中籤率: 0.5,
+          各序位: { 順序1: 4, 順序2: 4, 順序8: 20 },
+        },
+      },
+    } satisfies RawLotteryData);
+    const fixture = await renderDashboard(() => of(refixPublicSchools));
+    const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
+
+    input.value = '公立序位';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    const sequenceEightOption = (
+      Array.from(host.querySelectorAll('mat-chip-option.sequence-chip')).find((chip) =>
+        chip.textContent?.includes('順序8'),
+      ) as HTMLElement
+    ).querySelector('[role="option"]') as HTMLElement;
+    const sequencePanel = host.querySelector('.sequence-panel') as HTMLElement;
+
+    sequenceEightOption.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const cancelBtn = sequencePanel.querySelector('.sequence-cancel-btn') as HTMLElement;
+
+    cancelBtn.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(sequencePanel.querySelector('.selected-sequence-rate')).toBeNull();
+
+    sequenceEightOption.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(sequencePanel.querySelector('.selected-sequence-rate')).toBeTruthy();
+    expect(sequencePanel.querySelector('.selected-sequence-rate')?.textContent).toContain('順序8');
+  });
+
+  it('listbox (change) 再次點選已選序位仍能取消選取（桌機路徑）', async () => {
+    const toggleSchools = buildSchoolLotteryRates({
+      臺北市公立序位測試幼兒園: {
+        搜尋關鍵字: ['公立序位'],
+        '4歲': {
+          正取: 10,
+          備取: 20,
+          公告缺額: 10,
+          一般順序: 20,
+          一般順序中籤率: 0.5,
+          各序位: { 順序1: 4, 順序2: 4, 順序8: 20 },
+        },
+      },
+    } satisfies RawLotteryData);
+    const fixture = await renderDashboard(() => of(toggleSchools));
+    const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
+
+    input.value = '公立序位';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    const sequenceEightOption = (
+      Array.from(host.querySelectorAll('mat-chip-option.sequence-chip')).find((chip) =>
+        chip.textContent?.includes('順序8'),
+      ) as HTMLElement
+    ).querySelector('[role="option"]') as HTMLElement;
+    const sequencePanel = host.querySelector('.sequence-panel') as HTMLElement;
+
+    sequenceEightOption.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(sequencePanel.querySelector('.selected-sequence-rate')).toBeTruthy();
+
+    sequenceEightOption.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(host.querySelector('mat-chip-option.sequence-chip.is-selected')).toBeNull();
     expect(sequencePanel.querySelector('.selected-sequence-rate')).toBeNull();
   });
 
