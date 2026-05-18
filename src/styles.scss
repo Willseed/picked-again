@@ -161,6 +161,13 @@ app-lottery-dashboard {
     padding: clamp(20px, 4vw, 48px) clamp(14px, 3vw, 24px) 56px;
   }
 
+  .guidance-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    background: rgba(0, 0, 0, 0.72);
+  }
+
   .mat-mdc-card {
     box-shadow: none !important;
   }
@@ -426,10 +433,20 @@ app-lottery-dashboard {
   }
 
   .guidance-card {
+    position: relative;
+    z-index: 40;
     border: 1px solid var(--pa-hairline-strong);
     border-radius: var(--pa-radius-md);
     background: var(--pa-surface-elevated);
     color: var(--pa-on-dark-mute);
+  }
+
+  .is-guidance-target {
+    position: relative;
+    z-index: 30;
+    outline: 1px solid rgba(255, 255, 255, 0.22);
+    outline-offset: 4px;
+    border-radius: var(--pa-radius-lg);
   }
 
   .guidance-card--year {
@@ -1252,6 +1269,10 @@ app-lottery-dashboard {
 
     .year-sections {
       padding-bottom: 10px;
+    }
+
+    .is-guidance-target {
+      outline-offset: 3px;
     }
 
     .year-nav-btn {

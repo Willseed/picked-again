@@ -1,4 +1,12 @@
-<section class="dashboard-shell" aria-label="台北幼兒園中籤率搜尋工具">
+<section
+  class="dashboard-shell"
+  [class.is-guidance-active]="isGuidanceOpen()"
+  aria-label="台北幼兒園中籤率搜尋工具"
+>
+  @if (isGuidanceOpen()) {
+    <div class="guidance-scrim" aria-hidden="true"></div>
+  }
+
   <mat-card appearance="outlined" class="hero-card">
     <mat-card-header>
       <mat-icon mat-card-avatar aria-hidden="true">query_stats</mat-icon>
@@ -160,7 +168,10 @@
                 </div>
               </div>
 
-              <div class="year-nav-row">
+              <div
+                class="year-nav-row"
+                [class.is-guidance-target]="isYearGuidanceVisible(resultIndex, yearGroups.length)"
+              >
                 @if (isYearGuidanceVisible(resultIndex, yearGroups.length)) {
                   <mat-card
                     appearance="outlined"
@@ -278,6 +289,16 @@
                             @if (record.sequenceCounts.length > 0) {
                               <section
                                 class="sequence-panel"
+                                [class.is-guidance-target]="
+                                  isRecordGuidanceVisible(
+                                    'sequence',
+                                    resultIndex,
+                                    result.schoolName,
+                                    yearGroups.length,
+                                    yearIndex,
+                                    recordIndex
+                                  )
+                                "
                                 aria-label="各序位申請人數"
                                 [attr.aria-describedby]="
                                   recordGuidanceDescribedBy(
@@ -465,6 +486,16 @@
                                 </section>
                                 <section
                                   class="decision-section general-decision"
+                                  [class.is-guidance-target]="
+                                    isRecordGuidanceVisible(
+                                      'general',
+                                      resultIndex,
+                                      result.schoolName,
+                                      yearGroups.length,
+                                      yearIndex,
+                                      recordIndex
+                                    )
+                                  "
                                   [attr.aria-describedby]="
                                     recordGuidanceDescribedBy(
                                       'general',

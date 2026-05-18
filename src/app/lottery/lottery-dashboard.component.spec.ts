@@ -242,6 +242,31 @@ function getGeneralDecision(ageCard: HTMLElement): HTMLElement {
   return ageCard.querySelector('.general-decision') as HTMLElement;
 }
 
+function getGuidanceScrim(host: HTMLElement): HTMLElement | null {
+  return host.querySelector('.guidance-scrim');
+}
+
+function getGuidanceTargets(host: HTMLElement): HTMLElement[] {
+  return Array.from(host.querySelectorAll('.is-guidance-target'));
+}
+
+function expectSingleGuidanceTarget(host: HTMLElement, selector: string): HTMLElement {
+  const targets = getGuidanceTargets(host);
+
+  expect(targets).toHaveLength(1);
+  expect(targets[0]?.matches(selector)).toBe(true);
+
+  return targets[0] as HTMLElement;
+}
+
+function extractZIndex(rule: string): number {
+  const match = rule.match(/z-index:\s*(\d+)/u);
+
+  expect(match).not.toBeNull();
+
+  return Number(match?.[1] ?? 0);
+}
+
 function getDefinitionValue(scope: HTMLElement, label: string): string | undefined {
   return Array.from(scope.querySelectorAll('dl div')).find(
     (row) => row.querySelector('dt')?.textContent?.trim() === label,
@@ -614,11 +639,14 @@ describe('LotteryDashboardComponent', () => {
     const fixture = await renderDashboard(() => of(buildGuidanceTourSchools()), {
       guidanceStorage: 'fresh',
     });
+    const host = fixture.nativeElement as HTMLElement;
+
+    expect(getGuidanceScrim(host)).toBeNull();
+    expect(getGuidanceTargets(host)).toHaveLength(0);
 
     await enterSearch(fixture, '教學測試');
     await flushGuidanceFocus(fixture);
 
-    const host = fixture.nativeElement as HTMLElement;
     const input = host.querySelector('input') as HTMLInputElement;
     const clearButton = host.querySelector('button[aria-label="清除搜尋"]') as HTMLButtonElement;
     const yearGuidance = host.querySelector('.guidance-card--year') as HTMLElement;
@@ -627,7 +655,16 @@ describe('LotteryDashboardComponent', () => {
     const nextBtn = host.querySelector('.year-nav-btn--next') as HTMLButtonElement;
     const skipButton = yearGuidance.querySelector('.guidance-action') as HTMLButtonElement;
     const primaryButton = yearGuidance.querySelector('.guidance-primary') as HTMLButtonElement;
+    const scrim = getGuidanceScrim(host) as HTMLElement;
+    const guidanceTarget = expectSingleGuidanceTarget(host, '.year-nav-row');
 
+    expect(scrim).toBeTruthy();
+    expect(scrim.getAttribute('aria-hidden')).toBe('true');
+    expect(scrim.hasAttribute('tabindex')).toBe(false);
+    expect(scrim.tabIndex).toBe(-1);
+    expect(scrim.hasAttribute('aria-modal')).toBe(false);
+    expect(guidanceTarget.contains(yearGuidance)).toBe(true);
+    expect(guidanceTarget.contains(yearContainer)).toBe(true);
     expect(yearGuidance).toBeTruthy();
     expect(yearGuidance.id).toBe('lottery-guidance-year');
     expect(yearGuidance.getAttribute('role')).toBe('note');
@@ -723,6 +760,8 @@ describe('LotteryDashboardComponent', () => {
     const yearContainer = host.querySelector('.year-sections') as HTMLElement;
     const headerTrack = host.querySelector('.year-section-header-track') as HTMLElement;
 
+    expect(getGuidanceScrim(host)).toBeTruthy();
+    expect(expectSingleGuidanceTarget(host, '.year-nav-row')).toBeTruthy();
     expect(yearContainer.getAttribute('tabindex')).toBeNull();
     expect(yearContainer.getAttribute('aria-disabled')).toBe('true');
 
@@ -732,6 +771,8 @@ describe('LotteryDashboardComponent', () => {
     fixture.detectChanges();
 
     expect(host.querySelector('.guidance-card')).toBeNull();
+    expect(getGuidanceScrim(host)).toBeNull();
+    expect(getGuidanceTargets(host)).toHaveLength(0);
     expect(readGuidanceDismissed()).toBe('true');
     expect(yearContainer.getAttribute('tabindex')).toBe('0');
     expect(yearContainer.getAttribute('aria-disabled')).toBeNull();
@@ -764,6 +805,8 @@ describe('LotteryDashboardComponent', () => {
     const nextHost = nextFixture.nativeElement as HTMLElement;
 
     expect(nextHost.querySelector('.guidance-card')).toBeNull();
+    expect(getGuidanceScrim(nextHost)).toBeNull();
+    expect(getGuidanceTargets(nextHost)).toHaveLength(0);
     expect(nextHost.querySelector('.year-sections')?.getAttribute('aria-describedby')).toBeNull();
   });
 
@@ -781,6 +824,8 @@ describe('LotteryDashboardComponent', () => {
     ) as HTMLButtonElement;
 
     expect(host.querySelector('.guidance-card--year')).toBeTruthy();
+    expect(getGuidanceScrim(host)).toBeTruthy();
+    expect(expectSingleGuidanceTarget(host, '.year-nav-row')).toBeTruthy();
     expect(document.activeElement).toBe(yearPrimary);
 
     await clickGuidancePrimary(fixture);
@@ -796,6 +841,8 @@ describe('LotteryDashboardComponent', () => {
     ) as HTMLButtonElement;
 
     expect(sequenceGuidance).toBeTruthy();
+    expect(getGuidanceScrim(host)).toBeTruthy();
+    expect(expectSingleGuidanceTarget(host, '.sequence-panel')).toBe(sequencePanel);
     expect(sequenceGuidance.id).toBe('lottery-guidance-sequence');
     expect(sequenceGuidance.textContent).toContain(
       '各序位：完成教學後可點順序查看估算中籤率，或按 × 取消。',
@@ -845,6 +892,8 @@ describe('LotteryDashboardComponent', () => {
     const finishButton = generalGuidance.querySelector('.guidance-primary') as HTMLButtonElement;
 
     expect(generalGuidance).toBeTruthy();
+    expect(getGuidanceScrim(host)).toBeTruthy();
+    expect(expectSingleGuidanceTarget(host, '.general-decision')).toBe(generalDecision);
     expect(generalGuidance.id).toBe('lottery-guidance-general');
     expect(generalGuidance.textContent).toContain(
       '一般序位：預設摘要，完成教學後可和序位試算分開對照。',
@@ -862,7 +911,27 @@ describe('LotteryDashboardComponent', () => {
     await clickGuidancePrimary(fixture);
 
     expect(host.querySelector('.guidance-card')).toBeNull();
+    expect(getGuidanceScrim(host)).toBeNull();
+    expect(getGuidanceTargets(host)).toHaveLength(0);
     expect(readGuidanceDismissed()).toBe('true');
+  });
+
+  it('教學黑幕與聚焦目標的 SCSS 層級應符合無障礙與深色遮罩需求', async () => {
+    const scrimRule = await extractExactScssRule('.guidance-scrim');
+    const targetRule = await extractExactScssRule('.is-guidance-target');
+    const cardRule = await extractExactScssRule('.guidance-card');
+    const scrimZIndex = extractZIndex(scrimRule);
+
+    expect(scrimRule).toMatch(/position:\s*fixed/u);
+    expect(scrimRule).toMatch(/inset:\s*0/u);
+    expect(scrimRule).toMatch(/background:\s*rgba\(0,\s*0,\s*0,\s*0\.\d+\)/u);
+    expect(scrimRule).not.toMatch(/aria-modal/u);
+    expect(targetRule).toMatch(/position:\s*relative/u);
+    expect(cardRule).toMatch(/position:\s*relative/u);
+    expect(extractZIndex(targetRule)).toBeGreaterThan(scrimZIndex);
+    expect(extractZIndex(cardRule)).toBeGreaterThan(scrimZIndex);
+    expect(targetRule).not.toMatch(/box-shadow/u);
+    expect(cardRule).not.toMatch(/box-shadow/u);
   });
 
   it('教學顯示時會鎖定已選序位取消按鈕', async () => {
