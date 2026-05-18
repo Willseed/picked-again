@@ -43,6 +43,17 @@
           <mat-chip>{{ searchResults().length }} 筆符合「{{ keyword() }}」</mat-chip>
         }
       </mat-chip-set>
+
+      <button
+        mat-stroked-button
+        class="guidance-replay-button"
+        type="button"
+        aria-label="重新播放序位與年度操作教學"
+        (click)="replayGuidance()"
+      >
+        <mat-icon aria-hidden="true">tips_and_updates</mat-icon>
+        教學
+      </button>
     </mat-card-content>
   </mat-card>
 
@@ -159,11 +170,48 @@
               </div>
 
               <div class="year-nav-row">
+                @if (isYearGuidanceVisible(resultIndex, yearGroups.length)) {
+                  <mat-card
+                    appearance="outlined"
+                    class="guidance-card guidance-card--year"
+                    [id]="guidanceYearId"
+                    role="note"
+                    aria-live="polite"
+                  >
+                    <mat-card-content>
+                      <div class="guidance-copy">
+                        <span class="guidance-step">1/3</span>
+                        <p>年度切換：左右滑動或按上一年／下一年。</p>
+                      </div>
+                      <div class="guidance-actions">
+                        <button
+                          mat-button
+                          class="guidance-action"
+                          type="button"
+                          (click)="skipGuidance()"
+                        >
+                          跳過
+                        </button>
+                        <button
+                          mat-flat-button
+                          class="guidance-primary"
+                          type="button"
+                          (click)="advanceGuidance()"
+                        >
+                          {{ guidancePrimaryActionLabel() }}
+                        </button>
+                      </div>
+                    </mat-card-content>
+                  </mat-card>
+                }
                 @if (yearGroups.length > 1) {
                   <button
                     class="year-nav-btn year-nav-btn--prev"
                     type="button"
                     aria-label="查看上一學年度"
+                    [attr.aria-describedby]="
+                      yearGuidanceDescribedBy(resultIndex, yearGroups.length)
+                    "
                     [disabled]="!canNavigateYear(result.schoolName, yearGroups.length, -1)"
                     (click)="navigateYear(result.schoolName, yearGroups.length, -1)"
                   >
@@ -179,6 +227,7 @@
                   tabindex="0"
                   [style.height]="yearSectionsHeight(result.schoolName)"
                   [attr.data-school-name]="result.schoolName"
+                  [attr.aria-describedby]="yearGuidanceDescribedBy(resultIndex, yearGroups.length)"
                   [attr.aria-label]="
                     yearGroups.length > 1
                       ? result.schoolName + ' 各學年度班齡資料，可水平滑動查看'
@@ -206,7 +255,11 @@
                     [attr.aria-label]="result.schoolName + ' ' + yearGroup.schoolYear + '資料'"
                   >
                     <div class="age-grid" aria-label="各班齡估算中籤率">
-                      @for (record of yearGroup.records; track record.ageGroup) {
+                      @for (
+                        record of yearGroup.records;
+                        track record.ageGroup;
+                        let recordIndex = $index
+                      ) {
                         <mat-card appearance="outlined" class="age-card">
                           <mat-card-header>
                             <mat-card-title>
@@ -221,12 +274,78 @@
                             @let priorityRatePercent = record.priorityLotteryRatePercent;
                             @let generalRatePercent = generalDisplayRatePercent(record);
                             @if (record.sequenceCounts.length > 0) {
-                              <section class="sequence-panel" aria-label="各序位申請人數">
+                              <section
+                                class="sequence-panel"
+                                aria-label="各序位申請人數"
+                                [attr.aria-describedby]="
+                                  recordGuidanceDescribedBy(
+                                    'sequence',
+                                    resultIndex,
+                                    result.schoolName,
+                                    yearGroups.length,
+                                    yearIndex,
+                                    recordIndex
+                                  )
+                                "
+                              >
                                 <div class="section-kicker">各序位</div>
+                                @if (
+                                  isRecordGuidanceVisible(
+                                    'sequence',
+                                    resultIndex,
+                                    result.schoolName,
+                                    yearGroups.length,
+                                    yearIndex,
+                                    recordIndex
+                                  )
+                                ) {
+                                  <mat-card
+                                    appearance="outlined"
+                                    class="guidance-card guidance-card--sequence"
+                                    [id]="guidanceSequenceId"
+                                    role="note"
+                                    aria-live="polite"
+                                  >
+                                    <mat-card-content>
+                                      <div class="guidance-copy">
+                                        <span class="guidance-step">2/3</span>
+                                        <p>各序位：點順序查看該序位估算中籤率，可再點或按 × 取消。</p>
+                                      </div>
+                                      <div class="guidance-actions">
+                                        <button
+                                          mat-button
+                                          class="guidance-action"
+                                          type="button"
+                                          (click)="skipGuidance()"
+                                        >
+                                          跳過
+                                        </button>
+                                        <button
+                                          mat-flat-button
+                                          class="guidance-primary"
+                                          type="button"
+                                          (click)="advanceGuidance()"
+                                        >
+                                          {{ guidancePrimaryActionLabel() }}
+                                        </button>
+                                      </div>
+                                    </mat-card-content>
+                                  </mat-card>
+                                }
                                 @let fulfillmentMarker = sequenceFulfillmentMarker(record);
                                 <mat-chip-listbox
                                   class="sequence-list"
                                   aria-label="選擇後顯示選取序位中籤率"
+                                  [attr.aria-describedby]="
+                                    recordGuidanceDescribedBy(
+                                      'sequence',
+                                      resultIndex,
+                                      result.schoolName,
+                                      yearGroups.length,
+                                      yearIndex,
+                                      recordIndex
+                                    )
+                                  "
                                   [value]="selectedSequenceLabel(record)"
                                   [multiple]="false"
                                   [hideSingleSelectionIndicator]="true"
@@ -337,8 +456,66 @@
                                     </div>
                                   </dl>
                                 </section>
-                                <section class="decision-section general-decision">
-                                  <div class="section-kicker">一般序位</div>
+                                <section
+                                  class="decision-section general-decision"
+                                  [attr.aria-describedby]="
+                                    recordGuidanceDescribedBy(
+                                      'general',
+                                      resultIndex,
+                                      result.schoolName,
+                                      yearGroups.length,
+                                      yearIndex,
+                                      recordIndex
+                                    )
+                                  "
+                                >
+                                  <div class="section-kicker">
+                                    一般序位
+                                    <span class="section-kicker__badge">預設摘要</span>
+                                  </div>
+                                  @if (
+                                    isRecordGuidanceVisible(
+                                      'general',
+                                      resultIndex,
+                                      result.schoolName,
+                                      yearGroups.length,
+                                      yearIndex,
+                                      recordIndex
+                                    )
+                                  ) {
+                                    <mat-card
+                                      appearance="outlined"
+                                      class="guidance-card guidance-card--general"
+                                      [id]="guidanceGeneralId"
+                                      role="note"
+                                      aria-live="polite"
+                                    >
+                                      <mat-card-content>
+                                        <div class="guidance-copy">
+                                          <span class="guidance-step">3/3</span>
+                                          <p>一般序位：預設摘要，和序位試算分開對照。</p>
+                                        </div>
+                                        <div class="guidance-actions">
+                                          <button
+                                            mat-button
+                                            class="guidance-action"
+                                            type="button"
+                                            (click)="skipGuidance()"
+                                          >
+                                            跳過
+                                          </button>
+                                          <button
+                                            mat-flat-button
+                                            class="guidance-primary"
+                                            type="button"
+                                            (click)="advanceGuidance()"
+                                          >
+                                            {{ guidancePrimaryActionLabel() }}
+                                          </button>
+                                        </div>
+                                      </mat-card-content>
+                                    </mat-card>
+                                  }
                                   <dl class="decision-grid">
                                     <div>
                                       <dt>一般序位缺額</dt>
@@ -386,6 +563,9 @@
                     class="year-nav-btn year-nav-btn--next"
                     type="button"
                     aria-label="查看下一學年度"
+                    [attr.aria-describedby]="
+                      yearGuidanceDescribedBy(resultIndex, yearGroups.length)
+                    "
                     [disabled]="!canNavigateYear(result.schoolName, yearGroups.length, 1)"
                     (click)="navigateYear(result.schoolName, yearGroups.length, 1)"
                   >

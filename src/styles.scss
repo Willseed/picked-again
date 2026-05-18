@@ -426,6 +426,93 @@ app-lottery-dashboard {
     border-radius: var(--pa-radius-md);
   }
 
+  .guidance-replay-button {
+    --mdc-outlined-button-label-text-color: var(--pa-on-dark-mute);
+    --mdc-outlined-button-outline-color: var(--pa-hairline-strong);
+
+    justify-self: start;
+    min-height: 34px;
+    border-radius: var(--pa-radius-md);
+
+    mat-icon {
+      width: 17px;
+      height: 17px;
+      font-size: 17px;
+      line-height: 17px;
+    }
+  }
+
+  .guidance-card {
+    border: 1px solid var(--pa-hairline-strong);
+    border-radius: var(--pa-radius-md);
+    background: var(--pa-surface-elevated);
+    color: var(--pa-on-dark-mute);
+  }
+
+  .guidance-card--year {
+    grid-column: 1 / -1;
+  }
+
+  .guidance-card mat-card-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .guidance-copy {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .guidance-step {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    min-height: 24px;
+    border: 1px solid var(--pa-hairline);
+    border-radius: var(--pa-radius-full);
+    background: var(--pa-surface-card);
+    color: var(--pa-on-dark-mute);
+    padding: 0 8px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+  }
+
+  .guidance-copy p {
+    margin: 0;
+    color: var(--pa-on-dark);
+    font-size: 13px;
+    font-weight: 650;
+    line-height: 1.45;
+  }
+
+  .guidance-actions {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .guidance-action,
+  .guidance-primary {
+    min-height: 32px;
+    border-radius: var(--pa-radius-md);
+  }
+
+  .guidance-action {
+    --mdc-text-button-label-text-color: var(--pa-muted);
+  }
+
+  .guidance-primary {
+    --mdc-filled-button-container-color: var(--pa-cta);
+    --mdc-filled-button-label-text-color: var(--pa-on-cta);
+  }
+
   .results-stack {
     display: grid;
     gap: 16px;
@@ -789,6 +876,50 @@ app-lottery-dashboard {
     font-size: 17px;
     font-weight: 700;
     line-height: 1.2;
+  }
+
+  .general-decision {
+    border: 1px solid var(--pa-hairline-strong);
+    border-radius: var(--pa-radius-md);
+    background: var(--pa-surface-elevated);
+    padding: 12px;
+  }
+
+  .general-decision .section-kicker {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .section-kicker__badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 20px;
+    border: 1px solid var(--pa-hairline);
+    border-radius: var(--pa-radius-full);
+    background: var(--pa-surface-card);
+    color: var(--pa-on-dark-mute);
+    padding: 0 7px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+  }
+
+  .general-decision .decision-grid div {
+    border-color: var(--pa-hairline-soft);
+    background: var(--pa-surface);
+  }
+
+  .general-decision .decision-grid div:last-child {
+    border-color: var(--pa-hairline-strong);
+    background: var(--pa-surface-card);
+  }
+
+  .general-decision .decision-grid div:last-child dd {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
   }
 
   .selected-sequence-rate {
@@ -1195,6 +1326,22 @@ app-lottery-dashboard {
 
     .selected-sequence-rate {
       gap: 8px;
+    }
+
+    .guidance-card mat-card-content,
+    .guidance-copy,
+    .guidance-actions {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .guidance-actions {
+      width: 100%;
+    }
+
+    .guidance-action,
+    .guidance-primary {
+      width: 100%;
     }
 
     .sequence-list .mdc-evolution-chip-set__chips {

@@ -46,6 +46,18 @@ interface SequenceFulfillmentMarker {
   readonly cumulativeCount: number;
 }
 
+type GuidanceStep = 'year' | 'sequence' | 'general';
+
+interface RecordGuidanceAnchor {
+  readonly resultIndex: number;
+  readonly schoolName: string;
+  readonly yearIndex: number;
+  readonly recordIndex: number;
+}
+
+const GUIDANCE_STEPS = ['year', 'sequence', 'general'] as const satisfies readonly GuidanceStep[];
+const GUIDANCE_DISMISSED_STORAGE_KEY = 'picked-again.lottery-dashboard.guidance-dismissed';
+
 @Component({
   selector: 'app-lottery-dashboard',
   imports: [
@@ -82,10 +94,15 @@ export class LotteryDashboardComponent implements AfterViewInit {
   protected readonly loading = signal(true);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly schools = signal<readonly SchoolLotteryRates[]>([]);
+  protected readonly guidanceYearId = 'lottery-guidance-year';
+  protected readonly guidanceSequenceId = 'lottery-guidance-sequence';
+  protected readonly guidanceGeneralId = 'lottery-guidance-general';
   private readonly selectedSequenceLabelsByRecordKey = signal<ReadonlyMap<string, string>>(
     new Map(),
   );
   private readonly activeYearIndexesBySchoolName = signal<ReadonlyMap<string, number>>(new Map());
+  private readonly guidanceDismissed = signal(readGuidanceDismissed());
+  private readonly guidanceStep = signal<GuidanceStep>('year');
   protected readonly keyword = toSignal(
     this.searchControl.valueChanges.pipe(
       startWith(this.searchControl.value),
@@ -96,6 +113,31 @@ export class LotteryDashboardComponent implements AfterViewInit {
   protected readonly searchResults = computed(() =>
     this.lotteryDataService.searchSchoolRates(this.schools(), this.keyword()),
   );
+  protected readonly isGuidanceOpen = computed(
+    () =>
+      !this.guidanceDismissed() &&
+      !this.loading() &&
+      !this.errorMessage() &&
+      this.keyword().length > 0 &&
+      this.searchResults().length > 0,
+  );
+  private readonly activeGuidanceStep = computed<GuidanceStep | null>(() => {
+    if (!this.isGuidanceOpen()) {
+      return null;
+    }
+
+    const requestedStep = this.guidanceStep();
+
+    if (requestedStep === 'year' && !this.hasYearGuidanceAnchor()) {
+      return this.hasSequenceGuidanceAnchor() ? 'sequence' : 'general';
+    }
+
+    if (requestedStep === 'sequence' && !this.hasSequenceGuidanceAnchor()) {
+      return 'general';
+    }
+
+    return requestedStep;
+  });
   protected readonly totalAgeGroups = computed(() =>
     this.schools().reduce((total, school) => total + school.ageGroups.length, 0),
   );
@@ -379,8 +421,136 @@ export class LotteryDashboardComponent implements AfterViewInit {
       });
   }
 
+  protected replayGuidance(): void {
+    clearGuidanceDismissed();
+    this.guidanceDismissed.set(false);
+    this.guidanceStep.set('year');
+  }
+
+  protected skipGuidance(): void {
+    writeGuidanceDismissed();
+    this.guidanceDismissed.set(true);
+  }
+
+  protected advanceGuidance(): void {
+    const currentStep = this.activeGuidanceStep() ?? this.guidanceStep();
+    const currentIndex = GUIDANCE_STEPS.indexOf(currentStep);
+    const nextStep = GUIDANCE_STEPS[currentIndex + 1];
+
+    if (!nextStep) {
+      this.skipGuidance();
+      return;
+    }
+
+    this.guidanceStep.set(nextStep);
+  }
+
+  protected guidancePrimaryActionLabel(): string {
+    return this.activeGuidanceStep() === 'general' ? '完成' : '下一步';
+  }
+
+  protected isYearGuidanceVisible(resultIndex: number, yearGroupCount: number): boolean {
+    return (
+      this.activeGuidanceStep() === 'year' &&
+      resultIndex === this.firstYearGuidanceResultIndex() &&
+      yearGroupCount > 1
+    );
+  }
+
+  protected yearGuidanceDescribedBy(resultIndex: number, yearGroupCount: number): string | null {
+    return this.isYearGuidanceVisible(resultIndex, yearGroupCount) ? this.guidanceYearId : null;
+  }
+
+  protected isRecordGuidanceVisible(
+    step: Exclude<GuidanceStep, 'year'>,
+    resultIndex: number,
+    schoolName: string,
+    yearGroupCount: number,
+    yearIndex: number,
+    recordIndex: number,
+  ): boolean {
+    if (this.activeGuidanceStep() !== step) {
+      return false;
+    }
+
+    if (!this.isActiveYear(schoolName, yearGroupCount, yearIndex)) {
+      return false;
+    }
+
+    if (step === 'sequence') {
+      const anchor = this.firstSequenceGuidanceAnchor();
+
+      return (
+        anchor !== null &&
+        anchor.resultIndex === resultIndex &&
+        anchor.schoolName === schoolName &&
+        anchor.yearIndex === yearIndex &&
+        anchor.recordIndex === recordIndex
+      );
+    }
+
+    return resultIndex === 0 && recordIndex === 0;
+  }
+
+  protected recordGuidanceDescribedBy(
+    step: Exclude<GuidanceStep, 'year'>,
+    resultIndex: number,
+    schoolName: string,
+    yearGroupCount: number,
+    yearIndex: number,
+    recordIndex: number,
+  ): string | null {
+    if (
+      !this.isRecordGuidanceVisible(
+        step,
+        resultIndex,
+        schoolName,
+        yearGroupCount,
+        yearIndex,
+        recordIndex,
+      )
+    ) {
+      return null;
+    }
+
+    return step === 'sequence' ? this.guidanceSequenceId : this.guidanceGeneralId;
+  }
+
   private activeYearIndex(schoolName: string, yearGroupCount: number): number {
     return clampIndex(this.activeYearIndexesBySchoolName().get(schoolName) ?? 0, yearGroupCount);
+  }
+
+  private hasYearGuidanceAnchor(): boolean {
+    return this.firstYearGuidanceResultIndex() >= 0;
+  }
+
+  private firstYearGuidanceResultIndex(): number {
+    return this.searchResults().findIndex((result) => this.groupedAgeGroups(result).length > 1);
+  }
+
+  private hasSequenceGuidanceAnchor(): boolean {
+    return this.firstSequenceGuidanceAnchor() !== null;
+  }
+
+  private firstSequenceGuidanceAnchor(): RecordGuidanceAnchor | null {
+    for (const [resultIndex, result] of this.searchResults().entries()) {
+      const yearGroups = this.groupedAgeGroups(result);
+      const yearIndex = this.activeYearIndex(result.schoolName, yearGroups.length);
+      const activeYearGroup = yearGroups[yearIndex];
+      const recordIndex =
+        activeYearGroup?.records.findIndex((record) => record.sequenceCounts.length > 0) ?? -1;
+
+      if (recordIndex >= 0) {
+        return {
+          resultIndex,
+          schoolName: result.schoolName,
+          yearIndex,
+          recordIndex,
+        };
+      }
+    }
+
+    return null;
   }
 
   private scheduleYearSectionsMeasurement(): void {
@@ -546,4 +716,42 @@ function findSequenceFulfillmentMarker(
   }
 
   return null;
+}
+
+function readGuidanceDismissed(): boolean {
+  try {
+    return getSafeLocalStorage()?.getItem(GUIDANCE_DISMISSED_STORAGE_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+function writeGuidanceDismissed(): void {
+  try {
+    getSafeLocalStorage()?.setItem(GUIDANCE_DISMISSED_STORAGE_KEY, 'true');
+  } catch {
+    // Ignore storage failures so the UI remains usable in private or test contexts.
+  }
+}
+
+function clearGuidanceDismissed(): void {
+  try {
+    getSafeLocalStorage()?.removeItem(GUIDANCE_DISMISSED_STORAGE_KEY);
+  } catch {
+    // Ignore storage failures so the replay action never breaks rendering.
+  }
+}
+
+function getSafeLocalStorage(): Storage | null {
+  try {
+    const storage = globalThis.localStorage;
+    const probeKey = `${GUIDANCE_DISMISSED_STORAGE_KEY}.probe`;
+
+    storage.setItem(probeKey, '1');
+    storage.removeItem(probeKey);
+
+    return storage;
+  } catch {
+    return null;
+  }
 }
