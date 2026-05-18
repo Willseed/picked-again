@@ -22,6 +22,7 @@ const guidanceStorageKey = 'picked-again.lottery-dashboard.guidance-dismissed';
 
 type GuidanceStorageMode = 'dismissed' | 'fresh' | 'preserve';
 type GuidanceStepForTest = 'year' | 'sequence' | 'general';
+type ScrollIntoViewArgument = boolean | ScrollIntoViewOptions | undefined;
 
 type NodeProcess = typeof globalThis & {
   readonly process?: {
@@ -265,6 +266,40 @@ function extractZIndex(rule: string): number {
   expect(match).not.toBeNull();
 
   return Number(match?.[1] ?? 0);
+}
+
+function installScrollIntoViewSpy(): {
+  readonly calls: {
+    readonly element: HTMLElement;
+    readonly argument: ScrollIntoViewArgument;
+  }[];
+  readonly restore: () => void;
+} {
+  const descriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollIntoView');
+  const calls: { element: HTMLElement; argument: ScrollIntoViewArgument }[] = [];
+
+  Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+    configurable: true,
+    value(this: HTMLElement, argument?: ScrollIntoViewArgument) {
+      calls.push({ element: this, argument });
+    },
+  });
+
+  return {
+    calls,
+    restore: () => {
+      if (descriptor) {
+        Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', descriptor);
+        return;
+      }
+
+      delete (
+        HTMLElement.prototype as {
+          scrollIntoView?: HTMLElement['scrollIntoView'];
+        }
+      ).scrollIntoView;
+    },
+  };
 }
 
 function getDefinitionValue(scope: HTMLElement, label: string): string | undefined {
@@ -843,6 +878,8 @@ describe('LotteryDashboardComponent', () => {
     expect(sequenceGuidance).toBeTruthy();
     expect(getGuidanceScrim(host)).toBeTruthy();
     expect(expectSingleGuidanceTarget(host, '.sequence-panel')).toBe(sequencePanel);
+    expect(host.querySelector('.guidance-card--year')).toBeNull();
+    expect(sequencePanel.contains(sequenceGuidance)).toBe(true);
     expect(sequenceGuidance.id).toBe('lottery-guidance-sequence');
     expect(sequenceGuidance.textContent).toContain(
       '各序位：完成教學後可點順序查看估算中籤率，或按 × 取消。',
@@ -894,6 +931,9 @@ describe('LotteryDashboardComponent', () => {
     expect(generalGuidance).toBeTruthy();
     expect(getGuidanceScrim(host)).toBeTruthy();
     expect(expectSingleGuidanceTarget(host, '.general-decision')).toBe(generalDecision);
+    expect(host.querySelector('.guidance-card--year')).toBeNull();
+    expect(host.querySelector('.guidance-card--sequence')).toBeNull();
+    expect(generalDecision.contains(generalGuidance)).toBe(true);
     expect(generalGuidance.id).toBe('lottery-guidance-general');
     expect(generalGuidance.textContent).toContain(
       '一般序位：預設摘要，完成教學後可和序位試算分開對照。',
@@ -916,10 +956,74 @@ describe('LotteryDashboardComponent', () => {
     expect(readGuidanceDismissed()).toBe('true');
   });
 
+  it('教學步驟切換時會捲動目前目標並保留主要按鈕焦點', async () => {
+    const scrollIntoViewSpy = installScrollIntoViewSpy();
+
+    try {
+      const fixture = await renderDashboard(() => of(buildGuidanceTourSchools()), {
+        guidanceStorage: 'fresh',
+      });
+
+      await enterSearch(fixture, '教學測試');
+      await flushGuidanceFocus(fixture);
+
+      const host = fixture.nativeElement as HTMLElement;
+      const yearTarget = expectSingleGuidanceTarget(host, '.year-nav-row');
+      const yearPrimary = host.querySelector(
+        '.guidance-card--year .guidance-primary',
+      ) as HTMLButtonElement;
+
+      expect(scrollIntoViewSpy.calls.at(-1)?.element).toBe(yearTarget);
+      expect(scrollIntoViewSpy.calls.at(-1)?.argument).toEqual({
+        block: 'center',
+        inline: 'nearest',
+        behavior: 'smooth',
+      });
+      expect(document.activeElement).toBe(yearPrimary);
+
+      await clickGuidancePrimary(fixture);
+      await flushGuidanceFocus(fixture);
+
+      const sequenceTarget = expectSingleGuidanceTarget(host, '.sequence-panel');
+      const sequencePrimary = host.querySelector(
+        '.guidance-card--sequence .guidance-primary',
+      ) as HTMLButtonElement;
+
+      expect(scrollIntoViewSpy.calls.at(-1)?.element).toBe(sequenceTarget);
+      expect(scrollIntoViewSpy.calls.at(-1)?.argument).toEqual({
+        block: 'center',
+        inline: 'nearest',
+        behavior: 'smooth',
+      });
+      expect(document.activeElement).toBe(sequencePrimary);
+
+      await clickGuidancePrimary(fixture);
+      await flushGuidanceFocus(fixture);
+
+      const generalTarget = expectSingleGuidanceTarget(host, '.general-decision');
+      const generalPrimary = host.querySelector(
+        '.guidance-card--general .guidance-primary',
+      ) as HTMLButtonElement;
+
+      expect(scrollIntoViewSpy.calls.at(-1)?.element).toBe(generalTarget);
+      expect(scrollIntoViewSpy.calls.at(-1)?.argument).toEqual({
+        block: 'center',
+        inline: 'nearest',
+        behavior: 'smooth',
+      });
+      expect(document.activeElement).toBe(generalPrimary);
+    } finally {
+      scrollIntoViewSpy.restore();
+    }
+  });
+
   it('教學黑幕與聚焦目標的 SCSS 層級應符合無障礙與深色遮罩需求', async () => {
     const scrimRule = await extractExactScssRule('.guidance-scrim');
     const targetRule = await extractExactScssRule('.is-guidance-target');
+    const targetAfterRule = await extractExactScssRule('.is-guidance-target::after');
     const cardRule = await extractExactScssRule('.guidance-card');
+    const cardConnectorRule = await extractExactScssRule('.guidance-card::before');
+    const stylesText = await getStylesScssText();
     const scrimZIndex = extractZIndex(scrimRule);
 
     expect(scrimRule).toMatch(/position:\s*fixed/u);
@@ -930,6 +1034,24 @@ describe('LotteryDashboardComponent', () => {
     expect(cardRule).toMatch(/position:\s*relative/u);
     expect(extractZIndex(targetRule)).toBeGreaterThan(scrimZIndex);
     expect(extractZIndex(cardRule)).toBeGreaterThan(scrimZIndex);
+    expect(cardRule).toMatch(
+      /animation:\s*guidance-card-enter\s+\d+ms\s+cubic-bezier\([^)]*\)\s+both/u,
+    );
+    expect(cardConnectorRule).toMatch(/content:\s*''/u);
+    expect(cardConnectorRule).toMatch(/position:\s*absolute/u);
+    expect(cardConnectorRule).toMatch(/pointer-events:\s*none/u);
+    expect(targetAfterRule).toMatch(/pointer-events:\s*none/u);
+    expect(targetAfterRule).toMatch(
+      /animation:\s*guidance-target-pulse\s+\d+ms\s+ease-in-out\s+infinite/u,
+    );
+    expect(stylesText).toMatch(/@keyframes\s+guidance-card-enter/u);
+    expect(stylesText).toMatch(
+      /@keyframes\s+guidance-card-enter\s*\{[\s\S]*opacity:\s*0;[\s\S]*transform:\s*translateY\(8px\)\s+scale\(0\.985\);[\s\S]*opacity:\s*1;[\s\S]*transform:\s*translateY\(0\)\s+scale\(1\);/u,
+    );
+    expect(stylesText).toMatch(/@keyframes\s+guidance-target-pulse/u);
+    expect(stylesText).toMatch(
+      /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*\.guidance-card,[\s\S]*\.is-guidance-target::after\s*\{[\s\S]*animation:\s*none;[\s\S]*transition:\s*none;[\s\S]*transform:\s*none;/u,
+    );
     expect(targetRule).not.toMatch(/box-shadow/u);
     expect(cardRule).not.toMatch(/box-shadow/u);
   });

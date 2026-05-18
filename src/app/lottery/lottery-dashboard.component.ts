@@ -745,11 +745,38 @@ export class LotteryDashboardComponent implements AfterViewInit {
       return;
     }
 
+    this.scrollActiveGuidanceTargetIntoView(activeStep);
+
     try {
       primaryButton.focus({ preventScroll: true });
     } catch {
       primaryButton.focus();
     }
+  }
+
+  private scrollActiveGuidanceTargetIntoView(activeStep: GuidanceStep): void {
+    const activeGuidanceCard = this.hostElement.nativeElement.querySelector<HTMLElement>(
+      `.guidance-card--${activeStep}`,
+    );
+    const activeTarget =
+      activeGuidanceCard?.closest<HTMLElement>('.is-guidance-target') ?? activeGuidanceCard;
+
+    if (!activeTarget || typeof activeTarget.scrollIntoView !== 'function') {
+      return;
+    }
+
+    activeTarget.scrollIntoView({
+      block: 'center',
+      inline: 'nearest',
+      behavior: this.prefersReducedMotion() ? 'auto' : 'smooth',
+    });
+  }
+
+  private prefersReducedMotion(): boolean {
+    return (
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    );
   }
 
   private requestMeasurementFrame(callback: FrameRequestCallback): number {
