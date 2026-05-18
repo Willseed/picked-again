@@ -126,6 +126,12 @@ function getProgressValue(scope: HTMLElement): string | null {
   return scope.querySelector('mat-progress-bar')?.getAttribute('aria-valuenow') ?? null;
 }
 
+function getDefinitionValue(scope: HTMLElement, label: string): string | undefined {
+  return Array.from(scope.querySelectorAll('dl div')).find(
+    (row) => row.querySelector('dt')?.textContent?.trim() === label,
+  )?.querySelector('dd')?.textContent?.trim();
+}
+
 describe('LotteryDashboardComponent', () => {
   afterEach(() => TestBed.resetTestingModule());
 
@@ -196,7 +202,7 @@ describe('LotteryDashboardComponent', () => {
     expect(singleYearAriaLabel).not.toMatch(/左右滑動|水平滑動/u);
   });
 
-  it('優先生與一般生中籤率摘要在班齡卡片中呈現在公告資訊之前', async () => {
+  it('應分開顯示優先序位與一般序位登記資訊和中籤率', async () => {
     const announcedCountSchools = buildSchoolLotteryRates({
       臺北市公告資訊測試幼兒園: {
         搜尋關鍵字: ['公告資訊測試'],
@@ -234,12 +240,18 @@ describe('LotteryDashboardComponent', () => {
     const ageCardLayout = ageCard.querySelector('.age-card-layout') as HTMLElement;
     const decisionPanel = ageCard.querySelector('.decision-panel') as HTMLElement;
     const decisionContext = decisionPanel.querySelector('.decision-context') as HTMLElement;
-    const decisionGrid = decisionPanel.querySelector('.decision-grid') as HTMLElement;
+    const priorityDecision = decisionPanel.querySelector('.priority-decision') as HTMLElement;
+    const generalDecision = decisionPanel.querySelector('.general-decision') as HTMLElement;
+    const priorityGrid = priorityDecision.querySelector('.decision-grid') as HTMLElement;
+    const generalGrid = generalDecision.querySelector('.decision-grid') as HTMLElement;
     const rateRail = getRateRail(ageCard);
     const identityRateGrid = rateRail.querySelector('.identity-rate-grid') as HTMLElement;
     const priorityRateCard = getIdentityRateCard(ageCard, '.priority-rate');
     const generalRateCard = getIdentityRateCard(ageCard, '.general-rate');
-    const decisionLabels = Array.from(decisionGrid.querySelectorAll('dt')).map((element) =>
+    const priorityLabels = Array.from(priorityGrid.querySelectorAll('dt')).map((element) =>
+      element.textContent?.trim(),
+    );
+    const generalLabels = Array.from(generalGrid.querySelectorAll('dt')).map((element) =>
       element.textContent?.trim(),
     );
     const ageCardLayoutRule = await extractScssRule('.age-card-layout');
@@ -257,10 +269,21 @@ describe('LotteryDashboardComponent', () => {
     expect(decisionContext.textContent).toContain('8');
     expect(decisionContext.textContent).toContain('總登記人數');
     expect(decisionContext.textContent).toContain('20');
-    expect(decisionLabels).toEqual(['一般缺額', '一般申請', '備取／未中']);
+    expect(priorityDecision.textContent).toContain('優先序位');
+    expect(priorityLabels).toEqual(['優先序位登記人數', '中籤率']);
+    expect(getDefinitionValue(priorityDecision, '優先序位登記人數')).toBe('4');
+    expect(getDefinitionValue(priorityDecision, '中籤率')).toBe('50.0%');
+    expect(generalDecision.textContent).toContain('一般序位');
+    expect(generalLabels).toEqual(['一般序位缺額', '登記人數', '中籤率']);
+    expect(getDefinitionValue(generalDecision, '一般序位缺額')).toBe('6');
+    expect(getDefinitionValue(generalDecision, '登記人數')).toBe('12');
+    expect(getDefinitionValue(generalDecision, '中籤率')).toBe('50.0%');
     expect(decisionPanel.querySelector('.decision-rate')).toBeNull();
     expect(decisionPanel.querySelector('.identity-rate-grid')).toBeNull();
     expect(decisionPanel.textContent).not.toContain('一般生中籤率');
+    expect(decisionPanel.textContent).not.toContain('一般申請');
+    expect(decisionPanel.textContent).not.toContain('備取／未中');
+    expect(decisionPanel.textContent).not.toContain('備取/未中');
     expect(rateRail.contains(identityRateGrid)).toBe(true);
     expect(host.querySelector('.decision-rate')).toBeNull();
     expect(host.querySelector('.identity-panel')).toBeNull();
@@ -280,6 +303,9 @@ describe('LotteryDashboardComponent', () => {
     expect(getProgressValue(generalRateCard)).toBe('50');
     expect(host.querySelector('.detail-grid')).toBeNull();
     expect(host.textContent).not.toContain('正取／備取');
+    expect(host.textContent).not.toContain('一般申請');
+    expect(host.textContent).not.toContain('備取／未中');
+    expect(host.textContent).not.toContain('備取/未中');
   });
 
   it('可用行政區關鍵字搜尋幼兒園', async () => {
