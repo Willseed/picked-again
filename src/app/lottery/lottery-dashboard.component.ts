@@ -9,6 +9,7 @@ import {
   ViewChild,
   ViewChildren,
   computed,
+  effect,
   inject,
   signal,
 } from '@angular/core';
@@ -77,6 +78,7 @@ const GUIDANCE_DISMISSED_STORAGE_KEY = 'picked-again.lottery-dashboard.guidance-
 export class LotteryDashboardComponent implements AfterViewInit {
   private readonly lotteryDataService = inject(LotteryDataService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly hostElement = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly yearSectionHeightsBySchoolName = signal<ReadonlyMap<string, number>>(new Map());
   private readonly yearSectionResizeObserver =
     typeof ResizeObserver === 'undefined'
@@ -87,6 +89,7 @@ export class LotteryDashboardComponent implements AfterViewInit {
     minimumFractionDigits: 1,
   });
   private yearSectionMeasurementFrameId: number | null = null;
+  private guidanceFocusFrameId: number | null = null;
 
   protected readonly searchControl = new FormControl('', { nonNullable: true });
   protected readonly dataUrl = this.lotteryDataService.dataUrl;
@@ -121,6 +124,7 @@ export class LotteryDashboardComponent implements AfterViewInit {
       this.keyword().length > 0 &&
       this.searchResults().length > 0,
   );
+  protected readonly guidanceInteractionLocked = computed(() => this.isGuidanceOpen());
   private readonly activeGuidanceStep = computed<GuidanceStep | null>(() => {
     if (!this.isGuidanceOpen()) {
       return null;
@@ -148,6 +152,25 @@ export class LotteryDashboardComponent implements AfterViewInit {
   @ViewChildren('yearSection') private yearSectionElements?: QueryList<ElementRef<HTMLElement>>;
 
   constructor() {
+    effect(() => {
+      const shouldLockSearch = this.guidanceInteractionLocked();
+
+      if (shouldLockSearch && this.searchControl.enabled) {
+        this.searchControl.disable({ emitEvent: false });
+      } else if (!shouldLockSearch && this.searchControl.disabled) {
+        this.searchControl.enable({ emitEvent: false });
+      }
+    });
+
+    effect(() => {
+      if (this.activeGuidanceStep() === null) {
+        this.cancelGuidancePrimaryFocus();
+        return;
+      }
+
+      this.scheduleGuidancePrimaryFocus();
+    });
+
     this.searchControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.activeYearIndexesBySchoolName.set(new Map());
       this.yearSectionHeightsBySchoolName.set(new Map());
@@ -158,6 +181,7 @@ export class LotteryDashboardComponent implements AfterViewInit {
       if (this.yearSectionMeasurementFrameId !== null) {
         this.cancelMeasurementFrame(this.yearSectionMeasurementFrameId);
       }
+      this.cancelGuidancePrimaryFocus();
 
       this.yearSectionResizeObserver?.disconnect();
     });
@@ -181,6 +205,10 @@ export class LotteryDashboardComponent implements AfterViewInit {
   }
 
   protected clearSearch(): void {
+    if (this.guidanceInteractionLocked()) {
+      return;
+    }
+
     this.searchControl.setValue('');
   }
 
@@ -195,6 +223,12 @@ export class LotteryDashboardComponent implements AfterViewInit {
     }
 
     event.preventDefault();
+
+    if (this.guidanceInteractionLocked()) {
+      this.scheduleGuidancePrimaryFocus();
+      return;
+    }
+
     this.searchInput?.nativeElement.focus();
   }
 
@@ -247,6 +281,10 @@ export class LotteryDashboardComponent implements AfterViewInit {
   }
 
   protected selectSequence(record: LotteryRateRecord, event: MatChipListboxChange): void {
+    if (this.guidanceInteractionLocked()) {
+      return;
+    }
+
     const recordKey = getLotteryRateRecordKey(record);
     const nextSequenceLabel = typeof event.value === 'string' ? event.value : null;
 
@@ -266,6 +304,12 @@ export class LotteryDashboardComponent implements AfterViewInit {
   }
 
   protected clearSelectedSequence(record: LotteryRateRecord, event: Event): void {
+    if (this.guidanceInteractionLocked()) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
     if (event.type === 'pointerdown') {
       const pointerEvent = event as PointerEvent;
 
@@ -335,6 +379,11 @@ export class LotteryDashboardComponent implements AfterViewInit {
   }
 
   protected updateActiveYearIndex(schoolName: string, yearGroupCount: number, event: Event): void {
+    if (this.guidanceInteractionLocked()) {
+      this.restoreYearSectionsScrollPosition(schoolName, yearGroupCount, event.currentTarget);
+      return;
+    }
+
     const target = event.currentTarget as HTMLElement | null;
 
     if (!target || yearGroupCount <= 1 || target.clientWidth <= 0) {
@@ -361,6 +410,20 @@ export class LotteryDashboardComponent implements AfterViewInit {
     this.scheduleYearSectionsMeasurement();
   }
 
+  protected guardYearSectionsInteraction(
+    schoolName: string,
+    yearGroupCount: number,
+    event: Event,
+  ): void {
+    if (!this.guidanceInteractionLocked() || this.isGuidanceControlEvent(event)) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    this.restoreYearSectionsScrollPosition(schoolName, yearGroupCount, event.currentTarget);
+  }
+
   protected yearHeaderTrackTransform(schoolName: string, yearGroupCount: number): string {
     return `translateX(-${this.activeYearIndex(schoolName, yearGroupCount) * 100}%)`;
   }
@@ -382,6 +445,10 @@ export class LotteryDashboardComponent implements AfterViewInit {
   }
 
   protected navigateYear(schoolName: string, yearGroupCount: number, direction: number): void {
+    if (this.guidanceInteractionLocked()) {
+      return;
+    }
+
     const current = this.activeYearIndex(schoolName, yearGroupCount);
     const nextIndex = clampIndex(current + direction, yearGroupCount);
     if (nextIndex === current) return;
@@ -419,12 +486,6 @@ export class LotteryDashboardComponent implements AfterViewInit {
           this.loading.set(false);
         },
       });
-  }
-
-  protected replayGuidance(): void {
-    clearGuidanceDismissed();
-    this.guidanceDismissed.set(false);
-    this.guidanceStep.set('year');
   }
 
   protected skipGuidance(): void {
@@ -518,6 +579,26 @@ export class LotteryDashboardComponent implements AfterViewInit {
 
   private activeYearIndex(schoolName: string, yearGroupCount: number): number {
     return clampIndex(this.activeYearIndexesBySchoolName().get(schoolName) ?? 0, yearGroupCount);
+  }
+
+  private restoreYearSectionsScrollPosition(
+    schoolName: string,
+    yearGroupCount: number,
+    target: EventTarget | null,
+  ): void {
+    if (!(target instanceof HTMLElement)) {
+      return;
+    }
+
+    const lockedScrollLeft = this.activeYearIndex(schoolName, yearGroupCount) * target.clientWidth;
+
+    if (target.scrollLeft !== lockedScrollLeft) {
+      target.scrollLeft = lockedScrollLeft;
+    }
+  }
+
+  private isGuidanceControlEvent(event: Event): boolean {
+    return event.target instanceof Element && event.target.closest('.guidance-card') !== null;
   }
 
   private hasYearGuidanceAnchor(): boolean {
@@ -632,6 +713,45 @@ export class LotteryDashboardComponent implements AfterViewInit {
     }
   }
 
+  private scheduleGuidancePrimaryFocus(): void {
+    this.cancelGuidancePrimaryFocus();
+    this.guidanceFocusFrameId = this.requestMeasurementFrame(() => {
+      this.guidanceFocusFrameId = null;
+      this.focusActiveGuidancePrimary();
+    });
+  }
+
+  private cancelGuidancePrimaryFocus(): void {
+    if (this.guidanceFocusFrameId === null) {
+      return;
+    }
+
+    this.cancelMeasurementFrame(this.guidanceFocusFrameId);
+    this.guidanceFocusFrameId = null;
+  }
+
+  private focusActiveGuidancePrimary(): void {
+    const activeStep = this.activeGuidanceStep();
+
+    if (activeStep === null) {
+      return;
+    }
+
+    const primaryButton = this.hostElement.nativeElement.querySelector<HTMLButtonElement>(
+      `.guidance-card--${activeStep} .guidance-primary`,
+    );
+
+    if (!primaryButton || primaryButton.disabled) {
+      return;
+    }
+
+    try {
+      primaryButton.focus({ preventScroll: true });
+    } catch {
+      primaryButton.focus();
+    }
+  }
+
   private requestMeasurementFrame(callback: FrameRequestCallback): number {
     if (typeof requestAnimationFrame === 'function') {
       return requestAnimationFrame(callback);
@@ -731,14 +851,6 @@ function writeGuidanceDismissed(): void {
     getSafeLocalStorage()?.setItem(GUIDANCE_DISMISSED_STORAGE_KEY, 'true');
   } catch {
     // Ignore storage failures so the UI remains usable in private or test contexts.
-  }
-}
-
-function clearGuidanceDismissed(): void {
-  try {
-    getSafeLocalStorage()?.removeItem(GUIDANCE_DISMISSED_STORAGE_KEY);
-  } catch {
-    // Ignore storage failures so the replay action never breaks rendering.
   }
 }
 

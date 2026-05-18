@@ -40,6 +40,12 @@ jobs:
       - name: Build for GitHub Pages
         run: npm run build:pages
 
+      - name: Run Lighthouse CI (mobile)
+        run: npm run lhci:mobile
+
+      - name: Run Lighthouse CI (desktop)
+        run: npm run lhci:desktop
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:

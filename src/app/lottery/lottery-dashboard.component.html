@@ -27,6 +27,7 @@
               matSuffix
               type="button"
               aria-label="清除搜尋"
+              [disabled]="guidanceInteractionLocked()"
               (click)="clearSearch()"
             >
               <mat-icon aria-hidden="true">close</mat-icon>
@@ -44,16 +45,6 @@
         }
       </mat-chip-set>
 
-      <button
-        mat-stroked-button
-        class="guidance-replay-button"
-        type="button"
-        aria-label="重新播放序位與年度操作教學"
-        (click)="replayGuidance()"
-      >
-        <mat-icon aria-hidden="true">tips_and_updates</mat-icon>
-        教學
-      </button>
     </mat-card-content>
   </mat-card>
 
@@ -181,7 +172,7 @@
                     <mat-card-content>
                       <div class="guidance-copy">
                         <span class="guidance-step">1/3</span>
-                        <p>年度切換：左右滑動或按上一年／下一年。</p>
+                        <p>年度切換：完成教學後可左右滑動或按上一年／下一年。</p>
                       </div>
                       <div class="guidance-actions">
                         <button
@@ -212,7 +203,10 @@
                     [attr.aria-describedby]="
                       yearGuidanceDescribedBy(resultIndex, yearGroups.length)
                     "
-                    [disabled]="!canNavigateYear(result.schoolName, yearGroups.length, -1)"
+                    [disabled]="
+                      guidanceInteractionLocked() ||
+                      !canNavigateYear(result.schoolName, yearGroups.length, -1)
+                    "
                     (click)="navigateYear(result.schoolName, yearGroups.length, -1)"
                   >
                     <mat-icon aria-hidden="true">chevron_left</mat-icon>
@@ -223,9 +217,13 @@
                 <div
                   #yearSections
                   class="year-sections"
+                  [class.is-guidance-locked]="guidanceInteractionLocked()"
                   role="list"
-                  tabindex="0"
+                  [attr.tabindex]="guidanceInteractionLocked() ? null : 0"
+                  [attr.aria-disabled]="guidanceInteractionLocked() ? 'true' : null"
                   [style.height]="yearSectionsHeight(result.schoolName)"
+                  [style.overflow-x]="guidanceInteractionLocked() ? 'hidden' : null"
+                  [style.touch-action]="guidanceInteractionLocked() ? 'none' : null"
                   [attr.data-school-name]="result.schoolName"
                   [attr.aria-describedby]="yearGuidanceDescribedBy(resultIndex, yearGroups.length)"
                   [attr.aria-label]="
@@ -233,6 +231,10 @@
                       ? result.schoolName + ' 各學年度班齡資料，可水平滑動查看'
                       : result.schoolName + ' 各學年度班齡資料'
                   "
+                  (pointerdown)="guardYearSectionsInteraction(result.schoolName, yearGroups.length, $event)"
+                  (touchmove)="guardYearSectionsInteraction(result.schoolName, yearGroups.length, $event)"
+                  (wheel)="guardYearSectionsInteraction(result.schoolName, yearGroups.length, $event)"
+                  (keydown)="guardYearSectionsInteraction(result.schoolName, yearGroups.length, $event)"
                   (scroll)="updateActiveYearIndex(result.schoolName, yearGroups.length, $event)"
                 >
                 @for (yearGroup of yearGroups; track yearGroup.schoolYear; let yearIndex = $index) {
@@ -309,7 +311,9 @@
                                     <mat-card-content>
                                       <div class="guidance-copy">
                                         <span class="guidance-step">2/3</span>
-                                        <p>各序位：點順序查看該序位估算中籤率，可再點或按 × 取消。</p>
+                                        <p>
+                                          各序位：完成教學後可點順序查看估算中籤率，或按 × 取消。
+                                        </p>
                                       </div>
                                       <div class="guidance-actions">
                                         <button
@@ -349,6 +353,7 @@
                                   [value]="selectedSequenceLabel(record)"
                                   [multiple]="false"
                                   [hideSingleSelectionIndicator]="true"
+                                  [disabled]="guidanceInteractionLocked()"
                                   (change)="selectSequence(record, $event)"
                                 >
                                   @for (sequence of record.sequenceCounts; track sequence.label) {
@@ -364,6 +369,7 @@
                                       [aria-label]="
                                         sequenceAriaLabel(record, sequence.label, sequence.count)
                                       "
+                                      [disabled]="guidanceInteractionLocked()"
                                     >
                                       <span>{{ sequence.label }}</span>
                                       <strong>{{ sequence.count }}</strong>
@@ -382,6 +388,7 @@
                                         type="button"
                                         class="sequence-cancel-btn"
                                         [attr.aria-label]="'取消選取序位 ' + sequenceRate.sequenceLabel"
+                                        [disabled]="guidanceInteractionLocked()"
                                         (pointerdown)="clearSelectedSequence(record, $event)"
                                         (click)="clearSelectedSequence(record, $event)"
                                       >
@@ -493,7 +500,7 @@
                                       <mat-card-content>
                                         <div class="guidance-copy">
                                           <span class="guidance-step">3/3</span>
-                                          <p>一般序位：預設摘要，和序位試算分開對照。</p>
+                                          <p>一般序位：預設摘要，完成教學後可和序位試算分開對照。</p>
                                         </div>
                                         <div class="guidance-actions">
                                           <button
@@ -566,7 +573,10 @@
                     [attr.aria-describedby]="
                       yearGuidanceDescribedBy(resultIndex, yearGroups.length)
                     "
-                    [disabled]="!canNavigateYear(result.schoolName, yearGroups.length, 1)"
+                    [disabled]="
+                      guidanceInteractionLocked() ||
+                      !canNavigateYear(result.schoolName, yearGroups.length, 1)
+                    "
                     (click)="navigateYear(result.schoolName, yearGroups.length, 1)"
                   >
                     <mat-icon aria-hidden="true">chevron_right</mat-icon>

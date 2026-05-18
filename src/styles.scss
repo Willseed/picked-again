@@ -1,5 +1,4 @@
 @use '@angular/material' as mat;
-@import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&display=swap');
 
 html {
   height: 100%;
@@ -426,22 +425,6 @@ app-lottery-dashboard {
     border-radius: var(--pa-radius-md);
   }
 
-  .guidance-replay-button {
-    --mdc-outlined-button-label-text-color: var(--pa-on-dark-mute);
-    --mdc-outlined-button-outline-color: var(--pa-hairline-strong);
-
-    justify-self: start;
-    min-height: 34px;
-    border-radius: var(--pa-radius-md);
-
-    mat-icon {
-      width: 17px;
-      height: 17px;
-      font-size: 17px;
-      line-height: 17px;
-    }
-  }
-
   .guidance-card {
     border: 1px solid var(--pa-hairline-strong);
     border-radius: var(--pa-radius-md);
@@ -628,6 +611,19 @@ app-lottery-dashboard {
     scrollbar-width: thin;
     transition: height 180ms ease;
     -webkit-overflow-scrolling: touch;
+  }
+
+  .year-sections.is-guidance-locked {
+    overflow-x: hidden;
+    overscroll-behavior-inline: none;
+    scroll-snap-type: none;
+    scrollbar-width: none;
+    touch-action: none;
+    -webkit-overflow-scrolling: auto;
+  }
+
+  .year-sections.is-guidance-locked::-webkit-scrollbar {
+    display: none;
   }
 
   .year-sections:focus-visible {

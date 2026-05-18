@@ -20,6 +20,9 @@ const sampleSchools = buildSchoolLotteryRates(sampleData);
 let cachedStylesText: string | null = null;
 const guidanceStorageKey = 'picked-again.lottery-dashboard.guidance-dismissed';
 
+type GuidanceStorageMode = 'dismissed' | 'fresh' | 'preserve';
+type GuidanceStepForTest = 'year' | 'sequence' | 'general';
+
 type NodeProcess = typeof globalThis & {
   readonly process?: {
     cwd?: () => string;
@@ -130,7 +133,18 @@ function readGuidanceDismissed(): string | null {
   return getTestLocalStorage()?.getItem(guidanceStorageKey) ?? null;
 }
 
-async function renderDashboard(loadSchoolRates = () => of(sampleSchools)) {
+async function renderDashboard(
+  loadSchoolRates = () => of(sampleSchools),
+  options: { readonly guidanceStorage?: GuidanceStorageMode } = {},
+) {
+  const guidanceStorage = options.guidanceStorage ?? 'dismissed';
+
+  if (guidanceStorage === 'fresh') {
+    clearGuidanceStorage();
+  } else if (guidanceStorage === 'dismissed') {
+    setGuidanceDismissed();
+  }
+
   await TestBed.configureTestingModule({
     imports: [LotteryDashboardComponent],
     providers: [{ provide: LotteryDataService, useValue: createServiceMock(loadSchoolRates) }],
@@ -142,6 +156,37 @@ async function renderDashboard(loadSchoolRates = () => of(sampleSchools)) {
   fixture.detectChanges();
 
   return fixture;
+}
+
+async function flushGuidanceFocus(
+  fixture: ComponentFixture<LotteryDashboardComponent>,
+): Promise<void> {
+  await new Promise<void>((resolve) => {
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => resolve());
+      return;
+    }
+
+    setTimeout(resolve, 0);
+  });
+  fixture.detectChanges();
+  await fixture.whenStable();
+  fixture.detectChanges();
+}
+
+function openGuidanceForTest(
+  fixture: ComponentFixture<LotteryDashboardComponent>,
+  step: GuidanceStepForTest,
+): void {
+  const component = fixture.componentInstance as unknown as {
+    readonly guidanceDismissed: { set(value: boolean): void };
+    readonly guidanceStep: { set(value: GuidanceStepForTest): void };
+  };
+
+  clearGuidanceStorage();
+  component.guidanceDismissed.set(false);
+  component.guidanceStep.set(step);
+  fixture.detectChanges();
 }
 
 async function enterSearch(
@@ -463,7 +508,6 @@ describe('LotteryDashboardComponent', () => {
     const yearNavRow = yearCarousel.querySelector('.year-nav-row') as HTMLElement;
     const prevBtn = yearCarousel.querySelector('.year-nav-btn--prev') as HTMLElement;
     const nextBtn = yearCarousel.querySelector('.year-nav-btn--next') as HTMLElement;
-    const yearGuidance = yearCarousel.querySelector('.guidance-card--year') as HTMLElement;
     const yearHeaders = Array.from(host.querySelectorAll('.year-section-header')) as HTMLElement[];
     const yearSections = Array.from(host.querySelectorAll('.year-section')) as HTMLElement[];
     const yearKickers = Array.from(host.querySelectorAll('.year-kicker')).map((element) =>
@@ -490,11 +534,10 @@ describe('LotteryDashboardComponent', () => {
     expect(nextBtn.getAttribute('aria-label')).toBeTruthy();
     expect(yearNavRow.contains(yearContainer)).toBe(true);
     expect(stickyHeader.nextElementSibling).toBe(yearNavRow);
-    expect(yearGuidance.id).toBe('lottery-guidance-year');
-    expect(yearGuidance.textContent).toContain('年度切換：左右滑動或按上一年／下一年。');
+    expect(yearCarousel.querySelector('.guidance-card--year')).toBeNull();
     expect(yearContainer.getAttribute('role')).toBe('list');
     expect(yearContainer.getAttribute('tabindex')).toBe('0');
-    expect(yearContainer.getAttribute('aria-describedby')).toBe('lottery-guidance-year');
+    expect(yearContainer.getAttribute('aria-describedby')).toBeNull();
     expect(yearContainer.getAttribute('aria-label')).toContain('可水平滑動查看');
     expect(yearContainer.getAttribute('aria-label')).toContain('臺北市測試非營利幼兒園');
     expect(yearCarousel.contains(stickyHeader)).toBe(true);
@@ -567,35 +610,121 @@ describe('LotteryDashboardComponent', () => {
     expect(yearSections[1]?.textContent).not.toContain('5歲');
   });
 
-  it('預設應顯示年度教學，並錨定年度滑動區與換年按鈕', async () => {
-    const fixture = await renderDashboard(() => of(buildGuidanceTourSchools()));
+  it('預設應顯示年度教學，聚焦主要教學按鈕並鎖定其他控制', async () => {
+    const fixture = await renderDashboard(() => of(buildGuidanceTourSchools()), {
+      guidanceStorage: 'fresh',
+    });
 
     await enterSearch(fixture, '教學測試');
+    await flushGuidanceFocus(fixture);
 
     const host = fixture.nativeElement as HTMLElement;
+    const input = host.querySelector('input') as HTMLInputElement;
+    const clearButton = host.querySelector('button[aria-label="清除搜尋"]') as HTMLButtonElement;
     const yearGuidance = host.querySelector('.guidance-card--year') as HTMLElement;
     const yearContainer = host.querySelector('.year-sections') as HTMLElement;
-    const prevBtn = host.querySelector('.year-nav-btn--prev') as HTMLElement;
-    const nextBtn = host.querySelector('.year-nav-btn--next') as HTMLElement;
+    const prevBtn = host.querySelector('.year-nav-btn--prev') as HTMLButtonElement;
+    const nextBtn = host.querySelector('.year-nav-btn--next') as HTMLButtonElement;
+    const skipButton = yearGuidance.querySelector('.guidance-action') as HTMLButtonElement;
+    const primaryButton = yearGuidance.querySelector('.guidance-primary') as HTMLButtonElement;
 
     expect(yearGuidance).toBeTruthy();
     expect(yearGuidance.id).toBe('lottery-guidance-year');
     expect(yearGuidance.getAttribute('role')).toBe('note');
-    expect(yearGuidance.textContent).toContain('年度切換：左右滑動或按上一年／下一年。');
+    expect(yearGuidance.textContent).toContain(
+      '年度切換：完成教學後可左右滑動或按上一年／下一年。',
+    );
     expect(yearGuidance.textContent).toContain('跳過');
     expect(yearGuidance.textContent).toContain('下一步');
     expect(yearContainer.getAttribute('aria-describedby')).toBe('lottery-guidance-year');
+    expect(yearContainer.getAttribute('tabindex')).toBeNull();
+    expect(yearContainer.tabIndex).toBe(-1);
+    expect(yearContainer.getAttribute('aria-disabled')).toBe('true');
+    expect(yearContainer.classList.contains('is-guidance-locked')).toBe(true);
+    expect(yearContainer.style.overflowX).toBe('hidden');
+    expect(yearContainer.style.touchAction).toBe('none');
     expect(prevBtn.getAttribute('aria-describedby')).toBe('lottery-guidance-year');
     expect(nextBtn.getAttribute('aria-describedby')).toBe('lottery-guidance-year');
+    expect(document.activeElement).toBe(primaryButton);
+    expect(input.disabled).toBe(true);
+    expect(clearButton.disabled).toBe(true);
+    expect(prevBtn.disabled).toBe(true);
+    expect(nextBtn.disabled).toBe(true);
+    expect(skipButton.disabled).toBe(false);
+    expect(primaryButton.disabled).toBe(false);
+    expect(host.querySelector('.guidance-replay-button')).toBeNull();
+
+    Object.defineProperty(yearContainer, 'clientWidth', { configurable: true, value: 360 });
+
+    let wheelBubbled = false;
+    let scrollToCallArgs: Parameters<typeof yearContainer.scrollTo> | null = null;
+
+    yearContainer.parentElement?.addEventListener(
+      'wheel',
+      () => {
+        wheelBubbled = true;
+      },
+      { once: true },
+    );
+
+    Object.defineProperty(yearContainer, 'scrollTo', {
+      configurable: true,
+      writable: true,
+      value: (...args: Parameters<typeof yearContainer.scrollTo>) => {
+        scrollToCallArgs = args;
+      },
+    });
+
+    yearContainer.scrollLeft = 360;
+    const wheelEvent = new Event('wheel', { bubbles: true, cancelable: true });
+    yearContainer.dispatchEvent(wheelEvent);
+    fixture.detectChanges();
+
+    expect(wheelEvent.defaultPrevented).toBe(true);
+    expect(wheelBubbled).toBe(false);
+    expect(yearContainer.scrollLeft).toBe(0);
+
+    const keydownEvent = new KeyboardEvent('keydown', {
+      bubbles: true,
+      cancelable: true,
+      key: 'ArrowRight',
+    });
+    yearContainer.dispatchEvent(keydownEvent);
+
+    expect(keydownEvent.defaultPrevented).toBe(true);
+
+    yearContainer.scrollLeft = 360;
+    yearContainer.dispatchEvent(new Event('scroll'));
+    fixture.detectChanges();
+    await flushCarouselMeasurements(fixture);
+
+    expect(yearContainer.scrollLeft).toBe(0);
+    expect((host.querySelector('.year-section-header-track') as HTMLElement).style.transform).toBe(
+      'translateX(-0%)',
+    );
+
+    nextBtn.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(scrollToCallArgs).toBeNull();
   });
 
   it('教學可跳過並持久化，不會再次自動顯示', async () => {
-    const fixture = await renderDashboard(() => of(buildGuidanceTourSchools()));
+    const fixture = await renderDashboard(() => of(buildGuidanceTourSchools()), {
+      guidanceStorage: 'fresh',
+    });
 
     await enterSearch(fixture, '教學測試');
+    await flushGuidanceFocus(fixture);
 
     const host = fixture.nativeElement as HTMLElement;
     const skipButton = host.querySelector('.guidance-card .guidance-action') as HTMLButtonElement;
+    const yearContainer = host.querySelector('.year-sections') as HTMLElement;
+    const headerTrack = host.querySelector('.year-section-header-track') as HTMLElement;
+
+    expect(yearContainer.getAttribute('tabindex')).toBeNull();
+    expect(yearContainer.getAttribute('aria-disabled')).toBe('true');
 
     skipButton.click();
     fixture.detectChanges();
@@ -604,11 +733,31 @@ describe('LotteryDashboardComponent', () => {
 
     expect(host.querySelector('.guidance-card')).toBeNull();
     expect(readGuidanceDismissed()).toBe('true');
+    expect(yearContainer.getAttribute('tabindex')).toBe('0');
+    expect(yearContainer.getAttribute('aria-disabled')).toBeNull();
+    expect(yearContainer.classList.contains('is-guidance-locked')).toBe(false);
+    expect(yearContainer.style.overflowX).toBe('');
+    expect(yearContainer.style.touchAction).toBe('');
+
+    const wheelEvent = new Event('wheel', { bubbles: true, cancelable: true });
+    yearContainer.dispatchEvent(wheelEvent);
+
+    expect(wheelEvent.defaultPrevented).toBe(false);
+
+    Object.defineProperty(yearContainer, 'clientWidth', { configurable: true, value: 360 });
+    yearContainer.scrollLeft = 360;
+    yearContainer.dispatchEvent(new Event('scroll'));
+    fixture.detectChanges();
+    await flushCarouselMeasurements(fixture);
+
+    expect(headerTrack.style.transform).toBe('translateX(-100%)');
 
     fixture.destroy();
     TestBed.resetTestingModule();
 
-    const nextFixture = await renderDashboard(() => of(buildGuidanceTourSchools()));
+    const nextFixture = await renderDashboard(() => of(buildGuidanceTourSchools()), {
+      guidanceStorage: 'preserve',
+    });
 
     await enterSearch(nextFixture, '教學測試');
 
@@ -618,32 +767,78 @@ describe('LotteryDashboardComponent', () => {
     expect(nextHost.querySelector('.year-sections')?.getAttribute('aria-describedby')).toBeNull();
   });
 
-  it('教學可依序前進到序位與一般序位，完成後持久化', async () => {
-    const fixture = await renderDashboard(() => of(buildGuidanceTourSchools()));
+  it('教學可依序聚焦序位與一般序位主要按鈕，完成後持久化', async () => {
+    const fixture = await renderDashboard(() => of(buildGuidanceTourSchools()), {
+      guidanceStorage: 'fresh',
+    });
 
     await enterSearch(fixture, '教學測試');
+    await flushGuidanceFocus(fixture);
 
     const host = fixture.nativeElement as HTMLElement;
+    const yearPrimary = host.querySelector(
+      '.guidance-card--year .guidance-primary',
+    ) as HTMLButtonElement;
 
     expect(host.querySelector('.guidance-card--year')).toBeTruthy();
+    expect(document.activeElement).toBe(yearPrimary);
 
     await clickGuidancePrimary(fixture);
+    await flushGuidanceFocus(fixture);
 
     const sequenceGuidance = host.querySelector('.guidance-card--sequence') as HTMLElement;
     const sequencePanel = host.querySelector('.sequence-panel') as HTMLElement;
     const sequenceListbox = host.querySelector('mat-chip-listbox.sequence-list') as HTMLElement;
+    const sequenceChip = host.querySelector('mat-chip-option.sequence-chip') as HTMLElement;
+    const sequenceOption = sequenceChip.querySelector('[role="option"]') as HTMLElement;
+    const sequencePrimary = sequenceGuidance.querySelector(
+      '.guidance-primary',
+    ) as HTMLButtonElement;
 
     expect(sequenceGuidance).toBeTruthy();
     expect(sequenceGuidance.id).toBe('lottery-guidance-sequence');
     expect(sequenceGuidance.textContent).toContain(
-      '各序位：點順序查看該序位估算中籤率，可再點或按 × 取消。',
+      '各序位：完成教學後可點順序查看估算中籤率，或按 × 取消。',
     );
     expect(sequenceGuidance.textContent).toContain('跳過');
     expect(sequenceGuidance.textContent).toContain('下一步');
     expect(sequencePanel.getAttribute('aria-describedby')).toBe('lottery-guidance-sequence');
     expect(sequenceListbox.getAttribute('aria-describedby')).toBe('lottery-guidance-sequence');
+    expect(document.activeElement).toBe(sequencePrimary);
+    expect(
+      sequenceListbox.getAttribute('aria-disabled') === 'true' ||
+        sequenceListbox.classList.contains('mat-mdc-chip-listbox-disabled') ||
+        sequenceListbox.classList.contains('mat-mdc-chip-set-disabled'),
+    ).toBe(true);
+    expect(
+      sequenceOption.getAttribute('aria-disabled') === 'true' ||
+        sequenceChip.getAttribute('aria-disabled') === 'true' ||
+        sequenceChip.classList.contains('mat-mdc-chip-disabled'),
+    ).toBe(true);
+    expect(
+      Array.from(sequenceGuidance.querySelectorAll('button')).every(
+        (button) => !(button as HTMLButtonElement).disabled,
+      ),
+    ).toBe(true);
+
+    const sequencePrimaryKeydown = new KeyboardEvent('keydown', {
+      bubbles: true,
+      cancelable: true,
+      key: 'Enter',
+    });
+    sequencePrimary.dispatchEvent(sequencePrimaryKeydown);
+
+    expect(sequencePrimaryKeydown.defaultPrevented).toBe(false);
+
+    sequenceOption.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(sequencePanel.querySelector('.selected-sequence-rate')).toBeNull();
 
     await clickGuidancePrimary(fixture);
+    await flushGuidanceFocus(fixture);
 
     const generalGuidance = host.querySelector('.guidance-card--general') as HTMLElement;
     const generalDecision = host.querySelector('.general-decision') as HTMLElement;
@@ -651,10 +846,18 @@ describe('LotteryDashboardComponent', () => {
 
     expect(generalGuidance).toBeTruthy();
     expect(generalGuidance.id).toBe('lottery-guidance-general');
-    expect(generalGuidance.textContent).toContain('一般序位：預設摘要，和序位試算分開對照。');
+    expect(generalGuidance.textContent).toContain(
+      '一般序位：預設摘要，完成教學後可和序位試算分開對照。',
+    );
     expect(generalGuidance.textContent).toContain('跳過');
     expect(finishButton.textContent).toContain('完成');
     expect(generalDecision.getAttribute('aria-describedby')).toBe('lottery-guidance-general');
+    expect(document.activeElement).toBe(finishButton);
+    expect(
+      Array.from(generalGuidance.querySelectorAll('button')).every(
+        (button) => !(button as HTMLButtonElement).disabled,
+      ),
+    ).toBe(true);
 
     await clickGuidancePrimary(fixture);
 
@@ -662,9 +865,48 @@ describe('LotteryDashboardComponent', () => {
     expect(readGuidanceDismissed()).toBe('true');
   });
 
-  it('已跳過時可用教學按鈕重新播放', async () => {
-    setGuidanceDismissed();
+  it('教學顯示時會鎖定已選序位取消按鈕', async () => {
+    const fixture = await renderDashboard(() => of(buildGuidanceTourSchools()));
 
+    await enterSearch(fixture, '教學測試');
+
+    const host = fixture.nativeElement as HTMLElement;
+    const sequenceChip = Array.from(host.querySelectorAll('mat-chip-option.sequence-chip')).find(
+      (chip) => chip.textContent?.includes('順序8'),
+    ) as HTMLElement;
+    const sequenceOption = sequenceChip.querySelector('[role="option"]') as HTMLElement;
+    const sequencePanel = host.querySelector('.sequence-panel') as HTMLElement;
+
+    sequenceOption.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const selectedSequenceRate = sequencePanel.querySelector(
+      '.selected-sequence-rate',
+    ) as HTMLElement;
+    const cancelButton = selectedSequenceRate.querySelector(
+      '.sequence-cancel-btn',
+    ) as HTMLButtonElement;
+
+    expect(cancelButton.disabled).toBe(false);
+
+    openGuidanceForTest(fixture, 'sequence');
+    await flushGuidanceFocus(fixture);
+
+    expect(host.querySelector('.guidance-card--sequence')).toBeTruthy();
+    expect(cancelButton.disabled).toBe(true);
+
+    cancelButton.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(sequencePanel.querySelector('.selected-sequence-rate')).toBeTruthy();
+    expect(sequencePanel.querySelector('mat-chip-option.sequence-chip.is-selected')).toBeTruthy();
+  });
+
+  it('已跳過時不會自動顯示教學，也不提供搜尋欄教學重播按鈕', async () => {
     const fixture = await renderDashboard(() => of(buildGuidanceTourSchools()));
 
     await enterSearch(fixture, '教學測試');
@@ -672,20 +914,8 @@ describe('LotteryDashboardComponent', () => {
     const host = fixture.nativeElement as HTMLElement;
 
     expect(host.querySelector('.guidance-card')).toBeNull();
+    expect(host.querySelector('.guidance-replay-button')).toBeNull();
     expect(readGuidanceDismissed()).toBe('true');
-
-    const replayButton = host.querySelector('.guidance-replay-button') as HTMLButtonElement;
-
-    replayButton.click();
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
-
-    const yearGuidance = host.querySelector('.guidance-card--year') as HTMLElement;
-
-    expect(yearGuidance).toBeTruthy();
-    expect(yearGuidance.textContent).toContain('年度切換：左右滑動或按上一年／下一年。');
-    expect(readGuidanceDismissed()).toBeNull();
   });
 
   it('公告缺額在特定順序達標時應高亮該順序', async () => {
