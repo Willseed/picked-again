@@ -459,7 +459,7 @@ describe('LotteryDashboardComponent', () => {
     expect(getDefinitionValue(priorityDecision, '優先序位登記人數')).toBe('4');
     expect(getDefinitionValue(priorityDecision, '中籤率')).toBe('50.0%');
     expect(generalDecision.textContent).toContain('一般序位');
-    expect(generalDecision.textContent).toContain('預設摘要');
+    expect(host.textContent).not.toContain('預設摘要');
     expect(generalLabels).toEqual(['一般序位缺額', '登記人數', '中籤率']);
     expect(getDefinitionValue(generalDecision, '一般序位缺額')).toBe('6');
     expect(getDefinitionValue(generalDecision, '登記人數')).toBe('12');
@@ -878,11 +878,15 @@ describe('LotteryDashboardComponent', () => {
     expect(sequenceGuidance).toBeTruthy();
     expect(getGuidanceScrim(host)).toBeTruthy();
     expect(expectSingleGuidanceTarget(host, '.sequence-panel')).toBe(sequencePanel);
+    expect(sequencePanel.getAttribute('aria-label')).toBe('各序位登記人數');
+    expect(sequencePanel.querySelector('.section-kicker')?.textContent?.trim()).toBe(
+      '各序位登記人數',
+    );
     expect(host.querySelector('.guidance-card--year')).toBeNull();
     expect(sequencePanel.contains(sequenceGuidance)).toBe(true);
     expect(sequenceGuidance.id).toBe('lottery-guidance-sequence');
     expect(sequenceGuidance.textContent).toContain(
-      '各序位：完成教學後可點順序查看估算中籤率，或按 × 取消。',
+      '各序位登記人數：完成教學後可點順序查看估算中籤率，或按 × 取消。',
     );
     expect(sequenceGuidance.textContent).toContain('跳過');
     expect(sequenceGuidance.textContent).toContain('下一步');
@@ -936,7 +940,7 @@ describe('LotteryDashboardComponent', () => {
     expect(generalDecision.contains(generalGuidance)).toBe(true);
     expect(generalGuidance.id).toBe('lottery-guidance-general');
     expect(generalGuidance.textContent).toContain(
-      '一般序位：預設摘要，完成教學後可和序位試算分開對照。',
+      '一般序位：完成教學後可和序位試算分開對照。',
     );
     expect(generalGuidance.textContent).toContain('跳過');
     expect(finishButton.textContent).toContain('完成');
@@ -1448,7 +1452,7 @@ describe('LotteryDashboardComponent', () => {
     expect(stylesText).toMatch(/\.year-nav-btn\[disabled\]\s*\{[^}]*opacity:/u);
     expect(stylesText).not.toMatch(/\.year-nav-btn\[disabled\][^{]*\{[^}]*opacity:\s*0\.3/u);
     expect(stylesText).toMatch(
-      /@media\s*\(width\s*<=\s*640px\)[\s\S]*\.year-nav-btn__label\s*\{[^}]*display:\s*none/u,
+      /@media\s*\(max-width:\s*640px\)[\s\S]*\.year-nav-btn__label\s*\{[^}]*display:\s*none/u,
     );
   });
 
@@ -1556,10 +1560,16 @@ describe('LotteryDashboardComponent', () => {
   it('手機版 SCSS 中 age-card-layout 和 sequence-panel 的排列順序', async () => {
     const stylesText = await getStylesScssText();
     expect(stylesText).toMatch(
-      /@media\s*\(width\s*<=\s*640px\)[\s\S]*\.age-card\s+mat-card-content\s*>\s*\.age-card-layout\s*\{[^}]*order\s*:\s*1/u,
+      /@media\s*\(max-width:\s*640px\)[\s\S]*\.age-card\s+mat-card-content\s*>\s*\.age-card-layout\s*\{[^}]*order\s*:\s*1/u,
     );
     expect(stylesText).toMatch(
-      /@media\s*\(width\s*<=\s*640px\)[\s\S]*\.age-card\s+mat-card-content\s*>\s*\.sequence-panel\s*\{[^}]*order\s*:\s*2/u,
+      /@media\s*\(max-width:\s*640px\)[\s\S]*\.age-card\s+mat-card-content\s*>\s*\.sequence-panel\s*\{[^}]*order\s*:\s*2/u,
+    );
+    expect(stylesText).toMatch(
+      /@media\s*\(max-width:\s*640px\)[\s\S]*\.sequence-list\s+\.mdc-evolution-chip-set__chips\s*\{[^}]*display:\s*grid;[\s\S]*grid-template-columns:\s*repeat\(auto-fit,\s*minmax\(min\(100%,\s*7\.5rem\),\s*1fr\)\)/u,
+    );
+    expect(stylesText).toMatch(
+      /\.sequence-chip\s+\.mat-mdc-chip-action-label\s*\{[^}]*max-width:\s*100%;[\s\S]*min-width:\s*0;/u,
     );
   });
 

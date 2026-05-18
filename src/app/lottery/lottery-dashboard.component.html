@@ -299,7 +299,7 @@
                                     recordIndex
                                   )
                                 "
-                                aria-label="各序位申請人數"
+                                aria-label="各序位登記人數"
                                 [attr.aria-describedby]="
                                   recordGuidanceDescribedBy(
                                     'sequence',
@@ -311,7 +311,7 @@
                                   )
                                 "
                               >
-                                <div class="section-kicker">各序位</div>
+                                <div class="section-kicker">各序位登記人數</div>
                                 @if (
                                   isRecordGuidanceVisible(
                                     'sequence',
@@ -333,7 +333,7 @@
                                       <div class="guidance-copy">
                                         <span class="guidance-step">2/3</span>
                                         <p>
-                                          各序位：完成教學後可點順序查看估算中籤率，或按 × 取消。
+                                          各序位登記人數：完成教學後可點順序查看估算中籤率，或按 × 取消。
                                         </p>
                                       </div>
                                       <div class="guidance-actions">
@@ -509,7 +509,6 @@
                                 >
                                   <div class="section-kicker">
                                     一般序位
-                                    <span class="section-kicker__badge">預設摘要</span>
                                   </div>
                                   @if (
                                     isRecordGuidanceVisible(
@@ -531,7 +530,7 @@
                                       <mat-card-content>
                                         <div class="guidance-copy">
                                           <span class="guidance-step">3/3</span>
-                                          <p>一般序位：預設摘要，完成教學後可和序位試算分開對照。</p>
+                                          <p>一般序位：完成教學後可和序位試算分開對照。</p>
                                         </div>
                                         <div class="guidance-actions">
                                           <button

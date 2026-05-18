@@ -966,20 +966,6 @@ app-lottery-dashboard {
     gap: 8px;
   }
 
-  .section-kicker__badge {
-    display: inline-flex;
-    align-items: center;
-    min-height: 20px;
-    border: 1px solid var(--pa-hairline);
-    border-radius: var(--pa-radius-full);
-    background: var(--pa-surface-card);
-    color: var(--pa-on-dark-mute);
-    padding: 0 7px;
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-  }
-
   .general-decision .decision-grid div {
     border-color: var(--pa-hairline-soft);
     background: var(--pa-surface);
@@ -999,6 +985,8 @@ app-lottery-dashboard {
   .selected-sequence-rate {
     display: grid;
     gap: 10px;
+    max-width: 100%;
+    min-width: 0;
     border: 1px solid rgba(87, 193, 255, 0.30);
     border-radius: var(--pa-radius-md);
     background: var(--pa-surface-elevated);
@@ -1018,13 +1006,16 @@ app-lottery-dashboard {
     align-items: center;
     justify-content: space-between;
     gap: 8px;
+    min-width: 0;
   }
 
   .rate-scope {
+    min-width: 0;
     color: var(--pa-ink);
     font-size: 13px;
     font-weight: 800;
     letter-spacing: 0.04em;
+    overflow-wrap: anywhere;
   }
 
   .selected-sequence-rate-header strong {
@@ -1083,6 +1074,7 @@ app-lottery-dashboard {
   .sequence-panel {
     display: grid;
     gap: 12px;
+    max-width: 100%;
     min-width: 0;
     background: var(--pa-surface-card);
     border: 1px solid var(--pa-hairline);
@@ -1094,15 +1086,21 @@ app-lottery-dashboard {
     font-size: 11px;
     font-weight: 800;
     letter-spacing: 0.12em;
+    overflow-wrap: anywhere;
   }
 
   .sequence-list {
     display: block;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
   }
 
   .sequence-list .mdc-evolution-chip-set__chips {
     gap: 6px;
     margin: 0;
+    width: 100%;
+    max-width: 100%;
     min-width: 0;
   }
 
@@ -1114,6 +1112,8 @@ app-lottery-dashboard {
 
     display: inline-flex;
     align-items: center;
+    max-width: 100%;
+    min-width: 0;
     min-height: 26px;
     margin: 0 !important;
     border: 1px solid var(--pa-hairline);
@@ -1123,10 +1123,18 @@ app-lottery-dashboard {
     font-size: 12px;
   }
 
+  .sequence-chip .mdc-evolution-chip__cell--primary,
+  .sequence-chip .mdc-evolution-chip__action--primary {
+    max-width: 100%;
+    min-width: 0;
+  }
+
   .sequence-chip .mat-mdc-chip-action-label {
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    max-width: 100%;
+    min-width: 0;
   }
 
   .sequence-chip.is-selected {
@@ -1268,7 +1276,7 @@ app-lottery-dashboard {
     font-weight: 500;
   }
 
-  @media (width <= 640px) {
+  @media (max-width: 640px) {
     .dashboard-shell {
       gap: 14px;
       padding: 18px 12px 40px;
@@ -1423,13 +1431,23 @@ app-lottery-dashboard {
     }
 
     .sequence-list .mdc-evolution-chip-set__chips {
-      flex-wrap: wrap;
+      display: grid;
       gap: 8px;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 7.5rem), 1fr));
     }
 
     .sequence-chip {
-      flex: 1 1 7.5rem;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
       min-height: 36px;
+    }
+
+    .sequence-chip .mat-mdc-chip-action-label {
+      justify-content: center;
+      overflow-wrap: anywhere;
+      text-align: center;
+      white-space: normal;
     }
 
     .rate-value {

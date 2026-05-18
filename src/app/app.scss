@@ -127,7 +127,7 @@
   padding-block: clamp(32px, 6vw, 72px) 0;
 }
 
-@media (width <= 640px) {
+@media (max-width: 640px) {
   .app-shell {
     --pa-app-chrome-top: 8px;
     --pa-app-toolbar-height: 54px;

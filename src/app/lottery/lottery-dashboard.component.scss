@@ -27,7 +27,7 @@
   font-weight: 500;
 }
 
-@media (width <= 640px) {
+@media (max-width: 640px) {
   .dashboard-footer {
     margin-top: 4px;
     padding-top: 14px;
