@@ -259,10 +259,6 @@ export class LotteryDashboardComponent implements AfterViewInit {
     return record.generalLotteryRatePercent ?? record.estimatedLotteryRatePercent;
   }
 
-  protected generalDisplayAcceptedCount(record: LotteryRateRecord): number | null {
-    return record.generalAcceptedCount ?? record.acceptedCount;
-  }
-
   protected selectedSequenceRate(record: LotteryRateRecord): LotterySequenceRate | null {
     const selectedSequenceLabel = this.selectedSequenceLabel(record);
 

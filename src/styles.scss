@@ -308,7 +308,6 @@ app-lottery-dashboard {
   .search-field mat-hint,
   .rate-row span,
   .rate-scope,
-  .identity-rate-header small,
   .decision-context dt,
   .section-kicker,
   dt {
@@ -318,7 +317,6 @@ app-lottery-dashboard {
   .search-field mat-hint,
   .rate-row span,
   .rate-scope,
-  .identity-rate-header small,
   .decision-context dt,
   .decision-context dd,
   .section-kicker,
@@ -701,7 +699,7 @@ app-lottery-dashboard {
     display: grid;
     align-items: stretch;
     gap: 12px;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: 1fr;
   }
 
   .decision-panel {
@@ -750,7 +748,6 @@ app-lottery-dashboard {
     text-align: left;
   }
 
-  .identity-rate-card .rate-value > strong,
   .selected-sequence-rate .rate-value > strong {
     color: var(--pa-ink);
     font-size: clamp(22px, 3vw, 30px);
@@ -759,7 +756,6 @@ app-lottery-dashboard {
     letter-spacing: -0.02em;
   }
 
-  .identity-rate-card .rate-value > strong.is-unavailable,
   .selected-sequence-rate .rate-value > strong.is-unavailable {
     max-width: 11ch;
     font-size: clamp(18px, 2.6vw, 24px);
@@ -795,35 +791,13 @@ app-lottery-dashboard {
     line-height: 1.2;
   }
 
-  .rate-rail {
-    display: grid;
-    align-content: start;
-    gap: 12px;
-    min-width: 0;
-    border: 1px solid var(--pa-hairline-strong);
-    border-radius: var(--pa-radius-lg);
-    background: var(--pa-surface-card);
-    padding: 16px;
-  }
-
-  .identity-rate-grid {
-    display: grid;
-    gap: 10px;
-  }
-
-  .identity-rate-card,
   .selected-sequence-rate {
     display: grid;
     gap: 10px;
-    border: 1px solid var(--pa-hairline);
+    border: 1px solid rgba(87, 193, 255, 0.30);
     border-radius: var(--pa-radius-md);
     background: var(--pa-surface-elevated);
     padding: 12px;
-  }
-
-  .selected-sequence-rate {
-    border-color: rgba(87, 193, 255, 0.30);
-    background: var(--pa-surface-elevated);
     animation: selected-sequence-rate-reveal 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
@@ -832,13 +806,6 @@ app-lottery-dashboard {
       animation: none;
       transform: none;
     }
-  }
-
-  .identity-rate-header {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 8px;
   }
 
   .selected-sequence-rate-header {
@@ -855,7 +822,6 @@ app-lottery-dashboard {
     letter-spacing: 0.04em;
   }
 
-  .identity-rate-header small,
   .selected-sequence-rate-header strong {
     font-size: 11px;
     font-weight: 800;
@@ -1075,7 +1041,6 @@ app-lottery-dashboard {
   }
 
   .rate-row strong,
-  .identity-rate-card .rate-value > strong,
   .decision-grid dd,
   .count-grid dd {
     color: var(--pa-ink);
@@ -1154,7 +1119,6 @@ app-lottery-dashboard {
     .age-grid,
     .age-card-layout,
     .decision-grid,
-    .identity-rate-grid,
     .count-grid {
       grid-template-columns: 1fr;
     }
@@ -1229,7 +1193,6 @@ app-lottery-dashboard {
       gap: 6px;
     }
 
-    .identity-rate-card,
     .selected-sequence-rate {
       gap: 8px;
     }
