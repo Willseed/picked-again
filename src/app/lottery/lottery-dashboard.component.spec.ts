@@ -1191,6 +1191,34 @@ describe('LotteryDashboardComponent', () => {
     expect(sequencePanel.contains(selectedSequenceRate)).toBe(true);
   });
 
+  it('收滿點序位按鈕應避免徽章撐開版面並維持互動狀態一致', async () => {
+    const chipRule = await extractExactScssRule('.sequence-chip');
+    const enabledChipRule = await extractExactScssRule('.sequence-chip:not(.mat-mdc-chip-disabled)');
+    const actionLabelRule = await extractExactScssRule(
+      '.sequence-chip .mat-mdc-chip-action-label',
+    );
+    const chipLabelRule = await extractExactScssRule('.sequence-chip-label');
+    const chipCountRule = await extractExactScssRule('.sequence-chip-count');
+    const hitBadgeRule = await extractExactScssRule('.sequence-hit-badge');
+    const stylesText = await getStylesScssText();
+
+    expect(chipRule).toMatch(/overflow:\s*hidden/u);
+    expect(chipRule).not.toMatch(/cursor:\s*pointer/u);
+    expect(enabledChipRule).toMatch(/cursor:\s*pointer/u);
+    expect(actionLabelRule).toMatch(/flex-wrap:\s*nowrap/u);
+    expect(actionLabelRule).toMatch(/overflow:\s*hidden/u);
+    expect(chipLabelRule).toMatch(/text-overflow:\s*ellipsis/u);
+    expect(chipLabelRule).toMatch(/white-space:\s*nowrap/u);
+    expect(chipCountRule).toMatch(/white-space:\s*nowrap/u);
+    expect(hitBadgeRule).toMatch(/flex:\s*0\s+0\s+auto/u);
+    expect(hitBadgeRule).toMatch(/white-space:\s*nowrap/u);
+    expect(stylesText).toMatch(
+      /\.sequence-chip:not\(\.mat-mdc-chip-disabled\):not\(\.is-selected\):not\(\.is-fill-threshold\):hover/u,
+    );
+    expect(stylesText).toMatch(/\.sequence-chip:not\(\.mat-mdc-chip-disabled\):active/u);
+    expect(stylesText).toMatch(/\.sequence-chip:focus-within\s*\{[^}]*outline:/u);
+  });
+
   it('序位選項應以可點選 listbox 呈現，且再次點選已選序位會取消選取', async () => {
     const publicSequenceSchools = buildSchoolLotteryRates({
       臺北市公立序位測試幼兒園: {

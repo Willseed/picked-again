@@ -1121,26 +1121,68 @@ app-lottery-dashboard {
     background: var(--pa-surface-card);
     color: var(--pa-muted);
     font-size: 12px;
+    overflow: hidden;
+  }
+
+  .sequence-chip:not(.mat-mdc-chip-disabled) {
+    cursor: pointer;
   }
 
   .sequence-chip .mdc-evolution-chip__cell--primary,
   .sequence-chip .mdc-evolution-chip__action--primary {
     max-width: 100%;
     min-width: 0;
+    overflow: hidden;
   }
 
   .sequence-chip .mat-mdc-chip-action-label {
     display: inline-flex;
     align-items: center;
+    flex-wrap: nowrap;
     gap: 6px;
     max-width: 100%;
     min-width: 0;
+    overflow: hidden;
+  }
+
+  .sequence-chip-label {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .sequence-chip-count {
+    flex: 0 0 auto;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .sequence-chip:not(.mat-mdc-chip-disabled):not(.is-selected):not(.is-fill-threshold):hover {
+    border-color: var(--pa-hairline-strong);
+    background: var(--pa-surface-elevated);
+    color: var(--pa-ink);
+  }
+
+  .sequence-chip:not(.mat-mdc-chip-disabled):active {
+    border-color: var(--pa-ink);
+  }
+
+  .sequence-chip:focus-within {
+    outline: 2px solid var(--pa-ink);
+    outline-offset: 2px;
   }
 
   .sequence-chip.is-selected {
     border-color: var(--pa-ink);
     background: color-mix(in srgb, var(--pa-ink) 12%, var(--pa-surface-card));
     color: var(--pa-ink);
+  }
+
+  .sequence-chip.is-selected:not(.mat-mdc-chip-disabled):hover {
+    background: color-mix(in srgb, var(--pa-ink) 16%, var(--pa-surface-card));
   }
 
   .sequence-chip.is-fill-threshold {
@@ -1154,12 +1196,20 @@ app-lottery-dashboard {
     font-weight: 700;
   }
 
+  .sequence-chip.is-fill-threshold:not(.mat-mdc-chip-disabled):hover {
+    background: color-mix(in srgb, var(--pa-ink) 92%, var(--pa-surface-card));
+  }
+
   .sequence-chip.is-fill-threshold.is-selected {
     --mat-chip-elevated-selected-container-color: var(--pa-button-fg);
     --mat-chip-selected-label-text-color: var(--pa-ink);
 
     background: var(--pa-button-fg);
     color: var(--pa-ink);
+  }
+
+  .sequence-chip.is-fill-threshold.is-selected:not(.mat-mdc-chip-disabled):hover {
+    background: color-mix(in srgb, var(--pa-button-fg) 88%, var(--pa-ink));
   }
 
   .sequence-chip strong {
@@ -1181,6 +1231,9 @@ app-lottery-dashboard {
   }
 
   .sequence-hit-badge {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
     border: 1px solid color-mix(in srgb, var(--pa-canvas) 70%, transparent);
     border-radius: 999px;
     background: color-mix(in srgb, var(--pa-canvas) 16%, transparent);
@@ -1190,6 +1243,7 @@ app-lottery-dashboard {
     font-weight: 800;
     line-height: 1.2;
     letter-spacing: 0.04em;
+    white-space: nowrap;
   }
 
   .sequence-chip.is-fill-threshold .sequence-hit-badge {

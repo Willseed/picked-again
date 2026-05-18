@@ -392,8 +392,8 @@
                                       "
                                       [disabled]="guidanceInteractionLocked()"
                                     >
-                                      <span>{{ sequence.label }}</span>
-                                      <strong>{{ sequence.count }}</strong>
+                                      <span class="sequence-chip-label">{{ sequence.label }}</span>
+                                      <strong class="sequence-chip-count">{{ sequence.count }}</strong>
                                       @if (fulfillmentMarker?.label === sequence.label) {
                                         <em class="sequence-hit-badge">收滿點</em>
                                       }
