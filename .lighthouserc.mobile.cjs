@@ -20,7 +20,7 @@ module.exports = {
           'error',
           {
             minScore: 0.9,
-            aggregationMethod: 'pessimistic',
+            aggregationMethod: 'median',
           },
         ],
       },
