@@ -703,9 +703,7 @@ describe('LotteryDashboardComponent', () => {
     expect(yearGuidance).toBeTruthy();
     expect(yearGuidance.id).toBe('lottery-guidance-year');
     expect(yearGuidance.getAttribute('role')).toBe('note');
-    expect(yearGuidance.textContent).toContain(
-      '年度切換：完成教學後可左右滑動或按上一年／下一年。',
-    );
+    expect(yearGuidance.textContent).toContain('年度切換：完成教學後可左右滑動或按左右箭頭。');
     expect(yearGuidance.textContent).toContain('跳過');
     expect(yearGuidance.textContent).toContain('下一步');
     expect(yearContainer.getAttribute('aria-describedby')).toBe('lottery-guidance-year');
@@ -1429,8 +1427,10 @@ describe('LotteryDashboardComponent', () => {
     expect(nextBtn.getAttribute('aria-label')).toBe('查看下一學年度');
     expect(prevBtn.disabled).toBe(true);
     expect(nextBtn.disabled).toBe(false);
-    expect(prevBtn.textContent).toContain('上一年');
-    expect(nextBtn.textContent).toContain('下一年');
+    expect(prevBtn.textContent).not.toContain('上一年');
+    expect(nextBtn.textContent).not.toContain('下一年');
+    expect(prevBtn.querySelector('.year-nav-btn__label')).toBeNull();
+    expect(nextBtn.querySelector('.year-nav-btn__label')).toBeNull();
 
     Object.defineProperty(yearContainer, 'clientWidth', { configurable: true, value: 360 });
 
@@ -1469,7 +1469,12 @@ describe('LotteryDashboardComponent', () => {
     const navBtnRule = await extractExactScssRule('.year-nav-btn');
     const stylesText = await getStylesScssText();
 
+    expect(navBtnRule).toMatch(/display:\s*inline-flex/u);
+    expect(navBtnRule).toMatch(/width:\s*44px/u);
+    expect(navBtnRule).toMatch(/min-width:\s*44px/u);
     expect(navBtnRule).toMatch(/min-height:\s*44px/u);
+    expect(navBtnRule).toMatch(/aspect-ratio:\s*1/u);
+    expect(navBtnRule).toMatch(/padding:\s*0/u);
     expect(navBtnRule).toMatch(/border:/u);
     expect(navBtnRule).toMatch(/pa-hairline-strong/u);
     expect(navBtnRule).toMatch(/border-radius:\s*var\(--pa-radius-md\)/u);
@@ -1480,8 +1485,9 @@ describe('LotteryDashboardComponent', () => {
     expect(stylesText).toMatch(/\.year-nav-btn\[disabled\]\s*\{[^}]*opacity:/u);
     expect(stylesText).not.toMatch(/\.year-nav-btn\[disabled\][^{]*\{[^}]*opacity:\s*0\.3/u);
     expect(stylesText).toMatch(
-      /@media\s*\(max-width:\s*640px\)[\s\S]*\.year-nav-btn__label\s*\{[^}]*display:\s*none/u,
+      /\.year-nav-row:has\(\.year-nav-btn--prev\)\s*\{[^}]*grid-template-columns:\s*auto minmax\(0,\s*1fr\) auto/u,
     );
+    expect(stylesText).not.toContain('.year-nav-btn__label');
   });
 
   it('序位選取取消後再次點選相同序位可重新選取', async () => {

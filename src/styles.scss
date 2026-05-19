@@ -595,24 +595,25 @@ app-lottery-dashboard {
   .year-nav-row {
     display: grid;
     gap: 8px;
-    align-items: stretch;
+    align-items: center;
     grid-template-columns: minmax(0, 1fr);
     min-width: 0;
     position: relative;
   }
 
   .year-nav-row:has(.year-nav-btn--prev) {
-    grid-template-columns: clamp(44px, 8vw, 88px) minmax(0, 1fr) clamp(44px, 8vw, 88px);
+    grid-template-columns: auto minmax(0, 1fr) auto;
   }
 
   .year-nav-btn {
-    display: flex;
-    flex-direction: column;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 3px;
+    width: 44px;
+    min-width: 44px;
     min-height: 44px;
-    padding: 8px 4px;
+    aspect-ratio: 1;
+    padding: 0;
     border: 1px solid var(--pa-hairline-strong);
     border-radius: var(--pa-radius-md);
     background: var(--pa-surface-elevated);
@@ -647,14 +648,6 @@ app-lottery-dashboard {
 
   .year-nav-btn[disabled] mat-icon {
     color: var(--pa-muted);
-  }
-
-  .year-nav-btn__label {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    line-height: 1;
-    white-space: nowrap;
   }
 
   .year-section-header-viewport {
@@ -1396,14 +1389,6 @@ app-lottery-dashboard {
 
     .is-guidance-target {
       outline-offset: 3px;
-    }
-
-    .year-nav-btn {
-      padding: 0;
-    }
-
-    .year-nav-btn__label {
-      display: none;
     }
 
     .year-section {
