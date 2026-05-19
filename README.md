@@ -53,6 +53,12 @@ GitHub Actions 會在推送或手動觸發 `main` 時執行測試、建置，並
 `dist/picked-again/browser/` 部署到 GitHub Pages；`public/CNAME` 會一併輸出成 Pages
 自訂網域設定檔。PR 只會測試與建置，不會部署。
 
+`public/_headers` 會隨建置輸出，為支援該檔案格式的靜態主機或 CDN 設定快取：
+content-hashed Angular JS/CSS bundles 使用長效 immutable 快取，`/`、`/index.html`
+與 `/assets/data.json` 維持短效可重新驗證。GitHub Pages 不會套用 `_headers`，若要在線上
+`pick.pylot.space` 實際送出這些 Cache-Control headers，仍需在 Cloudflare 等邊緣層設定快取規則，
+或改由會讀取 `_headers` 的相容靜態主機提供服務。
+
 執行單元測試：
 
 ```bash

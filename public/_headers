@@ -1,0 +1,22 @@
+# Portable static-host headers for platforms that honor _headers
+
+/
+  Cache-Control: public, max-age=600, must-revalidate
+
+/index.html
+  Cache-Control: public, max-age=600, must-revalidate
+
+/assets/data.json
+  Cache-Control: public, max-age=300, must-revalidate
+
+/main-*
+  Cache-Control: public, max-age=31536000, immutable
+
+/polyfills-*
+  Cache-Control: public, max-age=31536000, immutable
+
+/chunk-*
+  Cache-Control: public, max-age=31536000, immutable
+
+/styles-*
+  Cache-Control: public, max-age=31536000, immutable
