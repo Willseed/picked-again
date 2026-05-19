@@ -1596,7 +1596,7 @@ describe('LotteryDashboardComponent', () => {
     expect(sequencePanel.querySelector('.selected-sequence-rate')).toBeNull();
   });
 
-  it('手機版 SCSS 中 age-card-layout 和 sequence-panel 的排列順序', async () => {
+  it('手機版 SCSS 中 age-card-layout、sequence-panel 排列順序與序位文字對齊', async () => {
     const stylesText = await getStylesScssText();
     expect(stylesText).toMatch(
       /@media\s*\(max-width:\s*640px\)[\s\S]*\.age-card\s+mat-card-content\s*>\s*\.age-card-layout\s*\{[^}]*order\s*:\s*1/u,
@@ -1617,7 +1617,19 @@ describe('LotteryDashboardComponent', () => {
       /\.sequence-chip\s+\.mat-mdc-chip-action-label\s*\{[^}]*max-width:\s*100%;[\s\S]*min-width:\s*0;/u,
     );
     expect(stylesText).toMatch(
+      /\.sequence-chip-label\s*\{[^}]*flex:\s*1\s+1\s+auto;/u,
+    );
+    expect(stylesText).toMatch(
+      /@media\s*\(max-width:\s*640px\)[\s\S]*\.sequence-chip\s+\.mdc-evolution-chip__action--primary\s*\{[^}]*justify-content:\s*flex-start;[\s\S]*text-align:\s*start;/u,
+    );
+    expect(stylesText).toMatch(
+      /@media\s*\(max-width:\s*640px\)[\s\S]*\.sequence-chip\s+\.mat-mdc-chip-action-label\s*\{[^}]*flex:\s*1\s+1\s+auto;[\s\S]*justify-content:\s*flex-start;[\s\S]*text-align:\s*start;[\s\S]*white-space:\s*nowrap;/u,
+    );
+    expect(stylesText).not.toMatch(
       /@media\s*\(max-width:\s*640px\)[\s\S]*\.sequence-chip\s+\.mdc-evolution-chip__action--primary\s*\{[^}]*justify-content:\s*center/u,
+    );
+    expect(stylesText).not.toMatch(
+      /@media\s*\(max-width:\s*640px\)[\s\S]*\.sequence-chip\s+\.mat-mdc-chip-action-label\s*\{[^}]*text-align:\s*center/u,
     );
   });
 

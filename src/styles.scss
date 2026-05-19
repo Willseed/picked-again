@@ -1505,16 +1505,18 @@ app-lottery-dashboard {
     }
 
     .sequence-chip .mdc-evolution-chip__action--primary {
-      justify-content: center;
+      justify-content: flex-start;
       padding-inline: 8px;
+      text-align: start;
     }
 
     .sequence-chip .mat-mdc-chip-action-label {
+      flex: 1 1 auto;
       width: 100%;
-      justify-content: center;
-      overflow-wrap: anywhere;
-      text-align: center;
-      white-space: normal;
+      justify-content: flex-start;
+      overflow-wrap: normal;
+      text-align: start;
+      white-space: nowrap;
     }
 
     .rate-value {
