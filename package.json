@@ -6,6 +6,10 @@
     "start": "ng serve",
     "build": "ng build",
     "build:pages": "ng build --configuration production --base-href /",
+    "bundle:build": "ng build --configuration production --source-map",
+    "bundle:list": "find dist/picked-again/browser -maxdepth 1 -type f -name '*.js' -print | sort",
+    "bundle:analyze": "source-map-explorer 'dist/picked-again/browser/main-*.js' --json --no-border-checks",
+    "bundle:report": "source-map-explorer 'dist/picked-again/browser/main-*.js' --html dist/picked-again/browser/main-bundle-report.html --no-border-checks",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "lhci:mobile": "node scripts/run-lhci.mjs mobile",
@@ -32,6 +36,7 @@
     "@lhci/cli": "^0.15.1",
     "jsdom": "^28.0.0",
     "prettier": "^3.8.1",
+    "source-map-explorer": "^2.5.3",
     "typescript": "~5.9.2",
     "vitest": "^4.0.8"
   }

@@ -41,7 +41,7 @@ npm start
 npm run build
 ```
 
-輸出會產生在 `dist/picked-again/`。
+輸出會產生在 `dist/picked-again/browser/`。
 
 建置 GitHub Pages 版本（給自訂網域 `https://pick.pylot.space/` 使用，base href 為 `/`）：
 
@@ -52,6 +52,19 @@ npm run build:pages
 GitHub Actions 會在推送或手動觸發 `main` 時執行測試、建置，並把
 `dist/picked-again/browser/` 部署到 GitHub Pages；`public/CNAME` 會一併輸出成 Pages
 自訂網域設定檔。PR 只會測試與建置，不會部署。
+
+Bundle inspection（本機分析用；不會改變一般部署建置，也不讓 `build` / `build:pages`
+輸出 source maps）：
+
+```bash
+npm run bundle:build    # production build with source maps for inspection only
+npm run bundle:list     # list JS bundles in dist/picked-again/browser/
+npm run bundle:analyze  # source-map-explorer JSON output for the main bundle
+npm run bundle:report   # HTML report at dist/picked-again/browser/main-bundle-report.html
+```
+
+`bundle:build` 會在 `dist/picked-again/browser/` 產生 `.map` 檔供
+`source-map-explorer` 讀取；這些輸出位於已忽略的 `dist/`，只適合本機或 CI 檢查。
 
 `public/_headers` 會隨建置輸出，為支援該檔案格式的靜態主機或 CDN 設定快取：
 content-hashed Angular JS/CSS bundles 使用長效 immutable 快取，`/`、`/index.html`
