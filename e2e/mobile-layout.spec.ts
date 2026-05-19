@@ -45,6 +45,63 @@ test('mobile sequence chips stay inside the data card and year controls use the 
 
   expect(overflowingChips).toEqual([]);
 
+  const fillThresholdChip = sequencePanel.locator('.sequence-chip.is-fill-threshold').first();
+  await expect(fillThresholdChip).toBeVisible();
+  await expect(fillThresholdChip.locator('.sequence-hit-badge')).toHaveText('收滿點');
+
+  const fillThresholdMetrics = await fillThresholdChip.evaluate((chip) => {
+    const label = chip.querySelector<HTMLElement>('.sequence-chip-label');
+    const count = chip.querySelector<HTMLElement>('.sequence-chip-count');
+    const badge = chip.querySelector<HTMLElement>('.sequence-hit-badge');
+    const actionLabel = chip.querySelector<HTMLElement>('.mat-mdc-chip-action-label');
+
+    if (!label || !count || !badge || !actionLabel) {
+      throw new Error('Expected fill-threshold chip internals to be present');
+    }
+
+    const chipRect = chip.getBoundingClientRect();
+    const actionRect = actionLabel.getBoundingClientRect();
+    const labelRect = label.getBoundingClientRect();
+    const countRect = count.getBoundingClientRect();
+    const badgeRect = badge.getBoundingClientRect();
+
+    return {
+      text: chip.textContent?.replace(/\s+/g, ' ').trim(),
+      chipWidth: chipRect.width,
+      labelClientWidth: label.clientWidth,
+      labelScrollWidth: label.scrollWidth,
+      labelWidth: labelRect.width,
+      labelHeight: labelRect.height,
+      countWidth: countRect.width,
+      badgeClientWidth: badge.clientWidth,
+      badgeScrollWidth: badge.scrollWidth,
+      badgeWidth: badgeRect.width,
+      badgeHeight: badgeRect.height,
+      badgeWithinAction:
+        badgeRect.left >= actionRect.left - 0.5 && badgeRect.right <= actionRect.right + 0.5,
+      badgeWithinChip:
+        badgeRect.left >= chipRect.left - 0.5 && badgeRect.right <= chipRect.right + 0.5,
+      labelWithinChip:
+        labelRect.left >= chipRect.left - 0.5 && labelRect.right <= chipRect.right + 0.5,
+    };
+  });
+
+  expect(fillThresholdMetrics.text).toContain('收滿點');
+  expect(fillThresholdMetrics.chipWidth).toBeGreaterThanOrEqual(148);
+  expect(fillThresholdMetrics.labelClientWidth).toBeGreaterThan(20);
+  expect(fillThresholdMetrics.labelScrollWidth).toBeGreaterThan(20);
+  expect(fillThresholdMetrics.labelWidth).toBeGreaterThan(20);
+  expect(fillThresholdMetrics.labelHeight).toBeGreaterThan(0);
+  expect(fillThresholdMetrics.countWidth).toBeGreaterThan(0);
+  expect(fillThresholdMetrics.badgeClientWidth + 1).toBeGreaterThanOrEqual(
+    fillThresholdMetrics.badgeScrollWidth,
+  );
+  expect(fillThresholdMetrics.badgeWidth).toBeGreaterThan(0);
+  expect(fillThresholdMetrics.badgeHeight).toBeGreaterThan(0);
+  expect(fillThresholdMetrics.badgeWithinAction).toBe(true);
+  expect(fillThresholdMetrics.badgeWithinChip).toBe(true);
+  expect(fillThresholdMetrics.labelWithinChip).toBe(true);
+
   const pageOverflow = await page.evaluate(() => {
     const documentElement = document.documentElement;
     return documentElement.scrollWidth - documentElement.clientWidth;

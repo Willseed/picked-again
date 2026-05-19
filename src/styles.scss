@@ -1483,7 +1483,7 @@ app-lottery-dashboard {
       display: grid;
       gap: 8px;
       align-items: stretch;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.5rem), 1fr));
     }
 
     .sequence-list .mdc-evolution-chip-set__chips > * {

@@ -1605,7 +1605,10 @@ describe('LotteryDashboardComponent', () => {
       /@media\s*\(max-width:\s*640px\)[\s\S]*\.age-card\s+mat-card-content\s*>\s*\.sequence-panel\s*\{[^}]*order\s*:\s*2/u,
     );
     expect(stylesText).toMatch(
-      /@media\s*\(max-width:\s*640px\)[\s\S]*\.sequence-list\s+\.mdc-evolution-chip-set__chips\s*\{[^}]*display:\s*grid;[\s\S]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/u,
+      /@media\s*\(max-width:\s*640px\)[\s\S]*\.sequence-list\s+\.mdc-evolution-chip-set__chips\s*\{[^}]*display:\s*grid;[\s\S]*grid-template-columns:\s*repeat\(auto-fit,\s*minmax\(min\(100%,\s*9\.5rem\),\s*1fr\)\)/u,
+    );
+    expect(stylesText).not.toMatch(
+      /\.sequence-list\s+\.mdc-evolution-chip-set__chips\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/u,
     );
     expect(stylesText).toMatch(
       /@media\s*\(max-width:\s*380px\)[\s\S]*\.sequence-list\s+\.mdc-evolution-chip-set__chips\s*\{[^}]*grid-template-columns:\s*1fr/u,
