@@ -162,6 +162,14 @@ async function renderDashboard(
 async function flushGuidanceFocus(
   fixture: ComponentFixture<LotteryDashboardComponent>,
 ): Promise<void> {
+  await flushGuidanceFocusFrame(fixture);
+  await fixture.whenStable();
+  fixture.detectChanges();
+}
+
+async function flushGuidanceFocusFrame(
+  fixture: ComponentFixture<LotteryDashboardComponent>,
+): Promise<void> {
   await new Promise<void>((resolve) => {
     if (typeof requestAnimationFrame === 'function') {
       requestAnimationFrame(() => resolve());
@@ -170,8 +178,6 @@ async function flushGuidanceFocus(
 
     setTimeout(resolve, 0);
   });
-  fixture.detectChanges();
-  await fixture.whenStable();
   fixture.detectChanges();
 }
 
@@ -298,6 +304,40 @@ function installScrollIntoViewSpy(): {
           scrollIntoView?: HTMLElement['scrollIntoView'];
         }
       ).scrollIntoView;
+    },
+  };
+}
+
+function installReducedMotionPreference(matches: boolean): { readonly restore: () => void } {
+  const descriptor = Object.getOwnPropertyDescriptor(window, 'matchMedia');
+
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
+    value: (query: string): MediaQueryList =>
+      ({
+        matches: matches && query === '(prefers-reduced-motion: reduce)',
+        media: query,
+        onchange: null,
+        addListener: () => undefined,
+        removeListener: () => undefined,
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined,
+        dispatchEvent: () => false,
+      }) as MediaQueryList,
+  });
+
+  return {
+    restore: () => {
+      if (descriptor) {
+        Object.defineProperty(window, 'matchMedia', descriptor);
+        return;
+      }
+
+      delete (
+        window as {
+          matchMedia?: Window['matchMedia'];
+        }
+      ).matchMedia;
     },
   };
 }
@@ -784,6 +824,43 @@ describe('LotteryDashboardComponent', () => {
     expect(scrollToCallArgs).toBeNull();
   });
 
+  it('首次搜尋開啟教學時會顯示前往定位點過場，後續步驟不重播', async () => {
+    const fixture = await renderDashboard(() => of(buildGuidanceTourSchools()), {
+      guidanceStorage: 'fresh',
+    });
+    const host = fixture.nativeElement as HTMLElement;
+
+    await enterSearch(fixture, '教學測試');
+    await flushGuidanceFocusFrame(fixture);
+
+    const shell = host.querySelector('.dashboard-shell') as HTMLElement;
+    const cue = host.querySelector(
+      '[data-guidance-transition="search-to-target"]',
+    ) as HTMLElement;
+
+    expect(shell.classList.contains('is-guidance-active')).toBe(true);
+    expect(shell.classList.contains('is-guidance-transitioning')).toBe(true);
+    expect(cue).toBeTruthy();
+    expect(cue.classList.contains('guidance-transition-cue')).toBe(true);
+    expect(cue.getAttribute('role')).toBe('status');
+    expect(cue.getAttribute('aria-live')).toBe('polite');
+    expect(cue.getAttribute('aria-atomic')).toBe('true');
+    expect(cue.textContent).toContain('正在前往教學重點');
+
+    cue.dispatchEvent(new Event('animationend', { bubbles: true }));
+    fixture.detectChanges();
+
+    expect(shell.classList.contains('is-guidance-transitioning')).toBe(false);
+    expect(host.querySelector('[data-guidance-transition="search-to-target"]')).toBeNull();
+
+    await clickGuidancePrimary(fixture);
+    await flushGuidanceFocusFrame(fixture);
+
+    expect(host.querySelector('.guidance-card--sequence')).toBeTruthy();
+    expect(shell.classList.contains('is-guidance-transitioning')).toBe(false);
+    expect(host.querySelector('[data-guidance-transition="search-to-target"]')).toBeNull();
+  });
+
   it('教學可跳過並持久化，不會再次自動顯示', async () => {
     const fixture = await renderDashboard(() => of(buildGuidanceTourSchools()), {
       guidanceStorage: 'fresh',
@@ -1023,19 +1100,59 @@ describe('LotteryDashboardComponent', () => {
     }
   });
 
+  it('偏好減少動態時首次教學捲動改用 auto 並保留過場語意提示', async () => {
+    const scrollIntoViewSpy = installScrollIntoViewSpy();
+    const reducedMotionPreference = installReducedMotionPreference(true);
+
+    try {
+      const fixture = await renderDashboard(() => of(buildGuidanceTourSchools()), {
+        guidanceStorage: 'fresh',
+      });
+
+      await enterSearch(fixture, '教學測試');
+      await flushGuidanceFocusFrame(fixture);
+
+      const host = fixture.nativeElement as HTMLElement;
+      const shell = host.querySelector('.dashboard-shell') as HTMLElement;
+      const cue = host.querySelector(
+        '[data-guidance-transition="search-to-target"]',
+      ) as HTMLElement;
+
+      expect(scrollIntoViewSpy.calls.at(-1)?.argument).toEqual({
+        block: 'center',
+        inline: 'nearest',
+        behavior: 'auto',
+      });
+      expect(shell.classList.contains('is-guidance-transitioning')).toBe(true);
+      expect(cue.getAttribute('role')).toBe('status');
+    } finally {
+      reducedMotionPreference.restore();
+      scrollIntoViewSpy.restore();
+    }
+  });
+
   it('教學黑幕與聚焦目標的 SCSS 層級應符合無障礙與深色遮罩需求', async () => {
     const scrimRule = await extractExactScssRule('.guidance-scrim');
+    const transitionCueRule = await extractExactScssRule('.guidance-transition-cue');
     const targetRule = await extractExactScssRule('.is-guidance-target');
     const targetAfterRule = await extractExactScssRule('.is-guidance-target::after');
     const cardRule = await extractExactScssRule('.guidance-card');
     const cardConnectorRule = await extractExactScssRule('.guidance-card::before');
     const stylesText = await getStylesScssText();
     const scrimZIndex = extractZIndex(scrimRule);
+    const transitionCueZIndex = extractZIndex(transitionCueRule);
 
     expect(scrimRule).toMatch(/position:\s*fixed/u);
     expect(scrimRule).toMatch(/inset:\s*0/u);
     expect(scrimRule).toMatch(/background:\s*rgba\(0,\s*0,\s*0,\s*0\.\d+\)/u);
     expect(scrimRule).not.toMatch(/aria-modal/u);
+    expect(transitionCueRule).toMatch(/position:\s*fixed/u);
+    expect(transitionCueZIndex).toBeGreaterThan(scrimZIndex);
+    expect(transitionCueZIndex).toBeLessThan(extractZIndex(targetRule));
+    expect(transitionCueRule).toMatch(/pointer-events:\s*none/u);
+    expect(transitionCueRule).toMatch(
+      /animation:\s*guidance-transition-cue\s+\d+ms\s+cubic-bezier\([^)]*\)\s+both/u,
+    );
     expect(targetRule).toMatch(/position:\s*relative/u);
     expect(cardRule).toMatch(/position:\s*relative/u);
     expect(extractZIndex(targetRule)).toBeGreaterThan(scrimZIndex);
@@ -1055,9 +1172,14 @@ describe('LotteryDashboardComponent', () => {
       /@keyframes\s+guidance-card-enter\s*\{[\s\S]*opacity:\s*0;[\s\S]*transform:\s*translateY\(8px\)\s+scale\(0\.985\);[\s\S]*opacity:\s*1;[\s\S]*transform:\s*translateY\(0\)\s+scale\(1\);/u,
     );
     expect(stylesText).toMatch(/@keyframes\s+guidance-target-pulse/u);
+    expect(stylesText).toMatch(/@keyframes\s+guidance-transition-cue/u);
     expect(stylesText).toMatch(
-      /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*\.guidance-card,[\s\S]*\.is-guidance-target::after\s*\{[\s\S]*animation:\s*none;[\s\S]*transition:\s*none;[\s\S]*transform:\s*none;/u,
+      /@keyframes\s+guidance-transition-cue\s*\{[\s\S]*opacity:\s*0;[\s\S]*transform:\s*translateY\(10px\)\s+scale\(0\.98\);[\s\S]*opacity:\s*1;[\s\S]*transform:\s*translateY\(0\)\s+scale\(1\);[\s\S]*opacity:\s*0;[\s\S]*transform:\s*translateY\(-6px\)\s+scale\(0\.99\);/u,
     );
+    expect(stylesText).toMatch(
+      /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*\.guidance-card,[\s\S]*\.guidance-transition-cue,[\s\S]*\.is-guidance-target::after\s*\{[\s\S]*animation:\s*none;[\s\S]*transition:\s*none;[\s\S]*transform:\s*none;/u,
+    );
+    expect(transitionCueRule).not.toMatch(/box-shadow/u);
     expect(targetRule).not.toMatch(/box-shadow/u);
     expect(cardRule).not.toMatch(/box-shadow/u);
   });

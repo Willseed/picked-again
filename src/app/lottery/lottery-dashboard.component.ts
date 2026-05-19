@@ -58,6 +58,8 @@ interface RecordGuidanceAnchor {
 
 const GUIDANCE_STEPS = ['year', 'sequence', 'general'] as const satisfies readonly GuidanceStep[];
 const GUIDANCE_DISMISSED_STORAGE_KEY = 'picked-again.lottery-dashboard.guidance-dismissed';
+const GUIDANCE_TRANSITION_TIMEOUT_MS = 960;
+const GUIDANCE_REDUCED_MOTION_TRANSITION_TIMEOUT_MS = 180;
 
 @Component({
   selector: 'app-lottery-dashboard',
@@ -106,6 +108,7 @@ export class LotteryDashboardComponent implements AfterViewInit {
   private readonly activeYearIndexesBySchoolName = signal<ReadonlyMap<string, number>>(new Map());
   private readonly guidanceDismissed = signal(readGuidanceDismissed());
   private readonly guidanceStep = signal<GuidanceStep>('year');
+  protected readonly guidanceTransitioning = signal(false);
   protected readonly keyword = toSignal(
     this.searchControl.valueChanges.pipe(
       startWith(this.searchControl.value),
@@ -150,6 +153,8 @@ export class LotteryDashboardComponent implements AfterViewInit {
     ElementRef<HTMLElement>
   >;
   @ViewChildren('yearSection') private yearSectionElements?: QueryList<ElementRef<HTMLElement>>;
+  private guidanceTransitionTimeoutId: number | null = null;
+  private guidanceInitialTransitionCompleted = false;
 
   constructor() {
     effect(() => {
@@ -165,10 +170,12 @@ export class LotteryDashboardComponent implements AfterViewInit {
     effect(() => {
       if (this.activeGuidanceStep() === null) {
         this.cancelGuidancePrimaryFocus();
+        this.cancelGuidanceTransition();
+        this.guidanceInitialTransitionCompleted = false;
         return;
       }
 
-      this.scheduleGuidancePrimaryFocus();
+      this.scheduleGuidancePrimaryFocus(!this.guidanceInitialTransitionCompleted);
     });
 
     this.searchControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
@@ -182,6 +189,7 @@ export class LotteryDashboardComponent implements AfterViewInit {
         this.cancelMeasurementFrame(this.yearSectionMeasurementFrameId);
       }
       this.cancelGuidancePrimaryFocus();
+      this.cancelGuidanceTransition();
 
       this.yearSectionResizeObserver?.disconnect();
     });
@@ -225,7 +233,7 @@ export class LotteryDashboardComponent implements AfterViewInit {
     event.preventDefault();
 
     if (this.guidanceInteractionLocked()) {
-      this.scheduleGuidancePrimaryFocus();
+      this.scheduleGuidancePrimaryFocus(false);
       return;
     }
 
@@ -489,11 +497,13 @@ export class LotteryDashboardComponent implements AfterViewInit {
   }
 
   protected skipGuidance(): void {
+    this.finishGuidanceTransition();
     writeGuidanceDismissed();
     this.guidanceDismissed.set(true);
   }
 
   protected advanceGuidance(): void {
+    this.finishGuidanceTransition();
     const currentStep = this.activeGuidanceStep() ?? this.guidanceStep();
     const currentIndex = GUIDANCE_STEPS.indexOf(currentStep);
     const nextStep = GUIDANCE_STEPS[currentIndex + 1];
@@ -713,11 +723,16 @@ export class LotteryDashboardComponent implements AfterViewInit {
     }
   }
 
-  private scheduleGuidancePrimaryFocus(): void {
+  protected finishGuidanceTransition(): void {
+    this.cancelGuidanceTransitionTimeout();
+    this.guidanceTransitioning.set(false);
+  }
+
+  private scheduleGuidancePrimaryFocus(shouldShowTransition: boolean): void {
     this.cancelGuidancePrimaryFocus();
     this.guidanceFocusFrameId = this.requestMeasurementFrame(() => {
       this.guidanceFocusFrameId = null;
-      this.focusActiveGuidancePrimary();
+      this.focusActiveGuidancePrimary(shouldShowTransition);
     });
   }
 
@@ -730,7 +745,7 @@ export class LotteryDashboardComponent implements AfterViewInit {
     this.guidanceFocusFrameId = null;
   }
 
-  private focusActiveGuidancePrimary(): void {
+  private focusActiveGuidancePrimary(shouldShowTransition: boolean): void {
     const activeStep = this.activeGuidanceStep();
 
     if (activeStep === null) {
@@ -743,6 +758,11 @@ export class LotteryDashboardComponent implements AfterViewInit {
 
     if (!primaryButton || primaryButton.disabled) {
       return;
+    }
+
+    if (shouldShowTransition && !this.guidanceInitialTransitionCompleted) {
+      this.startGuidanceTransition();
+      this.guidanceInitialTransitionCompleted = true;
     }
 
     this.scrollActiveGuidanceTargetIntoView(activeStep);
@@ -770,6 +790,31 @@ export class LotteryDashboardComponent implements AfterViewInit {
       inline: 'nearest',
       behavior: this.prefersReducedMotion() ? 'auto' : 'smooth',
     });
+  }
+
+  private startGuidanceTransition(): void {
+    this.cancelGuidanceTransitionTimeout();
+    this.guidanceTransitioning.set(true);
+    this.guidanceTransitionTimeoutId = window.setTimeout(
+      () => this.finishGuidanceTransition(),
+      this.prefersReducedMotion()
+        ? GUIDANCE_REDUCED_MOTION_TRANSITION_TIMEOUT_MS
+        : GUIDANCE_TRANSITION_TIMEOUT_MS,
+    );
+  }
+
+  private cancelGuidanceTransition(): void {
+    this.cancelGuidanceTransitionTimeout();
+    this.guidanceTransitioning.set(false);
+  }
+
+  private cancelGuidanceTransitionTimeout(): void {
+    if (this.guidanceTransitionTimeoutId === null) {
+      return;
+    }
+
+    clearTimeout(this.guidanceTransitionTimeoutId);
+    this.guidanceTransitionTimeoutId = null;
   }
 
   private prefersReducedMotion(): boolean {

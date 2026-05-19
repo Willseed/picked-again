@@ -170,6 +170,24 @@ body {
   }
 }
 
+@keyframes guidance-transition-cue {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+
+  20%,
+  76% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.99);
+  }
+}
+
 app-lottery-dashboard {
   display: block;
   min-height: 100dvh;
@@ -191,6 +209,42 @@ app-lottery-dashboard {
     inset: 0;
     z-index: 20;
     background: rgba(0, 0, 0, 0.72);
+  }
+
+  .guidance-transition-cue {
+    position: fixed;
+    top: clamp(72px, 14vh, 132px);
+    right: max(16px, env(safe-area-inset-right));
+    left: max(16px, env(safe-area-inset-left));
+    z-index: 25;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: fit-content;
+    max-width: min(360px, calc(100% - 32px));
+    min-height: 38px;
+    margin-inline: auto;
+    border: 1px solid var(--pa-hairline-strong);
+    border-radius: var(--pa-radius-full);
+    background: var(--pa-surface-elevated);
+    color: var(--pa-on-dark);
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    pointer-events: none;
+    animation: guidance-transition-cue 840ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    will-change: opacity, transform;
+  }
+
+  .guidance-transition-cue__marker {
+    display: inline-flex;
+    width: 8px;
+    height: 8px;
+    border: 1px solid var(--pa-on-dark);
+    border-radius: var(--pa-radius-full);
+    background: var(--pa-cta);
   }
 
   .mat-mdc-card {
@@ -506,6 +560,7 @@ app-lottery-dashboard {
   @media (prefers-reduced-motion: reduce) {
     .guidance-card,
     .guidance-card::before,
+    .guidance-transition-cue,
     .is-guidance-target,
     .is-guidance-target::after {
       animation: none;

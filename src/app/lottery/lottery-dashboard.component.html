@@ -1,10 +1,24 @@
 <section
   class="dashboard-shell"
   [class.is-guidance-active]="isGuidanceOpen()"
+  [class.is-guidance-transitioning]="guidanceTransitioning()"
   aria-label="台北幼兒園中籤率搜尋工具"
 >
   @if (isGuidanceOpen()) {
     <div class="guidance-scrim" aria-hidden="true"></div>
+  }
+  @if (guidanceTransitioning()) {
+    <div
+      class="guidance-transition-cue"
+      data-guidance-transition="search-to-target"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+      (animationend)="finishGuidanceTransition()"
+    >
+      <span class="guidance-transition-cue__marker" aria-hidden="true"></span>
+      <span>正在前往教學重點</span>
+    </div>
   }
 
   <mat-card appearance="outlined" class="hero-card">
