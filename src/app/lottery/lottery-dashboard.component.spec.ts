@@ -715,113 +715,125 @@ describe('LotteryDashboardComponent', () => {
   });
 
   it('預設應顯示年度教學，聚焦主要教學按鈕並鎖定其他控制', async () => {
-    const fixture = await renderDashboard(() => of(buildGuidanceTourSchools()), {
-      guidanceStorage: 'fresh',
-    });
-    const host = fixture.nativeElement as HTMLElement;
+    const scrollIntoViewSpy = installScrollIntoViewSpy();
 
-    expect(getGuidanceScrim(host)).toBeNull();
-    expect(getGuidanceTargets(host)).toHaveLength(0);
+    try {
+      const fixture = await renderDashboard(() => of(buildGuidanceTourSchools()), {
+        guidanceStorage: 'fresh',
+      });
+      const host = fixture.nativeElement as HTMLElement;
 
-    await enterSearch(fixture, '教學測試');
-    await flushGuidanceFocus(fixture);
+      expect(getGuidanceScrim(host)).toBeNull();
+      expect(getGuidanceTargets(host)).toHaveLength(0);
 
-    const input = host.querySelector('input') as HTMLInputElement;
-    const clearButton = host.querySelector('button[aria-label="清除搜尋"]') as HTMLButtonElement;
-    const yearGuidance = host.querySelector('.guidance-card--year') as HTMLElement;
-    const yearContainer = host.querySelector('.year-sections') as HTMLElement;
-    const prevBtn = host.querySelector('.year-nav-btn--prev') as HTMLButtonElement;
-    const nextBtn = host.querySelector('.year-nav-btn--next') as HTMLButtonElement;
-    const skipButton = yearGuidance.querySelector('.guidance-action') as HTMLButtonElement;
-    const primaryButton = yearGuidance.querySelector('.guidance-primary') as HTMLButtonElement;
-    const scrim = getGuidanceScrim(host) as HTMLElement;
-    const guidanceTarget = expectSingleGuidanceTarget(host, '.year-nav-row');
+      await enterSearch(fixture, '教學測試');
+      await flushGuidanceFocus(fixture);
 
-    expect(scrim).toBeTruthy();
-    expect(scrim.getAttribute('aria-hidden')).toBe('true');
-    expect(scrim.hasAttribute('tabindex')).toBe(false);
-    expect(scrim.tabIndex).toBe(-1);
-    expect(scrim.hasAttribute('aria-modal')).toBe(false);
-    expect(guidanceTarget.contains(yearGuidance)).toBe(true);
-    expect(guidanceTarget.contains(yearContainer)).toBe(true);
-    expect(yearGuidance).toBeTruthy();
-    expect(yearGuidance.id).toBe('lottery-guidance-year');
-    expect(yearGuidance.getAttribute('role')).toBe('note');
-    expect(yearGuidance.textContent).toContain('年度切換：完成教學後可左右滑動或按左右箭頭。');
-    expect(yearGuidance.textContent).toContain('跳過');
-    expect(yearGuidance.textContent).toContain('下一步');
-    expect(yearContainer.getAttribute('aria-describedby')).toBe('lottery-guidance-year');
-    expect(yearContainer.getAttribute('tabindex')).toBeNull();
-    expect(yearContainer.tabIndex).toBe(-1);
-    expect(yearContainer.getAttribute('aria-disabled')).toBe('true');
-    expect(yearContainer.classList.contains('is-guidance-locked')).toBe(true);
-    expect(yearContainer.style.overflowX).toBe('hidden');
-    expect(yearContainer.style.touchAction).toBe('none');
-    expect(prevBtn.getAttribute('aria-describedby')).toBe('lottery-guidance-year');
-    expect(nextBtn.getAttribute('aria-describedby')).toBe('lottery-guidance-year');
-    expect(document.activeElement).toBe(primaryButton);
-    expect(input.disabled).toBe(true);
-    expect(clearButton.disabled).toBe(true);
-    expect(prevBtn.disabled).toBe(true);
-    expect(nextBtn.disabled).toBe(true);
-    expect(skipButton.disabled).toBe(false);
-    expect(primaryButton.disabled).toBe(false);
-    expect(host.querySelector('.guidance-replay-button')).toBeNull();
+      const input = host.querySelector('input') as HTMLInputElement;
+      const clearButton = host.querySelector('button[aria-label="清除搜尋"]') as HTMLButtonElement;
+      const yearGuidance = host.querySelector('.guidance-card--year') as HTMLElement;
+      const yearContainer = host.querySelector('.year-sections') as HTMLElement;
+      const prevBtn = host.querySelector('.year-nav-btn--prev') as HTMLButtonElement;
+      const nextBtn = host.querySelector('.year-nav-btn--next') as HTMLButtonElement;
+      const skipButton = yearGuidance.querySelector('.guidance-action') as HTMLButtonElement;
+      const primaryButton = yearGuidance.querySelector('.guidance-primary') as HTMLButtonElement;
+      const scrim = getGuidanceScrim(host) as HTMLElement;
+      const guidanceTarget = expectSingleGuidanceTarget(host, '.year-nav-row');
 
-    Object.defineProperty(yearContainer, 'clientWidth', { configurable: true, value: 360 });
+      expect(scrim).toBeTruthy();
+      expect(scrim.getAttribute('aria-hidden')).toBe('true');
+      expect(scrim.hasAttribute('tabindex')).toBe(false);
+      expect(scrim.tabIndex).toBe(-1);
+      expect(scrim.hasAttribute('aria-modal')).toBe(false);
+      expect(guidanceTarget.contains(yearGuidance)).toBe(true);
+      expect(guidanceTarget.contains(yearContainer)).toBe(true);
+      expect(yearGuidance).toBeTruthy();
+      expect(yearGuidance.id).toBe('lottery-guidance-year');
+      expect(yearGuidance.getAttribute('role')).toBe('note');
+      expect(yearGuidance.textContent).toContain('年度切換：完成教學後可左右滑動或按左右箭頭。');
+      expect(yearGuidance.textContent).toContain('跳過');
+      expect(yearGuidance.textContent).toContain('下一步');
+      expect(yearContainer.getAttribute('aria-describedby')).toBe('lottery-guidance-year');
+      expect(yearContainer.getAttribute('tabindex')).toBeNull();
+      expect(yearContainer.tabIndex).toBe(-1);
+      expect(yearContainer.getAttribute('aria-disabled')).toBe('true');
+      expect(yearContainer.classList.contains('is-guidance-locked')).toBe(true);
+      expect(yearContainer.style.overflowX).toBe('hidden');
+      expect(yearContainer.style.touchAction).toBe('none');
+      expect(prevBtn.getAttribute('aria-describedby')).toBe('lottery-guidance-year');
+      expect(nextBtn.getAttribute('aria-describedby')).toBe('lottery-guidance-year');
+      expect(scrollIntoViewSpy.calls.at(-1)?.element).toBe(primaryButton);
+      expect(scrollIntoViewSpy.calls.at(-1)?.argument).toEqual({
+        block: 'center',
+        inline: 'nearest',
+        behavior: 'smooth',
+      });
+      expect(document.activeElement).toBe(primaryButton);
+      expect(input.disabled).toBe(true);
+      expect(clearButton.disabled).toBe(true);
+      expect(prevBtn.disabled).toBe(true);
+      expect(nextBtn.disabled).toBe(true);
+      expect(skipButton.disabled).toBe(false);
+      expect(primaryButton.disabled).toBe(false);
+      expect(host.querySelector('.guidance-replay-button')).toBeNull();
 
-    let wheelBubbled = false;
-    let scrollToCallArgs: Parameters<typeof yearContainer.scrollTo> | null = null;
+      Object.defineProperty(yearContainer, 'clientWidth', { configurable: true, value: 360 });
 
-    yearContainer.parentElement?.addEventListener(
-      'wheel',
-      () => {
-        wheelBubbled = true;
-      },
-      { once: true },
-    );
+      let wheelBubbled = false;
+      let scrollToCallArgs: Parameters<typeof yearContainer.scrollTo> | null = null;
 
-    Object.defineProperty(yearContainer, 'scrollTo', {
-      configurable: true,
-      writable: true,
-      value: (...args: Parameters<typeof yearContainer.scrollTo>) => {
-        scrollToCallArgs = args;
-      },
-    });
+      yearContainer.parentElement?.addEventListener(
+        'wheel',
+        () => {
+          wheelBubbled = true;
+        },
+        { once: true },
+      );
 
-    yearContainer.scrollLeft = 360;
-    const wheelEvent = new Event('wheel', { bubbles: true, cancelable: true });
-    yearContainer.dispatchEvent(wheelEvent);
-    fixture.detectChanges();
+      Object.defineProperty(yearContainer, 'scrollTo', {
+        configurable: true,
+        writable: true,
+        value: (...args: Parameters<typeof yearContainer.scrollTo>) => {
+          scrollToCallArgs = args;
+        },
+      });
 
-    expect(wheelEvent.defaultPrevented).toBe(true);
-    expect(wheelBubbled).toBe(false);
-    expect(yearContainer.scrollLeft).toBe(0);
+      yearContainer.scrollLeft = 360;
+      const wheelEvent = new Event('wheel', { bubbles: true, cancelable: true });
+      yearContainer.dispatchEvent(wheelEvent);
+      fixture.detectChanges();
 
-    const keydownEvent = new KeyboardEvent('keydown', {
-      bubbles: true,
-      cancelable: true,
-      key: 'ArrowRight',
-    });
-    yearContainer.dispatchEvent(keydownEvent);
+      expect(wheelEvent.defaultPrevented).toBe(true);
+      expect(wheelBubbled).toBe(false);
+      expect(yearContainer.scrollLeft).toBe(0);
 
-    expect(keydownEvent.defaultPrevented).toBe(true);
+      const keydownEvent = new KeyboardEvent('keydown', {
+        bubbles: true,
+        cancelable: true,
+        key: 'ArrowRight',
+      });
+      yearContainer.dispatchEvent(keydownEvent);
 
-    yearContainer.scrollLeft = 360;
-    yearContainer.dispatchEvent(new Event('scroll'));
-    fixture.detectChanges();
-    await flushCarouselMeasurements(fixture);
+      expect(keydownEvent.defaultPrevented).toBe(true);
 
-    expect(yearContainer.scrollLeft).toBe(0);
-    expect((host.querySelector('.year-section-header-track') as HTMLElement).style.transform).toBe(
-      'translateX(-0%)',
-    );
+      yearContainer.scrollLeft = 360;
+      yearContainer.dispatchEvent(new Event('scroll'));
+      fixture.detectChanges();
+      await flushCarouselMeasurements(fixture);
 
-    nextBtn.click();
-    fixture.detectChanges();
-    await fixture.whenStable();
+      expect(yearContainer.scrollLeft).toBe(0);
+      expect((host.querySelector('.year-section-header-track') as HTMLElement).style.transform).toBe(
+        'translateX(-0%)',
+      );
 
-    expect(scrollToCallArgs).toBeNull();
+      nextBtn.click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(scrollToCallArgs).toBeNull();
+    } finally {
+      scrollIntoViewSpy.restore();
+    }
   });
 
   it('首次搜尋開啟教學時會顯示前往定位點過場，後續步驟不重播', async () => {
@@ -1051,12 +1063,12 @@ describe('LotteryDashboardComponent', () => {
       await flushGuidanceFocus(fixture);
 
       const host = fixture.nativeElement as HTMLElement;
-      const yearTarget = expectSingleGuidanceTarget(host, '.year-nav-row');
       const yearPrimary = host.querySelector(
         '.guidance-card--year .guidance-primary',
       ) as HTMLButtonElement;
 
-      expect(scrollIntoViewSpy.calls.at(-1)?.element).toBe(yearTarget);
+      expect(expectSingleGuidanceTarget(host, '.year-nav-row')).toBeTruthy();
+      expect(scrollIntoViewSpy.calls.at(-1)?.element).toBe(yearPrimary);
       expect(scrollIntoViewSpy.calls.at(-1)?.argument).toEqual({
         block: 'center',
         inline: 'nearest',

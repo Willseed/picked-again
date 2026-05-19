@@ -779,7 +779,11 @@ export class LotteryDashboardComponent implements AfterViewInit {
       `.guidance-card--${activeStep}`,
     );
     const activeTarget =
-      activeGuidanceCard?.closest<HTMLElement>('.is-guidance-target') ?? activeGuidanceCard;
+      activeStep === 'year'
+        ? activeGuidanceCard?.querySelector<HTMLElement>('.guidance-primary') ??
+          activeGuidanceCard?.closest<HTMLElement>('.is-guidance-target') ??
+          activeGuidanceCard
+        : activeGuidanceCard?.closest<HTMLElement>('.is-guidance-target') ?? activeGuidanceCard;
 
     if (!activeTarget || typeof activeTarget.scrollIntoView !== 'function') {
       return;
