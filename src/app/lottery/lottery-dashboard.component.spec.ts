@@ -1474,9 +1474,14 @@ describe('LotteryDashboardComponent', () => {
     const navBtnRule = await extractExactScssRule('.year-nav-btn');
     const stylesText = await getStylesScssText();
 
-    expect(navControlsRule).toMatch(/display:\s*flex/u);
-    expect(navControlsRule).toMatch(/justify-content:\s*space-between/u);
-    expect(navControlsRule).toMatch(/width:\s*100%/u);
+    expect(navControlsRule).toMatch(/display:\s*inline-flex/u);
+    expect(navControlsRule).toMatch(/justify-content:\s*center/u);
+    expect(navControlsRule).toMatch(/gap:\s*8px/u);
+    expect(navControlsRule).toMatch(/width:\s*fit-content/u);
+    expect(navControlsRule).toMatch(/margin-inline:\s*auto/u);
+    expect(navControlsRule).toMatch(/border:\s*1px solid var\(--pa-hairline\)/u);
+    expect(navControlsRule).toMatch(/background:\s*var\(--pa-surface\)/u);
+    expect(navControlsRule).toMatch(/padding:\s*4px/u);
     expect(navBtnRule).toMatch(/display:\s*inline-flex/u);
     expect(navBtnRule).toMatch(/width:\s*44px/u);
     expect(navBtnRule).toMatch(/min-width:\s*44px/u);
@@ -1491,6 +1496,9 @@ describe('LotteryDashboardComponent', () => {
     expect(stylesText).toMatch(/\.year-nav-btn:focus-visible\s*\{[^}]*outline:/u);
     expect(stylesText).toMatch(/\.year-nav-btn\[disabled\]\s*\{[^}]*opacity:/u);
     expect(stylesText).not.toMatch(/\.year-nav-btn\[disabled\][^{]*\{[^}]*opacity:\s*0\.3/u);
+    expect(stylesText).toMatch(
+      /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*?\.year-nav-controls\s*\{[^}]*gap:\s*6px/u,
+    );
     expect(stylesText).not.toContain('.year-nav-row:has(.year-nav-btn--prev)');
     expect(stylesText).not.toContain('.year-nav-btn__label');
   });

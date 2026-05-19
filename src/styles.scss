@@ -601,11 +601,18 @@ app-lottery-dashboard {
   }
 
   .year-nav-controls {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    justify-content: space-between;
-    width: 100%;
+    justify-content: center;
+    gap: 8px;
+    width: fit-content;
+    max-width: 100%;
     min-width: 0;
+    margin-inline: auto;
+    border: 1px solid var(--pa-hairline);
+    border-radius: var(--pa-radius-md);
+    background: var(--pa-surface);
+    padding: 4px;
   }
 
   .year-nav-btn {
@@ -1387,6 +1394,10 @@ app-lottery-dashboard {
 
     .year-sections {
       padding-bottom: 10px;
+    }
+
+    .year-nav-controls {
+      gap: 6px;
     }
 
     .is-guidance-target {
