@@ -9,6 +9,7 @@
 - Development watch build: `npm run watch`
 - Full unit test suite: `npm test -- --watch=false`
 - Single spec file: `npm test -- --watch=false --include src/app/lottery/lottery-data.utils.spec.ts`
+- Playwright mobile layout checks: `npm run test:e2e` (runs mobile Chromium and WebKit; first-time setup may need `npx playwright install chromium webkit`)
 
 This project uses npm (`packageManager`: `npm@11.12.1`) and Angular CLI 21.
 
@@ -48,4 +49,6 @@ Use `DESIGN.md` as the source of truth for visual work. The target is a Raycast-
 - Component state uses Angular signals/computed values and `takeUntilDestroyed` for subscriptions. Component members used only by templates are `protected readonly`.
 - UI surfaces and controls should stay on Angular Material components (`mat-card`, `mat-form-field`, `mat-chip`, `mat-progress-bar`, Material buttons/icons), but style them toward the `DESIGN.md` dark command-palette system instead of accepting default Material chrome.
 - Unit tests use Vitest through `ng test`. Data utility tests use `satisfies RawLotteryData`; component tests stub `LotteryDataService` rather than performing real HTTP requests.
+- Mobile layout changes, especially around sequence chips or year navigation, must be validated with Playwright in both mobile Chromium and mobile WebKit. Sequence chip grids must avoid WebKit/Chrome overflow by keeping grid tracks at `minmax(0, 1fr)` and forcing Material chip internals (`.mdc-evolution-chip*`) to `min-width: 0`.
+- Year navigation buttons should remain icon-only, 44px touch targets, inside the data card as a full-width control row using `justify-content: space-between`; do not reintroduce visible `上一年` / `下一年` labels.
 - **Every new school entry must be accompanied by a test**: add an `it` block in `lottery-data.utils.spec.ts` that verifies `estimatedLotteryRatePercent` for every age group (via `toBeCloseTo`) and that at least one school-specific search keyword produces an exact match (`matchScore === 1`). Data and tests must land in the same commit.

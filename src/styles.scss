@@ -601,18 +601,11 @@ app-lottery-dashboard {
   }
 
   .year-nav-controls {
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 8px;
-    width: fit-content;
-    max-width: 100%;
+    justify-content: space-between;
+    width: 100%;
     min-width: 0;
-    margin-inline: auto;
-    border: 1px solid var(--pa-hairline);
-    border-radius: var(--pa-radius-md);
-    background: var(--pa-surface);
-    padding: 4px;
   }
 
   .year-nav-btn {
@@ -1098,6 +1091,13 @@ app-lottery-dashboard {
     min-width: 0;
   }
 
+  .sequence-list .mdc-evolution-chip-set {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
   .sequence-list .mdc-evolution-chip-set__chips {
     gap: 6px;
     margin: 0;
@@ -1132,6 +1132,7 @@ app-lottery-dashboard {
 
   .sequence-chip .mdc-evolution-chip__cell--primary,
   .sequence-chip .mdc-evolution-chip__action--primary {
+    box-sizing: border-box;
     max-width: 100%;
     min-width: 0;
     overflow: hidden;
@@ -1396,10 +1397,6 @@ app-lottery-dashboard {
       padding-bottom: 10px;
     }
 
-    .year-nav-controls {
-      gap: 6px;
-    }
-
     .is-guidance-target {
       outline-offset: 3px;
     }
@@ -1485,17 +1482,35 @@ app-lottery-dashboard {
     .sequence-list .mdc-evolution-chip-set__chips {
       display: grid;
       gap: 8px;
-      grid-template-columns: repeat(auto-fit, minmax(min(100%, 7.5rem), 1fr));
+      align-items: stretch;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .sequence-list .mdc-evolution-chip-set__chips > * {
+      min-width: 0;
     }
 
     .sequence-chip {
+      box-sizing: border-box;
       width: 100%;
-      max-width: 100%;
+      max-width: none;
       min-width: 0;
       min-height: 36px;
     }
 
+    .sequence-chip .mdc-evolution-chip__cell--primary,
+    .sequence-chip .mdc-evolution-chip__action--primary {
+      width: 100%;
+      min-width: 0;
+    }
+
+    .sequence-chip .mdc-evolution-chip__action--primary {
+      justify-content: center;
+      padding-inline: 8px;
+    }
+
     .sequence-chip .mat-mdc-chip-action-label {
+      width: 100%;
       justify-content: center;
       overflow-wrap: anywhere;
       text-align: center;
@@ -1510,5 +1525,11 @@ app-lottery-dashboard {
     .age-card mat-card-content > * { order: 3; }
     .age-card mat-card-content > .age-card-layout { order: 1; }
     .age-card mat-card-content > .sequence-panel { order: 2; }
+  }
+
+  @media (max-width: 380px) {
+    .sequence-list .mdc-evolution-chip-set__chips {
+      grid-template-columns: 1fr;
+    }
   }
 }

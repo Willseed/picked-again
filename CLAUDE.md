@@ -10,6 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run watch` — development watch build
 - `npm test -- --watch=false` — full unit test suite (Vitest via `ng test`)
 - `npm test -- --watch=false --include src/app/lottery/lottery-data.utils.spec.ts` — single spec file
+- `npm run test:e2e` — Playwright mobile layout checks in Chromium and WebKit (first run may need `npx playwright install chromium webkit`)
 
 ## Architecture
 
@@ -40,6 +41,10 @@ Angular 21 standalone app. No NgModules anywhere — import Angular Material mod
 **Component state:** Angular signals and `computed()` values; subscriptions use `takeUntilDestroyed`. Template-only members are `protected readonly`.
 
 **Tests:** data-utility tests use `satisfies RawLotteryData`; component tests stub `LotteryDataService` — no real HTTP.
+
+**Mobile layout:** changes to sequence chips or year navigation require Playwright validation in mobile Chromium and mobile WebKit. Keep sequence chip grids on `minmax(0, 1fr)` tracks and set Material chip internals (`.mdc-evolution-chip*`) to `min-width: 0` so WebKit/Chrome do not overflow.
+
+**Year navigation controls:** keep the year buttons icon-only, 44px touch targets, inside the data card as a full-width row with `justify-content: space-between`; do not restore visible `上一年` / `下一年` text.
 
 **Every new school entry requires a test:** whenever a school is added to `data.json` / `public/assets/data.json`, add a matching `it` block in `lottery-data.utils.spec.ts` in the same commit that verifies:
 - `estimatedLotteryRatePercent` for every age group (via `toBeCloseTo`)
