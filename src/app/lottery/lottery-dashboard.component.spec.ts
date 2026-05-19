@@ -566,6 +566,7 @@ describe('LotteryDashboardComponent', () => {
     const headerTrack = stickyHeader.querySelector('.year-section-header-track') as HTMLElement;
     const yearContainer = host.querySelector('.year-sections') as HTMLElement;
     const yearNavRow = yearCarousel.querySelector('.year-nav-row') as HTMLElement;
+    const yearNavControls = yearNavRow.querySelector('.year-nav-controls') as HTMLElement;
     const prevBtn = yearCarousel.querySelector('.year-nav-btn--prev') as HTMLElement;
     const nextBtn = yearCarousel.querySelector('.year-nav-btn--next') as HTMLElement;
     const yearHeaders = Array.from(host.querySelectorAll('.year-section-header')) as HTMLElement[];
@@ -588,11 +589,14 @@ describe('LotteryDashboardComponent', () => {
     await flushCarouselMeasurements(fixture);
 
     expect(yearNavRow).toBeTruthy();
+    expect(yearNavControls).toBeTruthy();
     expect(prevBtn).toBeTruthy();
     expect(nextBtn).toBeTruthy();
     expect(prevBtn.getAttribute('aria-label')).toBeTruthy();
     expect(nextBtn.getAttribute('aria-label')).toBeTruthy();
     expect(yearNavRow.contains(yearContainer)).toBe(true);
+    expect(yearNavControls.contains(prevBtn)).toBe(true);
+    expect(yearNavControls.contains(nextBtn)).toBe(true);
     expect(stickyHeader.nextElementSibling).toBe(yearNavRow);
     expect(yearCarousel.querySelector('.guidance-card--year')).toBeNull();
     expect(yearContainer.getAttribute('role')).toBe('list');
@@ -1466,27 +1470,28 @@ describe('LotteryDashboardComponent', () => {
     expect(nextBtn.disabled).toBe(true);
     expect(prevBtn.disabled).toBe(false);
 
+    const navControlsRule = await extractExactScssRule('.year-nav-controls');
     const navBtnRule = await extractExactScssRule('.year-nav-btn');
     const stylesText = await getStylesScssText();
 
+    expect(navControlsRule).toMatch(/display:\s*flex/u);
+    expect(navControlsRule).toMatch(/justify-content:\s*space-between/u);
+    expect(navControlsRule).toMatch(/width:\s*100%/u);
     expect(navBtnRule).toMatch(/display:\s*inline-flex/u);
     expect(navBtnRule).toMatch(/width:\s*44px/u);
     expect(navBtnRule).toMatch(/min-width:\s*44px/u);
     expect(navBtnRule).toMatch(/min-height:\s*44px/u);
     expect(navBtnRule).toMatch(/aspect-ratio:\s*1/u);
     expect(navBtnRule).toMatch(/padding:\s*0/u);
-    expect(navBtnRule).toMatch(/border:/u);
-    expect(navBtnRule).toMatch(/pa-hairline-strong/u);
+    expect(navBtnRule).toMatch(/border:\s*0/u);
     expect(navBtnRule).toMatch(/border-radius:\s*var\(--pa-radius-md\)/u);
-    expect(navBtnRule).toMatch(/background:\s*var\(--pa-surface-elevated\)/u);
+    expect(navBtnRule).toMatch(/background:\s*var\(--pa-surface-card\)/u);
     expect(navBtnRule).not.toMatch(/box-shadow/u);
     expect(navBtnRule).not.toMatch(/opacity/u);
     expect(stylesText).toMatch(/\.year-nav-btn:focus-visible\s*\{[^}]*outline:/u);
     expect(stylesText).toMatch(/\.year-nav-btn\[disabled\]\s*\{[^}]*opacity:/u);
     expect(stylesText).not.toMatch(/\.year-nav-btn\[disabled\][^{]*\{[^}]*opacity:\s*0\.3/u);
-    expect(stylesText).toMatch(
-      /\.year-nav-row:has\(\.year-nav-btn--prev\)\s*\{[^}]*grid-template-columns:\s*auto minmax\(0,\s*1fr\) auto/u,
-    );
+    expect(stylesText).not.toContain('.year-nav-row:has(.year-nav-btn--prev)');
     expect(stylesText).not.toContain('.year-nav-btn__label');
   });
 

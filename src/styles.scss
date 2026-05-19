@@ -595,14 +595,17 @@ app-lottery-dashboard {
   .year-nav-row {
     display: grid;
     gap: 8px;
-    align-items: center;
     grid-template-columns: minmax(0, 1fr);
     min-width: 0;
     position: relative;
   }
 
-  .year-nav-row:has(.year-nav-btn--prev) {
-    grid-template-columns: auto minmax(0, 1fr) auto;
+  .year-nav-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-width: 0;
   }
 
   .year-nav-btn {
@@ -614,16 +617,15 @@ app-lottery-dashboard {
     min-height: 44px;
     aspect-ratio: 1;
     padding: 0;
-    border: 1px solid var(--pa-hairline-strong);
+    border: 0;
     border-radius: var(--pa-radius-md);
-    background: var(--pa-surface-elevated);
+    background: var(--pa-surface-card);
     color: var(--pa-on-dark-mute);
     cursor: pointer;
   }
 
   .year-nav-btn:not([disabled]):hover {
-    border-color: var(--pa-hairline-strong);
-    background: var(--pa-surface-card);
+    background: var(--pa-surface-elevated);
     color: var(--pa-ink);
   }
 

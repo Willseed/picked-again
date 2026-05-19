@@ -207,21 +207,38 @@
                   </mat-card>
                 }
                 @if (yearGroups.length > 1) {
-                  <button
-                    class="year-nav-btn year-nav-btn--prev"
-                    type="button"
-                    aria-label="查看上一學年度"
-                    [attr.aria-describedby]="
-                      yearGuidanceDescribedBy(resultIndex, yearGroups.length)
-                    "
-                    [disabled]="
-                      guidanceInteractionLocked() ||
-                      !canNavigateYear(result.schoolName, yearGroups.length, -1)
-                    "
-                    (click)="navigateYear(result.schoolName, yearGroups.length, -1)"
-                  >
-                    <mat-icon aria-hidden="true">chevron_left</mat-icon>
-                  </button>
+                  <div class="year-nav-controls" role="group" aria-label="學年度切換控制">
+                    <button
+                      class="year-nav-btn year-nav-btn--prev"
+                      type="button"
+                      aria-label="查看上一學年度"
+                      [attr.aria-describedby]="
+                        yearGuidanceDescribedBy(resultIndex, yearGroups.length)
+                      "
+                      [disabled]="
+                        guidanceInteractionLocked() ||
+                        !canNavigateYear(result.schoolName, yearGroups.length, -1)
+                      "
+                      (click)="navigateYear(result.schoolName, yearGroups.length, -1)"
+                    >
+                      <mat-icon aria-hidden="true">chevron_left</mat-icon>
+                    </button>
+                    <button
+                      class="year-nav-btn year-nav-btn--next"
+                      type="button"
+                      aria-label="查看下一學年度"
+                      [attr.aria-describedby]="
+                        yearGuidanceDescribedBy(resultIndex, yearGroups.length)
+                      "
+                      [disabled]="
+                        guidanceInteractionLocked() ||
+                        !canNavigateYear(result.schoolName, yearGroups.length, 1)
+                      "
+                      (click)="navigateYear(result.schoolName, yearGroups.length, 1)"
+                    >
+                      <mat-icon aria-hidden="true">chevron_right</mat-icon>
+                    </button>
+                  </div>
                 }
 
                 <div
@@ -594,23 +611,6 @@
                   </section>
                 }
               </div>
-                @if (yearGroups.length > 1) {
-                  <button
-                    class="year-nav-btn year-nav-btn--next"
-                    type="button"
-                    aria-label="查看下一學年度"
-                    [attr.aria-describedby]="
-                      yearGuidanceDescribedBy(resultIndex, yearGroups.length)
-                    "
-                    [disabled]="
-                      guidanceInteractionLocked() ||
-                      !canNavigateYear(result.schoolName, yearGroups.length, 1)
-                    "
-                    (click)="navigateYear(result.schoolName, yearGroups.length, 1)"
-                  >
-                    <mat-icon aria-hidden="true">chevron_right</mat-icon>
-                  </button>
-                }
               </div>
             </div>
           </mat-card-content>
