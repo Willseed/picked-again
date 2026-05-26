@@ -1,0 +1,44 @@
+name: Deploy Kindergarten Worker
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'workers/kindergarten-sync/**'
+      - '.github/workflows/deploy-worker.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy Worker
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: workers/kindergarten-sync
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: workers/kindergarten-sync/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run typecheck
+        run: npm run typecheck
+
+      - name: Deploy Worker
+        run: npm run deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

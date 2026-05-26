@@ -78,6 +78,45 @@ content-hashed Angular JS/CSS bundles 使用長效 immutable 快取，`/`、`/in
 npm test -- --watch=false
 ```
 
+## Cloudflare Worker Data Sync
+
+`workers/kindergarten-sync` 是獨立的 Cloudflare Worker 子專案。正式上線後由 Worker Cron 每 3 分鐘同步臺北市公立與非營利幼兒園資料，並把最新 JSON 存到 Cloudflare KV；GitHub Actions 只負責部署 Worker，不會新增每 3 分鐘修改 repo 的 workflow。
+
+- KV key：`kindergarten:latest`
+- API endpoints：
+  - `GET /health`
+  - `GET /kindergarten/latest`
+  - `GET /kindergarten/public`
+  - `GET /kindergarten/non-profit`
+  - `POST /kindergarten/sync`
+- 初始匯入 KV：
+
+  ```bash
+  cd workers/kindergarten-sync
+  npm run kv:init
+  ```
+
+- 部署 Worker：
+
+  ```bash
+  cd workers/kindergarten-sync
+  npm install
+  npm run deploy
+  ```
+
+- Secrets 與環境設定：
+  - GitHub Actions 需要設定 `CLOUDFLARE_API_TOKEN` repository secret，供 `.github/workflows/deploy-worker.yml` 部署 Worker。
+  - 手動同步 endpoint 需要 Worker secret：
+
+    ```bash
+    cd workers/kindergarten-sync
+    npx wrangler secret put SYNC_SECRET
+    ```
+
+  - CORS 允許來源由 `ALLOWED_ORIGINS` 設定，格式為逗號分隔的 origin，例如 `https://pick.pylot.space,https://willseed.github.io,http://localhost:4200`。
+
+部署到 production 前，請務必把 `workers/kindergarten-sync/wrangler.jsonc` 中的 `REPLACE_WITH_PRODUCTION_KV_NAMESPACE_ID` 與 `REPLACE_WITH_PREVIEW_KV_NAMESPACE_ID` 換成實際 KV namespace id，並把前端 `REMOTE_DATA_URL` 的 `https://REPLACE_WITH_WORKER_DOMAIN/kindergarten/latest` 設為實際 Worker 網域。
+
 ## 資料與限制
 
 - 執行時資料來自 `public/assets/data.json`；根目錄的 `data.json` 目前鏡像同一份來源資料。
