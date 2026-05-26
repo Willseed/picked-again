@@ -1,0 +1,21 @@
+{
+  "name": "picked-again-kindergarten-sync",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-05-27",
+
+  "triggers": {
+    "crons": ["*/3 * * * *"]
+  },
+
+  "vars": {
+    "ALLOWED_ORIGINS": "https://pick.pylot.space,https://willseed.github.io,http://localhost:4200"
+  },
+
+  "kv_namespaces": [
+    {
+      "binding": "KINDERGARTEN_KV",
+      "id": "REPLACE_WITH_PRODUCTION_KV_NAMESPACE_ID",
+      "preview_id": "REPLACE_WITH_PREVIEW_KV_NAMESPACE_ID"
+    }
+  ]
+}
