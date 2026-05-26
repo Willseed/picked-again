@@ -2,12 +2,20 @@ import {
   ESTIMATED_LOTTERY_RATE_FORMULA,
   ESTIMATED_LOTTERY_RATE_LABEL,
   SEARCH_KEYWORDS_FIELD,
+  type KindergartenClassDataset,
+  type KindergartenDataset,
+  type KindergartenDistrictDataset,
+  type KindergartenItem,
+  type KindergartenSourceDataset,
+  type KindergartenSourceType,
   type LotteryCountField,
   type LotteryDataIssue,
   type LotteryRateRecord,
   type LotterySearchResult,
   type LotterySequenceCount,
   type LotterySequenceRate,
+  type RawLotteryCounts,
+  type RawLotteryData,
   type SchoolLotteryRates,
 } from './lottery-data.model';
 
@@ -23,17 +31,73 @@ interface CalculateSelectedSequenceLotteryRateOptions {
 }
 
 export function buildLotteryRateRecords(data: unknown): readonly LotteryRateRecord[] {
-  if (!isRecord(data)) {
+  const rawData = coerceRawLotteryData(data);
+
+  if (!isRecord(rawData)) {
     return [];
   }
 
-  return Object.entries(data).flatMap(([schoolName, ageGroups]) =>
+  return Object.entries(rawData).flatMap(([schoolName, ageGroups]) =>
     buildSchoolRecords(schoolName, ageGroups),
   );
 }
 
 export function buildSchoolLotteryRates(data: unknown): readonly SchoolLotteryRates[] {
-  return groupLotteryRateRecords(buildLotteryRateRecords(data), buildSearchAliasesBySchool(data));
+  const rawData = coerceRawLotteryData(data);
+
+  return groupLotteryRateRecords(
+    buildLotteryRateRecords(rawData),
+    buildSearchAliasesBySchool(rawData),
+  );
+}
+
+export function coerceRawLotteryData(data: unknown): unknown {
+  return isKindergartenDataset(data) ? adaptKindergartenDatasetToRawLotteryData(data) : data;
+}
+
+export function adaptKindergartenDatasetToRawLotteryData(
+  dataset: KindergartenDataset,
+): RawLotteryData {
+  const rawData: RawLotteryData = {};
+  const searchAliasesBySchool = new Map<string, Set<string>>();
+
+  for (const source of [dataset.public, dataset.nonProfit]) {
+    for (const district of source.districts) {
+      for (const classDataset of district.classes) {
+        for (const item of classDataset.items) {
+          const schoolName = item.schoolName.trim();
+          const ageGroup = (item.className || classDataset.className).trim();
+
+          if (schoolName.length === 0 || ageGroup.length === 0) {
+            continue;
+          }
+
+          const schoolData = rawData[schoolName] ?? {};
+          rawData[schoolName] = schoolData;
+          schoolData[ageGroup] = buildKindergartenRawCounts(source, item);
+
+          const aliases = searchAliasesBySchool.get(schoolName) ?? new Set<string>();
+          searchAliasesBySchool.set(schoolName, aliases);
+          addUniqueText(
+            aliases,
+            district.districtName,
+            item.districtName,
+            source.name,
+            source.type,
+            item.sourceType,
+          );
+        }
+      }
+    }
+  }
+
+  for (const [schoolName, aliases] of searchAliasesBySchool.entries()) {
+    if (aliases.size > 0) {
+      rawData[schoolName][SEARCH_KEYWORDS_FIELD] = Array.from(aliases);
+    }
+  }
+
+  return rawData;
 }
 
 export function groupLotteryRateRecords(
@@ -52,21 +116,20 @@ export function groupLotteryRateRecords(
     }
   }
 
-  return Array.from(schools.entries())
-    .map(([schoolName, ageGroups]) => {
-      const searchKeywords = searchAliasesBySchool.get(schoolName) ?? [];
+  return Array.from(schools.entries()).map(([schoolName, ageGroups]) => {
+    const searchKeywords = searchAliasesBySchool.get(schoolName) ?? [];
 
-      return {
-        schoolName,
-        normalizedSchoolName: normalizeSearchText(schoolName),
-        searchKeywords,
-        districtNames: extractDistrictNames(searchKeywords),
-        normalizedSearchKeywords: buildNormalizedSearchKeywords(schoolName, searchKeywords),
-        ageGroups: [...ageGroups].sort((left, right) =>
-          compareAgeGroupLabels(left.ageGroup, right.ageGroup),
-        ),
-      };
-    });
+    return {
+      schoolName,
+      normalizedSchoolName: normalizeSearchText(schoolName),
+      searchKeywords,
+      districtNames: extractDistrictNames(searchKeywords),
+      normalizedSearchKeywords: buildNormalizedSearchKeywords(schoolName, searchKeywords),
+      ageGroups: [...ageGroups].sort((left, right) =>
+        compareAgeGroupLabels(left.ageGroup, right.ageGroup),
+      ),
+    };
+  });
 }
 
 export function searchSchoolLotteryRates(
@@ -86,9 +149,7 @@ export function searchSchoolLotteryRates(
       matchScore: getBestFuzzyMatchScore(normalizedKeyword, school.normalizedSearchKeywords),
     }))
     .filter((match) => match.matchScore > 0)
-    .sort(
-      (left, right) => right.matchScore - left.matchScore || left.orderIndex - right.orderIndex,
-    )
+    .sort((left, right) => right.matchScore - left.matchScore || left.orderIndex - right.orderIndex)
     .map(({ school, matchScore }) => ({
       ...school,
       normalizedKeyword,
@@ -266,6 +327,66 @@ function buildSearchAliasesBySchool(data: unknown): ReadonlyMap<string, readonly
   }
 
   return aliasesBySchool;
+}
+
+function buildKindergartenRawCounts(
+  source: KindergartenSourceDataset,
+  item: KindergartenItem,
+): RawLotteryCounts {
+  const vacancyCount = pickKindergartenCount(item.availableQuota, item.totalQuota);
+  const registeredCount = pickKindergartenCount(item.registeredCount);
+  const sourceLabel = buildKindergartenSourceLabel(source, item);
+
+  return {
+    [ACCEPTED_FIELD]: pickKindergartenCount(item.availableQuota, item.totalQuota) ?? 0,
+    [WAITLISTED_FIELD]: pickKindergartenCount(item.waitingCount, item.registeredCount) ?? 0,
+    ...(vacancyCount === null ? {} : { 公告缺額: vacancyCount }),
+    ...(registeredCount === null ? {} : { 總登記人數: registeredCount }),
+    ...(sourceLabel === null ? {} : { 資料來源: sourceLabel }),
+  } satisfies RawLotteryCounts;
+}
+
+function buildKindergartenSourceLabel(
+  source: KindergartenSourceDataset,
+  item: KindergartenItem,
+): string | null {
+  const parts = collectUniqueText([source.name, source.type, item.sourceType]);
+
+  return parts.length > 0 ? parts.join(' / ') : null;
+}
+
+function pickKindergartenCount(...counts: readonly (number | null | undefined)[]): number | null {
+  for (const count of counts) {
+    if (count !== null && count !== undefined) {
+      return count;
+    }
+  }
+
+  return null;
+}
+
+function addUniqueText(target: Set<string>, ...values: readonly unknown[]): void {
+  for (const value of collectUniqueText(values)) {
+    target.add(value);
+  }
+}
+
+function collectUniqueText(values: readonly unknown[]): readonly string[] {
+  const uniqueValues = new Set<string>();
+
+  for (const value of values) {
+    if (typeof value !== 'string') {
+      continue;
+    }
+
+    const trimmedValue = value.trim();
+
+    if (trimmedValue.length > 0) {
+      uniqueValues.add(trimmedValue);
+    }
+  }
+
+  return Array.from(uniqueValues);
 }
 
 function readSearchAliases(value: unknown): readonly string[] {
@@ -583,6 +704,113 @@ function isOrderedSubsequence(needle: string, haystack: string): boolean {
   }
 
   return true;
+}
+
+function isKindergartenDataset(value: unknown): value is KindergartenDataset {
+  const dataset = readRecord(value);
+
+  return (
+    dataset !== null &&
+    dataset['schemaVersion'] === 2 &&
+    dataset['source'] === 'cloudflare-worker' &&
+    typeof dataset['updatedAt'] === 'string' &&
+    dataset['timezone'] === 'Asia/Taipei' &&
+    isKindergartenSourceDataset(dataset['public']) &&
+    isKindergartenSourceDataset(dataset['nonProfit'])
+  );
+}
+
+function isKindergartenSourceDataset(value: unknown): value is KindergartenSourceDataset {
+  const source = readRecord(value);
+  const districts = source?.['districts'];
+
+  return (
+    source !== null &&
+    isKindergartenSourceType(source['type']) &&
+    typeof source['name'] === 'string' &&
+    typeof source['baseUrl'] === 'string' &&
+    typeof source['updatedAt'] === 'string' &&
+    Array.isArray(districts) &&
+    districts.every(isKindergartenDistrictDataset)
+  );
+}
+
+function isKindergartenDistrictDataset(value: unknown): value is KindergartenDistrictDataset {
+  const district = readRecord(value);
+  const classes = district?.['classes'];
+
+  return (
+    district !== null &&
+    typeof district['districtCode'] === 'string' &&
+    typeof district['districtName'] === 'string' &&
+    Array.isArray(classes) &&
+    classes.every(isKindergartenClassDataset)
+  );
+}
+
+function isKindergartenClassDataset(value: unknown): value is KindergartenClassDataset {
+  const classDataset = readRecord(value);
+  const items = classDataset?.['items'];
+
+  return (
+    classDataset !== null &&
+    typeof classDataset['className'] === 'string' &&
+    typeof classDataset['fetchedAt'] === 'string' &&
+    typeof classDataset['sourceUrl'] === 'string' &&
+    Array.isArray(items) &&
+    items.every(isKindergartenItem)
+  );
+}
+
+function isKindergartenItem(value: unknown): value is KindergartenItem {
+  const item = readRecord(value);
+
+  return (
+    item !== null &&
+    typeof item['id'] === 'string' &&
+    typeof item['schoolName'] === 'string' &&
+    typeof item['districtCode'] === 'string' &&
+    typeof item['districtName'] === 'string' &&
+    isKindergartenSourceType(item['sourceType']) &&
+    typeof item['className'] === 'string' &&
+    isOptionalKindergartenCount(item['totalQuota']) &&
+    isOptionalKindergartenCount(item['availableQuota']) &&
+    isOptionalKindergartenCount(item['registeredCount']) &&
+    isOptionalKindergartenCount(item['waitingCount']) &&
+    isOptionalStringOrNull(item['address']) &&
+    isOptionalStringOrNull(item['phone']) &&
+    isOptionalKindergartenRawRecord(item['raw'])
+  );
+}
+
+function isKindergartenSourceType(value: unknown): value is KindergartenSourceType {
+  return value === 'public' || value === 'nonProfit';
+}
+
+function isOptionalKindergartenCount(value: unknown): value is number | null | undefined {
+  return (
+    value === undefined || value === null || (typeof value === 'number' && Number.isFinite(value))
+  );
+}
+
+function isOptionalStringOrNull(value: unknown): value is string | null | undefined {
+  return value === undefined || value === null || typeof value === 'string';
+}
+
+function isOptionalKindergartenRawRecord(
+  value: unknown,
+): value is Readonly<Record<string, string | number | null>> | undefined {
+  if (value === undefined) {
+    return true;
+  }
+
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return Object.values(value).every(
+    (entry) => typeof entry === 'string' || typeof entry === 'number' || entry === null,
+  );
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

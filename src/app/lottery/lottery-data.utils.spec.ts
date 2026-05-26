@@ -1,5 +1,10 @@
-import { ESTIMATED_LOTTERY_RATE_LABEL, type RawLotteryData } from './lottery-data.model';
 import {
+  ESTIMATED_LOTTERY_RATE_LABEL,
+  type KindergartenDataset,
+  type RawLotteryData,
+} from './lottery-data.model';
+import {
+  adaptKindergartenDatasetToRawLotteryData,
   buildLotteryRateRecords,
   buildSchoolLotteryRates,
   calculateSelectedSequenceLotteryRate,
@@ -135,6 +140,102 @@ describe('抽籤資料工具', () => {
     const schools = buildSchoolLotteryRates(sampleData);
 
     expect(searchSchoolLotteryRates(schools, '不存在')).toEqual([]);
+  });
+
+  it('應將 Worker schemaVersion 2 資料轉換成現有抽籤資料格式', () => {
+    const workerData = {
+      schemaVersion: 2,
+      source: 'cloudflare-worker',
+      updatedAt: '2026-05-26T00:00:00.000Z',
+      timezone: 'Asia/Taipei',
+      public: {
+        type: 'public',
+        name: '公立幼兒園',
+        baseUrl: 'https://example.test/public',
+        updatedAt: '2026-05-26T00:00:00.000Z',
+        districts: [
+          {
+            districtCode: '103',
+            districtName: '大同區',
+            classes: [
+              {
+                className: '5歲',
+                fetchedAt: '2026-05-26T00:00:00.000Z',
+                sourceUrl: 'https://example.test/public/5',
+                items: [
+                  {
+                    id: 'public-103-5-1',
+                    schoolName: '臺北市雲端幼兒園',
+                    districtCode: '103',
+                    districtName: '大同區',
+                    sourceType: 'public',
+                    className: '5歲',
+                    availableQuota: 10,
+                    totalQuota: 12,
+                    waitingCount: 15,
+                    registeredCount: 30,
+                  },
+                ],
+              },
+              {
+                className: '3歲',
+                fetchedAt: '2026-05-26T00:00:00.000Z',
+                sourceUrl: 'https://example.test/public/3',
+                items: [
+                  {
+                    id: 'public-103-3-1',
+                    schoolName: '臺北市雲端幼兒園',
+                    districtCode: '103',
+                    districtName: '大同區',
+                    sourceType: 'public',
+                    className: '3歲',
+                    totalQuota: 8,
+                    waitingCount: null,
+                    registeredCount: 12,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      nonProfit: {
+        type: 'nonProfit',
+        name: '非營利幼兒園',
+        baseUrl: 'https://example.test/nonprofit',
+        updatedAt: '2026-05-26T00:00:00.000Z',
+        districts: [],
+      },
+    } satisfies KindergartenDataset;
+
+    const rawData = adaptKindergartenDatasetToRawLotteryData(workerData);
+    expect(rawData['臺北市雲端幼兒園']?.['搜尋關鍵字']).toEqual(['大同區', '公立幼兒園', 'public']);
+    expect(rawData['臺北市雲端幼兒園']?.['5歲']).toMatchObject({
+      正取: 10,
+      備取: 15,
+      公告缺額: 10,
+      總登記人數: 30,
+      資料來源: '公立幼兒園 / public',
+    });
+    expect(rawData['臺北市雲端幼兒園']?.['3歲']).toMatchObject({
+      正取: 8,
+      備取: 12,
+      公告缺額: 8,
+      總登記人數: 12,
+    });
+
+    const schools = buildSchoolLotteryRates(workerData);
+    const [school] = schools;
+    const ratesByAge = new Map(school?.ageGroups.map((group) => [group.ageGroup, group]));
+
+    expect(school?.schoolName).toBe('臺北市雲端幼兒園');
+    expect(school?.ageGroups.map((group) => group.ageGroup)).toEqual(['5歲', '3歲']);
+    expect(ratesByAge.get('5歲')?.estimatedLotteryRatePercent).toBeCloseTo(40);
+    expect(ratesByAge.get('3歲')?.estimatedLotteryRatePercent).toBeCloseTo(40);
+
+    const [match] = searchSchoolLotteryRates(schools, '大同區');
+    expect(match?.schoolName).toBe('臺北市雲端幼兒園');
+    expect(match?.matchScore).toBe(1);
   });
 
   it('應回傳多筆模糊符合結果且排除無關幼兒園', () => {
