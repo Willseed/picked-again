@@ -51,7 +51,11 @@ describe('LotteryDataService', () => {
 
     httpTesting.expectNone(FALLBACK_DATA_URL);
     expect(results[0]?.[0]?.schoolName).toBe('臺北市雲端幼兒園');
-    expect(results[0]?.[0]?.ageGroups.map((group) => group.ageGroup).sort()).toEqual([
+    expect(
+      results[0]?.[0]?.ageGroups
+        .map((group) => group.ageGroup)
+        .sort((a, b) => a.localeCompare(b, 'zh-Hant')),
+    ).toEqual([
       '5歲（113學年）',
       '5歲（114學年）',
       '5歲（115學年）',
