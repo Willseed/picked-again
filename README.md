@@ -115,7 +115,7 @@ npm test -- --watch=false
 
   - CORS 允許來源由 `ALLOWED_ORIGINS` 設定，格式為逗號分隔的 origin，例如 `https://pick.pylot.space,https://willseed.github.io,http://localhost:4200`。
 
-部署到 production 前，請務必把 `workers/kindergarten-sync/wrangler.jsonc` 中的 `REPLACE_WITH_PRODUCTION_KV_NAMESPACE_ID` 與 `REPLACE_WITH_PREVIEW_KV_NAMESPACE_ID` 換成實際 KV namespace id，並把前端 `REMOTE_DATA_URL` 的 `https://REPLACE_WITH_WORKER_DOMAIN/kindergarten/latest` 設為實際 Worker 網域。
+部署時 Wrangler 會依 `KINDERGARTEN_KV` binding 自動佈建 KV namespace；若改用既有 KV，請在 `workers/kindergarten-sync/wrangler.jsonc` 補上實際 namespace id。正式上線前也要把前端 `REMOTE_DATA_URL` 的 `https://REPLACE_WITH_WORKER_DOMAIN/kindergarten/latest` 設為實際 Worker 網域。
 
 ## 資料與限制
 
