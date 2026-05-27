@@ -762,25 +762,35 @@ function extractAge(label: string): number | null {
     }
 
     const digitStartIndex = index;
+    const digitEndIndex = findDigitEndIndex(normalizedLabel, digitStartIndex);
+    const ageMarkerIndex = findFirstNonWhitespaceIndex(normalizedLabel, digitEndIndex);
 
-    while (index < normalizedLabel.length && isAsciiDigit(normalizedLabel[index] ?? '')) {
-      index += 1;
-    }
-
-    const digitEndIndex = index;
-
-    while (index < normalizedLabel.length && isWhitespace(normalizedLabel[index] ?? '')) {
-      index += 1;
-    }
-
-    if (normalizedLabel[index] === '歲') {
+    if (normalizedLabel[ageMarkerIndex] === '歲') {
       return Number(normalizedLabel.slice(digitStartIndex, digitEndIndex));
     }
-
-    index = digitEndIndex - 1;
   }
 
   return null;
+}
+
+function findDigitEndIndex(value: string, startIndex: number): number {
+  for (let index = startIndex; index < value.length; index += 1) {
+    if (!isAsciiDigit(value[index] ?? '')) {
+      return index;
+    }
+  }
+
+  return value.length;
+}
+
+function findFirstNonWhitespaceIndex(value: string, startIndex: number): number {
+  for (let index = startIndex; index < value.length; index += 1) {
+    if (!isWhitespace(value[index] ?? '')) {
+      return index;
+    }
+  }
+
+  return value.length;
 }
 
 function isDistrictAliasSeparator(character: string): boolean {

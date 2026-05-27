@@ -91,7 +91,7 @@ describe('static host cache headers', () => {
     const longCachedPaths = rules
       .filter((rule) => rule.headers.get('cache-control')?.includes('max-age=31536000') === true)
       .map((rule) => rule.path)
-      .sort();
+      .sort((leftPath, rightPath) => leftPath.localeCompare(rightPath));
 
     expect(longCachedPaths).toEqual([
       '/chunk-*',
