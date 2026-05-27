@@ -3,6 +3,7 @@ import type { SourceConfig } from "./types";
 export const SERVICE_NAME = "picked-again-kindergarten-sync";
 export const TIMEZONE = "Asia/Taipei";
 export const LATEST_KEY = "kindergarten:latest";
+export const HISTORICAL_LOTTERY_DATA_KEY = "kindergarten:lottery-history";
 
 export const DEFAULT_ALLOWED_ORIGINS = [
   "https://pick.pylot.space",

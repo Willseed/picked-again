@@ -1,5 +1,9 @@
-import { LATEST_KEY } from "./constants";
+import { HISTORICAL_LOTTERY_DATA_KEY, LATEST_KEY } from "./constants";
 import type { Env, KindergartenDataset } from "./types";
+
+export async function getHistoricalLotteryData(env: Env): Promise<unknown | null> {
+  return env.KINDERGARTEN_KV.get(HISTORICAL_LOTTERY_DATA_KEY, "json");
+}
 
 export async function getLatestDataset(
   env: Env,

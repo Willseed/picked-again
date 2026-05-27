@@ -1,6 +1,6 @@
 import { SERVICE_NAME } from "./constants";
 import { getCorsHeaders, isAllowedRequest } from "./cors";
-import { getLatestDataset } from "./kv";
+import { getHistoricalLotteryData, getLatestDataset } from "./kv";
 import { syncAndStore } from "./sync";
 import type { Env, KindergartenDataset } from "./types";
 
@@ -89,6 +89,10 @@ type DatasetResult =
   | { dataset: KindergartenDataset; response: null }
   | { dataset: null; response: Response };
 
+type HistoricalLotteryDataResult =
+  | { data: unknown; response: null }
+  | { data: null; response: Response };
+
 async function getRequiredDataset(
   request: Request,
   env: Env,
@@ -107,6 +111,25 @@ async function getRequiredDataset(
     response: null,
   };
 }
+
+  async function getRequiredHistoricalLotteryData(
+    request: Request,
+    env: Env,
+  ): Promise<HistoricalLotteryDataResult> {
+    const data = await getHistoricalLotteryData(env);
+
+    if (!data) {
+      return {
+        data: null,
+        response: jsonError(request, env, "Historical lottery data not found", 404),
+      };
+    }
+
+    return {
+      data,
+      response: null,
+    };
+  }
 
 async function handleRequest(request: Request, env: Env): Promise<Response> {
   if (request.method === "OPTIONS") {
@@ -142,6 +165,23 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
     }
 
     return jsonResponse(request, env, dataset, {
+      headers: {
+        "cache-control": "public, max-age=60",
+      },
+    });
+  }
+
+  if (url.pathname === "/kindergarten/lottery-data") {
+    if (request.method !== "GET") {
+      return methodNotAllowed(request, env, "GET");
+    }
+
+    const { data, response } = await getRequiredHistoricalLotteryData(request, env);
+    if (response) {
+      return response;
+    }
+
+    return jsonResponse(request, env, data, {
       headers: {
         "cache-control": "public, max-age=60",
       },
