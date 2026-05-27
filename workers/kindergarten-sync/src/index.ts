@@ -165,7 +165,7 @@ function cloneHistoricalLotteryData(data: unknown): RawLotteryData {
 function normalizeLiveAgeLabel(className: string): string {
   const trimmedClassName = className.trim();
 
-  return trimmedClassName.endsWith("班")
+  return trimmedClassName.endsWith("班") && !trimmedClassName.endsWith("專班")
     ? trimmedClassName.slice(0, -1)
     : trimmedClassName;
 }

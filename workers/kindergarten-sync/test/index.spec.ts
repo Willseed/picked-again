@@ -51,6 +51,23 @@ describe("mergeLiveSyncData", () => {
                   },
                 ],
               },
+              {
+                className: "2歲專班",
+                fetchedAt: "2026-05-27T00:00:00.000Z",
+                sourceUrl: "https://example.test/non-profit/2",
+                items: [
+                  {
+                    id: "nonProfit:103:2歲專班:蘭州非營利幼兒園",
+                    schoolName: "蘭州非營利幼兒園",
+                    districtCode: "103",
+                    districtName: "大同區",
+                    sourceType: "nonProfit",
+                    className: "2歲專班",
+                    availableQuota: 2,
+                    waitingCount: 8,
+                  },
+                ],
+              },
             ],
           },
         ],
@@ -64,6 +81,10 @@ describe("mergeLiveSyncData", () => {
       正取: 4,
       備取: 6,
       總登記人數: 10,
+    });
+    expect(mergedData["臺北市蘭州非營利幼兒園"]?.["2歲專班（115學年）"]).toMatchObject({
+      正取: 2,
+      備取: 8,
     });
     expect(mergedData["臺北市蘭州非營利幼兒園"]?.["搜尋關鍵字"]).toEqual([
       "蘭州非營利幼兒園",
