@@ -38,7 +38,7 @@ async function readRobotsTxt(): Promise<string> {
   const nodeProcess = globalThis as NodeProcess;
 
   if (typeof nodeProcess.process?.cwd !== 'function') {
-    throw new Error('process.cwd is required to read public/robots.txt in this test');
+    throw new TypeError('process.cwd is required to read public/robots.txt in this test');
   }
 
   // @ts-expect-error Node built-in types are intentionally not included in browser app config.
@@ -60,7 +60,7 @@ function parseDirectives(robotsTxt: string): readonly RobotsDirective[] {
       const separatorIndex = trimmedLine.indexOf(':');
 
       if (separatorIndex === -1) {
-        throw new Error(`robots.txt line ${index + 1} is missing a colon separator`);
+        throw new TypeError(`robots.txt line ${index + 1} is missing a colon separator`);
       }
 
       return {
@@ -91,7 +91,7 @@ function parseGroups(directives: readonly RobotsDirective[]): readonly RobotsGro
     }
 
     if (currentGroup === undefined) {
-      throw new Error(`robots.txt line ${directive.lineNumber} appears before a User-agent`);
+      throw new TypeError(`robots.txt line ${directive.lineNumber} appears before a User-agent`);
     }
 
     currentGroup.rules.push(directive);

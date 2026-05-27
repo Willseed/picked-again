@@ -19,7 +19,7 @@ async function readHeadersFile(): Promise<string> {
   const nodeProcess = globalThis as NodeProcess;
 
   if (typeof nodeProcess.process?.cwd !== 'function') {
-    throw new Error('process.cwd is required to read public/_headers in this test');
+    throw new TypeError('process.cwd is required to read public/_headers in this test');
   }
 
   // @ts-expect-error Node built-in types are intentionally not included in browser app config.
@@ -49,13 +49,13 @@ function parseHeadersRules(headersText: string): readonly HeadersRule[] {
     }
 
     if (currentRule === null) {
-      throw new Error(`Header line without a matching path rule: ${trimmedLine}`);
+      throw new TypeError(`Header line without a matching path rule: ${trimmedLine}`);
     }
 
     const separatorIndex = trimmedLine.indexOf(':');
 
     if (separatorIndex === -1) {
-      throw new Error(`Header line is missing a colon separator: ${trimmedLine}`);
+      throw new TypeError(`Header line is missing a colon separator: ${trimmedLine}`);
     }
 
     currentRule.headers.set(

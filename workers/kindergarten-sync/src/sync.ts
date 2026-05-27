@@ -500,13 +500,13 @@ function assertSelectedClass(html: string, className: string): void {
   const selectedClassName = getSelectedClassName(parse(html));
 
   if (!selectedClassName) {
-    throw new Error(`Class switch response did not identify selected class ${className}`);
+    throw new TypeError(`Class switch response did not identify selected class ${className}`);
   }
 
   if (
     normalizeClassText(selectedClassName) !== normalizeClassText(className)
   ) {
-    throw new Error(`Class switch selected ${selectedClassName} instead of ${className}`);
+    throw new TypeError(`Class switch selected ${selectedClassName} instead of ${className}`);
   }
 }
 

@@ -1,10 +1,11 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { catchError, map, type Observable } from 'rxjs';
+import { catchError, map, throwError, type Observable } from 'rxjs';
 
 import {
   FALLBACK_DATA_URL,
   REMOTE_DATA_URL,
+  REMOTE_DATA_URLS,
   type LotteryRateRecord,
   type SchoolLotteryRates,
 } from './lottery-data.model';
@@ -22,6 +23,7 @@ export class LotteryDataService {
   private readonly http = inject(HttpClient);
 
   readonly remoteDataUrl: string = REMOTE_DATA_URL;
+  readonly remoteDataUrls: readonly string[] = REMOTE_DATA_URLS;
   readonly fallbackDataUrl: string = FALLBACK_DATA_URL;
   readonly dataUrl: string = this.remoteDataUrl;
 
@@ -34,13 +36,48 @@ export class LotteryDataService {
   }
 
   private loadRawLotteryData(dataUrl: string): Observable<unknown> {
-    const request = this.http.get<unknown>(dataUrl);
-    const source =
-      dataUrl === this.remoteDataUrl
-        ? request.pipe(catchError(() => this.http.get<unknown>(this.fallbackDataUrl)))
-        : request;
+    return this.loadFirstAvailableRawLotteryData(this.getDataUrlCandidates(dataUrl)).pipe(
+      map(coerceRawLotteryData),
+    );
+  }
 
-    return source.pipe(map(coerceRawLotteryData));
+  private getDataUrlCandidates(dataUrl: string): readonly string[] {
+    if (!this.remoteDataUrls.includes(dataUrl)) {
+      return [dataUrl];
+    }
+
+    return [
+      dataUrl,
+      ...this.remoteDataUrls.filter((remoteDataUrl) => remoteDataUrl !== dataUrl),
+      this.fallbackDataUrl,
+    ];
+  }
+
+  private loadFirstAvailableRawLotteryData(
+    dataUrls: readonly string[],
+    dataUrlIndex = 0,
+  ): Observable<unknown> {
+    const dataUrl = dataUrls[dataUrlIndex];
+
+    if (dataUrl === undefined) {
+      return throwError(() => new Error('No lottery data URL candidates configured'));
+    }
+
+    return this.http.get<unknown>(dataUrl, this.getRequestOptions(dataUrl)).pipe(
+      catchError((error: unknown) => {
+        const nextDataUrlIndex = dataUrlIndex + 1;
+
+        if (nextDataUrlIndex >= dataUrls.length) {
+          return throwError(() => error);
+        }
+
+        return this.loadFirstAvailableRawLotteryData(dataUrls, nextDataUrlIndex);
+      }),
+    );
+  }
+
+  private getRequestOptions(dataUrl: string): { readonly cache?: RequestCache } {
+    return dataUrl === this.fallbackDataUrl ? {} : { cache: 'no-store' };
   }
 
   searchSchoolRates(

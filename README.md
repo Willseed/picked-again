@@ -94,6 +94,10 @@ npm test -- --watch=false
   - `GET /kindergarten/public`
   - `GET /kindergarten/non-profit`
   - `POST /kindergarten/sync`
+- `workers/kindergarten-sync/wrangler.jsonc` 會把 `pick.pylot.space/kindergarten/*`
+  路徑交給 Worker，讓前端優先用同源 `/kindergarten/lottery-data` 讀取 115
+  學年度即時資料；若同源路由或 Worker 暫時不可用，前端會再嘗試 workers.dev
+  endpoint，最後才退回本機 `assets/data.json`。
 - 初始匯入 KV：
 
   ```bash

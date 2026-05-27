@@ -14,7 +14,7 @@ async function readRepoFile(path: string): Promise<string> {
   const nodeProcess = globalThis as NodeProcess;
 
   if (typeof nodeProcess.process?.cwd !== 'function') {
-    throw new Error(`process.cwd is required to read ${path} in this test`);
+    throw new TypeError(`process.cwd is required to read ${path} in this test`);
   }
 
   // @ts-expect-error Node built-in types are intentionally not included in browser app config.

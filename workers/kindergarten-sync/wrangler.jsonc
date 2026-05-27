@@ -7,6 +7,13 @@
     "crons": ["*/3 * * * *"]
   },
 
+  "routes": [
+    {
+      "pattern": "pick.pylot.space/kindergarten/*",
+      "zone_name": "pylot.space"
+    }
+  ],
+
   "vars": {
     "ALLOWED_ORIGINS": "https://pick.pylot.space,https://willseed.github.io,http://localhost:4200"
   },

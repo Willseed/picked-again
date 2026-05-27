@@ -32,7 +32,7 @@ const collapseWhitespace = (text: string) => {
 test.beforeEach(async ({ page }) => {
   await page.exposeFunction('__pickedAgainCollapseWhitespace', collapseWhitespace);
   await page.addInitScript((storageKey) => {
-    window.localStorage.setItem(storageKey, 'true');
+    globalThis.localStorage.setItem(storageKey, 'true');
   }, GUIDANCE_DISMISSED_STORAGE_KEY);
 });
 
@@ -60,7 +60,7 @@ test('mobile sequence chips stay inside the data card and year controls use the 
         Array.from(panel.querySelectorAll<HTMLElement>('.sequence-chip')).map(async (chip) => {
           const rect = chip.getBoundingClientRect();
           return {
-            text: await window.__pickedAgainCollapseWhitespace(chip.textContent ?? ''),
+            text: await globalThis.__pickedAgainCollapseWhitespace(chip.textContent ?? ''),
             left: rect.left,
             right: rect.right,
             panelLeft: panelRect.left,
@@ -101,14 +101,14 @@ test('mobile sequence chips stay inside the data card and year controls use the 
       const textNode = walker.nextNode();
 
       if (!textNode) {
-        throw new Error(`Expected text content in ${element.className}`);
+        throw new TypeError(`Expected text content in ${element.className}`);
       }
 
       const text = textNode.textContent ?? '';
       const { start, end } = trimmedTextBounds(text);
 
       if (start < 0 || end <= start) {
-        throw new Error(`Expected non-empty text content in ${element.className}`);
+        throw new TypeError(`Expected non-empty text content in ${element.className}`);
       }
 
       const range = document.createRange();
@@ -139,7 +139,7 @@ test('mobile sequence chips stay inside the data card and year controls use the 
           const badge = chip.querySelector<HTMLElement>('.sequence-hit-badge');
 
           if (!action || !actionLabel || !label || !count) {
-            throw new Error('Expected sequence chip internals to be present');
+            throw new TypeError('Expected sequence chip internals to be present');
           }
 
           const actionRect = action.getBoundingClientRect();
@@ -148,7 +148,7 @@ test('mobile sequence chips stay inside the data card and year controls use the 
           const countTextRect = textRect(count);
 
           return {
-            text: await window.__pickedAgainCollapseWhitespace(chip.textContent ?? ''),
+            text: await globalThis.__pickedAgainCollapseWhitespace(chip.textContent ?? ''),
             isFillThreshold: chip.classList.contains('is-fill-threshold'),
             labelTextStartOffset: labelTextRect.left - actionRect.left,
             labelTextWidth: labelTextRect.width,
@@ -201,7 +201,7 @@ test('mobile sequence chips stay inside the data card and year controls use the 
     const actionLabel = chip.querySelector<HTMLElement>('.mat-mdc-chip-action-label');
 
     if (!label || !count || !badge || !actionLabel) {
-      throw new Error('Expected fill-threshold chip internals to be present');
+      throw new TypeError('Expected fill-threshold chip internals to be present');
     }
 
     const chipRect = chip.getBoundingClientRect();
@@ -211,7 +211,7 @@ test('mobile sequence chips stay inside the data card and year controls use the 
     const badgeRect = badge.getBoundingClientRect();
 
     return {
-      text: await window.__pickedAgainCollapseWhitespace(chip.textContent ?? ''),
+      text: await globalThis.__pickedAgainCollapseWhitespace(chip.textContent ?? ''),
       chipWidth: chipRect.width,
       labelClientWidth: label.clientWidth,
       labelScrollWidth: label.scrollWidth,

@@ -810,7 +810,7 @@ export class LotteryDashboardComponent implements AfterViewInit {
   private startGuidanceTransition(): void {
     this.cancelGuidanceTransitionTimeout();
     this.guidanceTransitioning.set(true);
-    this.guidanceTransitionTimeoutId = window.setTimeout(
+    this.guidanceTransitionTimeoutId = globalThis.setTimeout(
       () => this.finishGuidanceTransition(),
       this.prefersReducedMotion()
         ? GUIDANCE_REDUCED_MOTION_TRANSITION_TIMEOUT_MS
@@ -834,8 +834,8 @@ export class LotteryDashboardComponent implements AfterViewInit {
 
   private prefersReducedMotion(): boolean {
     return (
-      typeof window.matchMedia === 'function' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      typeof globalThis.matchMedia === 'function' &&
+      globalThis.matchMedia('(prefers-reduced-motion: reduce)').matches
     );
   }
 
@@ -844,7 +844,7 @@ export class LotteryDashboardComponent implements AfterViewInit {
       return requestAnimationFrame(callback);
     }
 
-    return window.setTimeout(() => callback(performance.now()), 0);
+    return globalThis.setTimeout(() => callback(performance.now()), 0);
   }
 
   private cancelMeasurementFrame(frameId: number): void {

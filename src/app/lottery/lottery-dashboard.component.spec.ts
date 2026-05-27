@@ -42,7 +42,7 @@ async function getStylesScssText(): Promise<string> {
   const nodeProcess = globalThis as NodeProcess;
 
   if (typeof nodeProcess.process?.cwd !== 'function') {
-    throw new Error('process.cwd is required to read styles.scss in this test');
+    throw new TypeError('process.cwd is required to read styles.scss in this test');
   }
 
   // @ts-expect-error Node built-in types are intentionally not included in browser app config.
@@ -102,7 +102,7 @@ async function extractScssBlock(blockStart: string): Promise<string> {
     }
   }
 
-  throw new Error(`Could not find closing brace for ${blockStart}`);
+  throw new TypeError(`Could not find closing brace for ${blockStart}`);
 }
 
 function normalizeScssWhitespace(text: string): string {
@@ -270,7 +270,7 @@ async function clickGuidancePrimary(
 async function flushCarouselMeasurements(
   fixture: ComponentFixture<LotteryDashboardComponent>,
 ): Promise<void> {
-  window.dispatchEvent(new Event('resize'));
+  globalThis.dispatchEvent(new Event('resize'));
   await new Promise<void>((resolve) => {
     if (typeof requestAnimationFrame === 'function') {
       requestAnimationFrame(() => resolve());
@@ -355,9 +355,9 @@ function installScrollIntoViewSpy(): {
 }
 
 function installReducedMotionPreference(matches: boolean): { readonly restore: () => void } {
-  const descriptor = Object.getOwnPropertyDescriptor(window, 'matchMedia');
+  const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'matchMedia');
 
-  Object.defineProperty(window, 'matchMedia', {
+  Object.defineProperty(globalThis, 'matchMedia', {
     configurable: true,
     value: (query: string): MediaQueryList =>
       ({
@@ -375,12 +375,12 @@ function installReducedMotionPreference(matches: boolean): { readonly restore: (
   return {
     restore: () => {
       if (descriptor) {
-        Object.defineProperty(window, 'matchMedia', descriptor);
+        Object.defineProperty(globalThis, 'matchMedia', descriptor);
         return;
       }
 
       delete (
-        window as {
+        globalThis as {
           matchMedia?: Window['matchMedia'];
         }
       ).matchMedia;
@@ -2074,7 +2074,7 @@ describe('LotteryDashboardComponent', () => {
     const fixture = await renderDashboard();
     const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
 
-    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
+    globalThis.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
     fixture.detectChanges();
 
     expect(document.activeElement).toBe(input);

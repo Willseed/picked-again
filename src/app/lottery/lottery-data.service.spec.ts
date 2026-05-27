@@ -5,6 +5,7 @@ import { TestBed } from '@angular/core/testing';
 import {
   FALLBACK_DATA_URL,
   REMOTE_DATA_URL,
+  WORKER_DATA_URL,
   type RawLotteryData,
   type SchoolLotteryRates,
 } from './lottery-data.model';
@@ -27,7 +28,7 @@ describe('LotteryDataService', () => {
     httpTesting.verify();
   });
 
-  it('應優先從 Worker API 載入歷史抽籤資料', () => {
+  it('應優先從同源 Worker API 載入歷史抽籤資料', () => {
     const remoteData = {
       臺北市雲端幼兒園: {
         搜尋關鍵字: ['大同區'],
@@ -47,8 +48,10 @@ describe('LotteryDataService', () => {
     const remoteRequest = httpTesting.expectOne(REMOTE_DATA_URL);
     expect(remoteRequest.request.method).toBe('GET');
     expect(remoteRequest.request.url).toContain('/kindergarten/lottery-data');
+    expect(remoteRequest.request.cache).toBe('no-store');
     remoteRequest.flush(remoteData);
 
+    httpTesting.expectNone(WORKER_DATA_URL);
     httpTesting.expectNone(FALLBACK_DATA_URL);
     expect(results[0]?.[0]?.schoolName).toBe('臺北市雲端幼兒園');
     expect(
@@ -64,7 +67,32 @@ describe('LotteryDataService', () => {
     expect(results[0]?.some((school) => school.schoolName === '臺北市新設雲端幼兒園')).toBe(true);
   });
 
-  it('Worker API 失敗時應改用 assets/data.json fallback', () => {
+  it('同源 Worker API 失敗時仍應從 workers.dev 載入 115 學年度資料', () => {
+    const workerData = {
+      '臺北市 Safari 測試幼兒園': {
+        搜尋關鍵字: ['Safari 測試'],
+        '5歲（115學年）': { 正取: 12, 備取: 18 },
+      },
+    } satisfies RawLotteryData;
+    const results: (readonly SchoolLotteryRates[])[] = [];
+
+    service.loadSchoolRates().subscribe((schools) => results.push(schools));
+
+    const sameOriginRequest = httpTesting.expectOne(REMOTE_DATA_URL);
+    sameOriginRequest.flush(null, { status: 404, statusText: 'No same-origin route' });
+
+    const workerRequest = httpTesting.expectOne(WORKER_DATA_URL);
+    expect(workerRequest.request.method).toBe('GET');
+    expect(workerRequest.request.cache).toBe('no-store');
+    workerRequest.flush(workerData);
+
+    httpTesting.expectNone(FALLBACK_DATA_URL);
+    expect(results[0]?.[0]?.schoolName).toBe('臺北市 Safari 測試幼兒園');
+    expect(results[0]?.[0]?.ageGroups[0]?.schoolYear).toBe('115學年');
+    expect(results[0]?.[0]?.ageGroups[0]?.estimatedLotteryRatePercent).toBeCloseTo(40);
+  });
+
+  it('所有 Worker API 失敗時應改用 assets/data.json fallback', () => {
     const fallbackData = {
       臺北市備援幼兒園: {
         搜尋關鍵字: ['中正區'],
@@ -78,8 +106,12 @@ describe('LotteryDataService', () => {
     const remoteRequest = httpTesting.expectOne(REMOTE_DATA_URL);
     remoteRequest.flush(null, { status: 500, statusText: 'Worker Error' });
 
+    const workerRequest = httpTesting.expectOne(WORKER_DATA_URL);
+    workerRequest.flush(null, { status: 500, statusText: 'Worker Error' });
+
     const fallbackRequest = httpTesting.expectOne(FALLBACK_DATA_URL);
     expect(fallbackRequest.request.method).toBe('GET');
+    expect(fallbackRequest.request.cache).toBeUndefined();
     fallbackRequest.flush(fallbackData);
 
     expect(results[0]?.[0]?.schoolName).toBe('臺北市備援幼兒園');
@@ -97,6 +129,9 @@ describe('LotteryDataService', () => {
 
     const remoteRequest = httpTesting.expectOne(REMOTE_DATA_URL);
     remoteRequest.flush(null, { status: 500, statusText: 'Worker Error' });
+
+    const workerRequest = httpTesting.expectOne(WORKER_DATA_URL);
+    workerRequest.flush(null, { status: 500, statusText: 'Worker Error' });
 
     const fallbackRequest = httpTesting.expectOne(FALLBACK_DATA_URL);
     fallbackRequest.flush(null, { status: 404, statusText: 'Missing fallback' });
