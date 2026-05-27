@@ -40,7 +40,7 @@ function cloneSchoolLotteryEntry(
     return readStringArray(value);
   }
 
-  return isRecord(value) ? { ...value } as RawLotteryCounts : null;
+  return isRecord(value) ? { ...value } : null;
 }
 
 function cloneSchoolLotteryData(schoolData: Record<string, unknown>): RawSchoolLotteryData {

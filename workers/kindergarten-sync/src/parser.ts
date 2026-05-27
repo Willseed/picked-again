@@ -18,7 +18,8 @@ export function buildKindergartenItemId(context: ParseContext, schoolName: strin
   ].join(":");
 }
 
-type RawRow = Record<string, string | number | null>;
+type RawRowValue = string | number | null;
+type RawRow = Record<string, RawRowValue>;
 
 type NormalizedField =
   | "schoolName"

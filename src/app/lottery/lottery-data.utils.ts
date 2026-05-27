@@ -827,7 +827,7 @@ function isDistrictAliasSeparator(character: string): boolean {
 }
 
 function endsWithClosingParenthesis(value: string): boolean {
-  const lastCharacter = value[value.length - 1];
+  const lastCharacter = value.at(-1);
 
   return lastCharacter === ')' || lastCharacter === '）';
 }
