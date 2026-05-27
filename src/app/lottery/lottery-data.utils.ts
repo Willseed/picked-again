@@ -422,7 +422,14 @@ function collectUniqueText(values: readonly unknown[]): readonly string[] {
 }
 
 function readSearchAliases(value: unknown): readonly string[] {
-  const rawAliases = Array.isArray(value) ? value : typeof value === 'string' ? [value] : [];
+  let rawAliases: readonly unknown[] = [];
+
+  if (Array.isArray(value)) {
+    rawAliases = value;
+  } else if (typeof value === 'string') {
+    rawAliases = [value];
+  }
+
   const aliases = rawAliases
     .filter((alias): alias is string => typeof alias === 'string')
     .map((alias) => alias.trim())

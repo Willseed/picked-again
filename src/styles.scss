@@ -911,6 +911,7 @@ app-lottery-dashboard {
 
   .age-card mat-card-content {
     gap: 14px;
+    grid-template-columns: minmax(0, 1fr);
     padding: 16px 18px 18px;
   }
 
@@ -926,6 +927,9 @@ app-lottery-dashboard {
     align-items: stretch;
     gap: 12px;
     grid-template-columns: 1fr;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
   }
 
   .decision-panel {
@@ -975,7 +979,7 @@ app-lottery-dashboard {
   }
 
   .selected-sequence-rate .rate-value > strong {
-    color: var(--pa-ink);
+    color: var(--pa-accent-blue);
     font-size: clamp(22px, 3vw, 30px);
     font-weight: 800;
     line-height: 1.05;
@@ -1003,18 +1007,26 @@ app-lottery-dashboard {
   }
 
   .decision-grid div {
+    min-width: 0;
     border: 1px solid var(--pa-hairline);
     border-radius: var(--pa-radius-md);
     background: var(--pa-surface-elevated);
     padding: 10px 12px;
   }
 
+  .decision-grid dt {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
   .decision-grid dd {
+    min-width: 0;
     margin: 4px 0 0;
     color: var(--pa-ink);
     font-size: 17px;
     font-weight: 700;
     line-height: 1.2;
+    overflow-wrap: anywhere;
   }
 
   .general-decision {
@@ -1084,14 +1096,11 @@ app-lottery-dashboard {
   }
 
   .selected-sequence-rate-header strong {
+    color: var(--pa-accent-blue);
     font-size: 11px;
     font-weight: 800;
     letter-spacing: 0.08em;
     white-space: nowrap;
-  }
-
-  .selected-sequence-rate-header strong {
-    color: var(--pa-accent-blue);
   }
 
   .sequence-cancel-btn {
@@ -1384,10 +1393,6 @@ app-lottery-dashboard {
   .decision-grid dd,
   .count-grid dd {
     color: var(--pa-ink);
-  }
-
-  .selected-sequence-rate .rate-value > strong {
-    color: var(--pa-accent-blue);
   }
 
   .selected-sequence-rate mat-progress-bar {

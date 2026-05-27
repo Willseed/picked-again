@@ -269,3 +269,59 @@ test('mobile sequence chips stay inside the data card and year controls use the 
 
   await expect(schoolCard.locator('.year-nav-btn__label')).toHaveCount(0);
 });
+
+test('mobile no-estimate age cards do not overflow their data card', async ({ page }) => {
+  await page.goto('/');
+
+  await page.getByLabel('輸入幼兒園關鍵字搜尋中籤率').fill('湖美');
+
+  const schoolCard = page.locator('.school-card').first();
+  await expect(schoolCard).toBeVisible();
+
+  const noEstimateCards = schoolCard
+    .locator('.year-section.is-active-year .age-card')
+    .filter({ hasText: '無法估算' });
+  await expect(noEstimateCards.first()).toBeVisible();
+
+  const overflowMeasurements = await noEstimateCards.evaluateAll(async (cards) =>
+    Promise.all(
+      cards.map(async (card) => {
+        const content = card.querySelector<HTMLElement>('mat-card-content');
+        const layout = card.querySelector<HTMLElement>('.age-card-layout');
+
+        if (!content || !layout) {
+          throw new TypeError('Expected no-estimate age card content and layout');
+        }
+
+        const contentRect = content.getBoundingClientRect();
+        const layoutRect = layout.getBoundingClientRect();
+
+        return {
+          text: await globalThis.__pickedAgainCollapseWhitespace(card.textContent ?? ''),
+          contentClientWidth: content.clientWidth,
+          contentScrollWidth: content.scrollWidth,
+          layoutLeft: layoutRect.left,
+          layoutRight: layoutRect.right,
+          contentLeft: contentRect.left,
+          contentRight: contentRect.right,
+        };
+      }),
+    ),
+  );
+
+  expect(overflowMeasurements.length).toBeGreaterThan(0);
+  expect(
+    overflowMeasurements.filter(
+      (measurement) =>
+        measurement.contentScrollWidth > measurement.contentClientWidth + 1 ||
+        measurement.layoutLeft < measurement.contentLeft - 0.5 ||
+        measurement.layoutRight > measurement.contentRight + 0.5,
+    ),
+  ).toEqual([]);
+
+  const pageOverflow = await page.evaluate(() => {
+    const documentElement = document.documentElement;
+    return documentElement.scrollWidth - documentElement.clientWidth;
+  });
+  expect(pageOverflow).toBeLessThanOrEqual(1);
+});

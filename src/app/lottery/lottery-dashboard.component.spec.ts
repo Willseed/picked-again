@@ -659,6 +659,26 @@ describe('LotteryDashboardComponent', () => {
     expect(host.querySelector('.identity-rate-card')).toBeNull();
   });
 
+  it('無法估算資訊面板應允許手機版卡片收縮不撐開滑動區', async () => {
+    const stylesText = await getStylesScssText();
+    const ageCardLayoutRule = await extractExactScssRule('.age-card-layout');
+    const decisionGridItemRule = await extractExactScssRule('.decision-grid div');
+    const decisionGridTermRule = await extractExactScssRule('.decision-grid dt');
+    const decisionGridValueRule = await extractExactScssRule('.decision-grid dd');
+
+    expect(stylesText).toMatch(
+      /\.age-card\s+mat-card-content\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/u,
+    );
+    expect(ageCardLayoutRule).toMatch(/width:\s*100%/u);
+    expect(ageCardLayoutRule).toMatch(/max-width:\s*100%/u);
+    expect(ageCardLayoutRule).toMatch(/min-width:\s*0/u);
+    expect(decisionGridItemRule).toMatch(/min-width:\s*0/u);
+    expect(decisionGridTermRule).toMatch(/min-width:\s*0/u);
+    expect(decisionGridTermRule).toMatch(/overflow-wrap:\s*anywhere/u);
+    expect(decisionGridValueRule).toMatch(/min-width:\s*0/u);
+    expect(decisionGridValueRule).toMatch(/overflow-wrap:\s*anywhere/u);
+  });
+
   it('可用行政區關鍵字搜尋幼兒園', async () => {
     const fixture = await renderDashboard();
     const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
