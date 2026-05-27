@@ -3,6 +3,7 @@ import type { SourceConfig } from "./types";
 export const SERVICE_NAME = "picked-again-kindergarten-sync";
 export const TIMEZONE = "Asia/Taipei";
 export const LATEST_KEY = "kindergarten:latest";
+export const LATEST_DATASET_KEY = "kindergarten:latest-dataset";
 export const HISTORICAL_LOTTERY_DATA_KEY = "kindergarten:lottery-history";
 export const SYNC_STATE_KEY = "kindergarten:sync-state";
 

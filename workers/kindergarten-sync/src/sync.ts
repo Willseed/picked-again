@@ -1,7 +1,14 @@
 import { parse, type HTMLElement, type Node as HtmlNode } from "node-html-parser";
 import { DISTRICT_NAMES, DISTRICTS, SOURCES, TIMEZONE } from "./constants";
-import { getLatestDataset, getSyncState, putLatestDataset, putSyncState } from "./kv";
+import {
+  getHistoricalLotteryData,
+  getLatestDataset,
+  getSyncState,
+  putLatestDataset,
+  putSyncState,
+} from "./kv";
 import { parseKindergartenItems, type ParseContext } from "./parser";
+import { buildLatestRawLotteryData } from "./raw-lottery";
 import type {
   Env,
   KindergartenClassDataset,
@@ -772,6 +779,8 @@ export async function syncAndStore(env: Env): Promise<SyncResult> {
   const syncedSource = getNextSourceConfig(syncState);
   const sourceResult = await syncSource(syncedSource, updatedAt, fetchHtml);
   const dataset = mergeSourceDataset(existingDataset, syncedSource, sourceResult, updatedAt);
+  const historicalData = await getHistoricalLotteryData(env);
+  const latestRawData = buildLatestRawLotteryData(dataset, historicalData);
   const publicCount = countSourceItems(dataset.public);
   const nonProfitCount = countSourceItems(dataset.nonProfit);
   const totalCount = publicCount + nonProfitCount;
@@ -786,7 +795,7 @@ export async function syncAndStore(env: Env): Promise<SyncResult> {
 
   const nextSourceType = getFollowingSourceType(syncedSource.type);
 
-  await putLatestDataset(env, dataset);
+  await putLatestDataset(env, dataset, latestRawData);
   await putSyncState(env, {
     nextSourceType,
     lastSyncedSourceType: syncedSource.type,

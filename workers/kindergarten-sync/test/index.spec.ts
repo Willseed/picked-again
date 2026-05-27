@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mergeLiveSyncData } from "../src/index";
+import { mergeLiveSyncData } from "../src/raw-lottery";
 import type { KindergartenDataset } from "../src/types";
 
 describe("mergeLiveSyncData", () => {

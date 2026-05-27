@@ -84,10 +84,12 @@ npm test -- --watch=false
 
 - KV keys：
   - `kindergarten:lottery-history`：113/114 學年度歷史抽籤資料，來源為 `public/assets/data.json`。
-  - `kindergarten:latest`：Worker Cron 每 3 分鐘同步的最新 115 學年度招生資料，供即時 API 使用。
+  - `kindergarten:latest`：Worker Cron 同步的最新 115 學年度招生資料，使用與 `kindergarten:lottery-history` 相同的園所 / 班齡 / `正取` / `備取` 欄位鍵值，並以 pretty JSON 寫入 KV。
+  - `kindergarten:latest-dataset`：Worker 內部使用的 schema v2 同步資料，支援 `/kindergarten/latest`、`/kindergarten/public` 與 `/kindergarten/non-profit` API。
+  - `kindergarten:sync-state`：Worker Cron 輪流同步公立與非營利來源的狀態，同樣以 pretty JSON 寫入 KV。
 - API endpoints：
   - `GET /health`
-  - `GET /kindergarten/lottery-data`：前端使用的合併資料，包含 `kindergarten:lottery-history` 的 113/114 學年度與 `kindergarten:latest` 轉換出的 115 學年度。
+  - `GET /kindergarten/lottery-data`：前端使用的合併資料，包含 `kindergarten:lottery-history` 的 113/114 學年度與 `kindergarten:latest-dataset` 轉換出的 115 學年度。
   - `GET /kindergarten/latest`
   - `GET /kindergarten/public`
   - `GET /kindergarten/non-profit`
@@ -118,7 +120,7 @@ npm test -- --watch=false
 
   - CORS 允許來源由 `ALLOWED_ORIGINS` 設定，格式為逗號分隔的 origin，例如 `https://pick.pylot.space,https://willseed.github.io,http://localhost:4200`。
 
-`workers/kindergarten-sync/wrangler.jsonc` 會把 `KINDERGARTEN_KV` 綁定到 production KV namespace；部署 workflow 會接著執行 `npm run kv:init`，把 `public/assets/data.json` seed 到 `kindergarten:lottery-history`。Cron sync 只更新 `kindergarten:latest`，不會覆蓋 113/114 學年度歷史抽籤資料；`/kindergarten/lottery-data` 會在回應時把 113/114 與 115 合併。若改用不同 KV，請同步更新 namespace id。
+`workers/kindergarten-sync/wrangler.jsonc` 會把 `KINDERGARTEN_KV` 綁定到 production KV namespace；部署 workflow 會接著執行 `npm run kv:init`，把 `public/assets/data.json` seed 到 `kindergarten:lottery-history`。Cron sync 只更新 `kindergarten:latest`、`kindergarten:latest-dataset` 與 `kindergarten:sync-state`，不會覆蓋 113/114 學年度歷史抽籤資料；`/kindergarten/lottery-data` 會在回應時把 113/114 與 115 合併。若改用不同 KV，請同步更新 namespace id。
 
 ## 資料與限制
 

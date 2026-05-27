@@ -9,7 +9,12 @@ interface StoredValue {
   readonly value: string;
 }
 
-function createMockEnv(initialState: { readonly nextSourceType?: SourceType } = {}): Env {
+interface MockEnv {
+  readonly env: Env;
+  readonly store: Map<string, StoredValue>;
+}
+
+function createMockEnv(initialState: { readonly nextSourceType?: SourceType } = {}): MockEnv {
   const store = new Map<string, StoredValue>();
 
   if (initialState.nextSourceType) {
@@ -18,7 +23,7 @@ function createMockEnv(initialState: { readonly nextSourceType?: SourceType } = 
     });
   }
 
-  return {
+  const env = {
     KINDERGARTEN_KV: {
       async get(key: string): Promise<unknown | null> {
         const entry = store.get(key);
@@ -29,6 +34,8 @@ function createMockEnv(initialState: { readonly nextSourceType?: SourceType } = 
       },
     },
   } as unknown as Env;
+
+  return { env, store };
 }
 
 function classPageHtml(className: string): string {
@@ -83,7 +90,7 @@ describe("syncAndStore", () => {
   });
 
   it("syncs one source per invocation so nonProfit stays under the Worker subrequest limit", async () => {
-    const env = createMockEnv();
+    const { env, store } = createMockEnv();
     const fetchMock = vi.fn(async (_url: string | URL | Request, init?: RequestInit) => {
       const body = init?.body instanceof URLSearchParams ? init.body : null;
       const className = body?.get("classType") ?? "5歲";
@@ -105,5 +112,22 @@ describe("syncAndStore", () => {
     expect(result.nonProfitCount).toBe(DISTRICTS.length * 4);
     expect(result.publicCount).toBe(0);
     expect(result.errors).toEqual([]);
+
+    const latestRawJson = store.get("kindergarten:latest")?.value ?? "";
+    const latestDatasetJson = store.get("kindergarten:latest-dataset")?.value ?? "";
+    const syncStateJson = store.get("kindergarten:sync-state")?.value ?? "";
+    const latestRaw = JSON.parse(latestRawJson) as Record<string, Record<string, unknown>>;
+
+    expect(latestRawJson).toContain("\n  ");
+    expect(latestDatasetJson).toContain("\n  ");
+    expect(syncStateJson).toContain("\n  ");
+    expect(latestRaw["5歲測試非營利幼兒園"]?.["5歲（115學年）"]).toMatchObject({
+      正取: 4,
+      備取: 6,
+      公告缺額: 4,
+      總登記人數: 10,
+      資料來源: "非營利幼兒園 / nonProfit",
+    });
+    expect(latestRaw["5歲測試非營利幼兒園"]?.["id"]).toBeUndefined();
   });
 });
