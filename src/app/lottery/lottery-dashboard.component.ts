@@ -462,7 +462,7 @@ export class LotteryDashboardComponent implements AfterViewInit {
     if (nextIndex === current) return;
     const containers = this.yearSectionContainers?.toArray() ?? [];
     const container = containers.find(
-      (el) => el.nativeElement.getAttribute('data-school-name') === schoolName,
+      (el) => el.nativeElement.dataset['schoolName'] === schoolName,
     );
     if (!container) return;
     container.nativeElement.scrollTo({

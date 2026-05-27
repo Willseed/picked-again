@@ -662,15 +662,15 @@ describe('LotteryDashboardComponent', () => {
     expect(yearKickers).toEqual(['目前查看', '目前查看']);
     expect(contextSchools).toEqual(['臺北市測試非營利幼兒園', '臺北市測試非營利幼兒園']);
     expect(yearHeaders[0]?.classList.contains('is-active-year')).toBe(true);
-    expect(yearHeaders[0]?.getAttribute('data-active-year')).toBe('true');
+    expect(yearHeaders[0]?.dataset['activeYear']).toBe('true');
     expect(yearHeaders[1]?.classList.contains('is-active-year')).toBe(false);
-    expect(yearHeaders[1]?.getAttribute('data-active-year')).toBeNull();
+    expect(yearHeaders[1]?.dataset['activeYear']).toBeUndefined();
     expect(yearSections[0]?.classList.contains('is-active-year')).toBe(true);
-    expect(yearSections[0]?.getAttribute('data-active-year')).toBe('true');
+    expect(yearSections[0]?.dataset['activeYear']).toBe('true');
     expect(yearSections[0]?.getAttribute('aria-hidden')).toBeNull();
     expect(yearSections[0]?.hasAttribute('inert')).toBe(false);
     expect(yearSections[1]?.classList.contains('is-active-year')).toBe(false);
-    expect(yearSections[1]?.getAttribute('data-active-year')).toBeNull();
+    expect(yearSections[1]?.dataset['activeYear']).toBeUndefined();
     expect(yearSections[1]?.getAttribute('aria-hidden')).toBe('true');
     expect(yearSections[1]?.hasAttribute('inert')).toBe(true);
 
@@ -694,9 +694,9 @@ describe('LotteryDashboardComponent', () => {
     expect(headerTrack.style.transform).toBe('translateX(-100%)');
     expect(yearContainer.style.height).toBe('280px');
     expect(yearHeaders[0]?.classList.contains('is-active-year')).toBe(false);
-    expect(yearHeaders[0]?.getAttribute('data-active-year')).toBeNull();
+    expect(yearHeaders[0]?.dataset['activeYear']).toBeUndefined();
     expect(yearHeaders[1]?.classList.contains('is-active-year')).toBe(true);
-    expect(yearHeaders[1]?.getAttribute('data-active-year')).toBe('true');
+    expect(yearHeaders[1]?.dataset['activeYear']).toBe('true');
     expect(yearSections[0]?.classList.contains('is-active-year')).toBe(false);
     expect(yearSections[0]?.getAttribute('aria-hidden')).toBe('true');
     expect(yearSections[0]?.hasAttribute('inert')).toBe(true);
