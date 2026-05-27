@@ -31,8 +31,13 @@ describe('LotteryDataService', () => {
     const remoteData = {
       臺北市雲端幼兒園: {
         搜尋關鍵字: ['大同區'],
+        '5歲（115學年）': { 正取: 12, 備取: 18 },
         '5歲（114學年）': { 正取: 10, 備取: 15 },
         '5歲（113學年）': { 正取: 8, 備取: 12 },
+      },
+      臺北市新設雲端幼兒園: {
+        搜尋關鍵字: ['大同區'],
+        '4歲（115學年）': { 正取: 3, 備取: 7 },
       },
     } satisfies RawLotteryData;
     const results: (readonly SchoolLotteryRates[])[] = [];
@@ -49,8 +54,10 @@ describe('LotteryDataService', () => {
     expect(results[0]?.[0]?.ageGroups.map((group) => group.ageGroup).sort()).toEqual([
       '5歲（113學年）',
       '5歲（114學年）',
+      '5歲（115學年）',
     ]);
     expect(results[0]?.[0]?.ageGroups[0]?.estimatedLotteryRatePercent).toBeCloseTo(40);
+    expect(results[0]?.some((school) => school.schoolName === '臺北市新設雲端幼兒園')).toBe(true);
   });
 
   it('Worker API 失敗時應改用 assets/data.json fallback', () => {

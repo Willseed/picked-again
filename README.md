@@ -83,11 +83,11 @@ npm test -- --watch=false
 `workers/kindergarten-sync` 是獨立的 Cloudflare Worker 子專案。正式上線後由 Worker Cron 每 3 分鐘同步臺北市公立與非營利幼兒園資料，並把最新 JSON 存到 Cloudflare KV；GitHub Actions 只負責部署 Worker，不會新增每 3 分鐘修改 repo 的 workflow。
 
 - KV keys：
-  - `kindergarten:lottery-history`：113/114 學年度歷史抽籤資料，來源為 `public/assets/data.json`，供前端查詢使用。
+  - `kindergarten:lottery-history`：113/114 學年度歷史抽籤資料，來源為 `public/assets/data.json`。
   - `kindergarten:latest`：Worker Cron 每 3 分鐘同步的最新 115 學年度招生資料，供即時 API 使用。
 - API endpoints：
   - `GET /health`
-  - `GET /kindergarten/lottery-data`
+  - `GET /kindergarten/lottery-data`：前端使用的合併資料，包含 `kindergarten:lottery-history` 的 113/114 學年度與 `kindergarten:latest` 轉換出的 115 學年度。
   - `GET /kindergarten/latest`
   - `GET /kindergarten/public`
   - `GET /kindergarten/non-profit`
@@ -118,7 +118,7 @@ npm test -- --watch=false
 
   - CORS 允許來源由 `ALLOWED_ORIGINS` 設定，格式為逗號分隔的 origin，例如 `https://pick.pylot.space,https://willseed.github.io,http://localhost:4200`。
 
-`workers/kindergarten-sync/wrangler.jsonc` 會把 `KINDERGARTEN_KV` 綁定到 production KV namespace；部署 workflow 會接著執行 `npm run kv:init`，把 `public/assets/data.json` seed 到 `kindergarten:lottery-history`。Cron sync 只更新 `kindergarten:latest`，不會覆蓋 113/114 學年度歷史抽籤資料。若改用不同 KV，請同步更新 namespace id。
+`workers/kindergarten-sync/wrangler.jsonc` 會把 `KINDERGARTEN_KV` 綁定到 production KV namespace；部署 workflow 會接著執行 `npm run kv:init`，把 `public/assets/data.json` seed 到 `kindergarten:lottery-history`。Cron sync 只更新 `kindergarten:latest`，不會覆蓋 113/114 學年度歷史抽籤資料；`/kindergarten/lottery-data` 會在回應時把 113/114 與 115 合併。若改用不同 KV，請同步更新 namespace id。
 
 ## 資料與限制
 
