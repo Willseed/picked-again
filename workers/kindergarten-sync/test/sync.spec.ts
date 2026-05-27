@@ -25,7 +25,7 @@ function createMockEnv(initialState: { readonly nextSourceType?: SourceType } = 
 
   const env = {
     KINDERGARTEN_KV: {
-      async get(key: string): Promise<unknown | null> {
+      async get(key: string): Promise<unknown> {
         const entry = store.get(key);
         return entry ? JSON.parse(entry.value) : null;
       },

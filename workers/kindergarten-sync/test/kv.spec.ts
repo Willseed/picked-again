@@ -19,7 +19,7 @@ function createMockEnv(initialStore: ReadonlyMap<string, StoredValue> = new Map(
   const store = new Map(initialStore);
   const env = {
     KINDERGARTEN_KV: {
-      async get(key: string): Promise<unknown | null> {
+      async get(key: string): Promise<unknown> {
         const entry = store.get(key);
         return entry ? JSON.parse(entry.value) : null;
       },

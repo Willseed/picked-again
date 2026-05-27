@@ -53,9 +53,11 @@ async function getStylesScssText(): Promise<string> {
 }
 
 async function extractScssRule(selector: string): Promise<string> {
-  const escapedSelector = selector.replaceAll(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+  const escapedSelector = selector.replaceAll(/[.*+?^${}()|[\]\\]/gu, String.raw`\$&`);
   const stylesText = await getStylesScssText();
-  const match = new RegExp(`[^{}]*${escapedSelector}[^{}]*\\{([^}]*)\\}`, 'u').exec(stylesText);
+  const match = new RegExp(String.raw`[^{}]*${escapedSelector}[^{}]*\{([^}]*)\}`, 'u').exec(
+    stylesText,
+  );
 
   expect(stylesText.includes(selector)).toBe(true);
   expect(match !== null).toBe(true);
@@ -64,9 +66,9 @@ async function extractScssRule(selector: string): Promise<string> {
 }
 
 async function extractExactScssRule(selector: string): Promise<string> {
-  const escapedSelector = selector.replaceAll(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+  const escapedSelector = selector.replaceAll(/[.*+?^${}()|[\]\\]/gu, String.raw`\$&`);
   const stylesText = await getStylesScssText();
-  const match = new RegExp(`(?:^|\\})\\s*${escapedSelector}\\s*\\{([^}]*)\\}`, 'u').exec(
+  const match = new RegExp(String.raw`(?:^|\})\s*${escapedSelector}\s*\{([^}]*)\}`, 'u').exec(
     stylesText,
   );
 

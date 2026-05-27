@@ -20,7 +20,7 @@ function isKindergartenDataset(value: unknown): value is KindergartenDataset {
   );
 }
 
-export async function getHistoricalLotteryData(env: Env): Promise<unknown | null> {
+export async function getHistoricalLotteryData(env: Env): Promise<unknown> {
   return env.KINDERGARTEN_KV.get(HISTORICAL_LOTTERY_DATA_KEY, "json");
 }
 

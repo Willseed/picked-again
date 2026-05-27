@@ -333,7 +333,7 @@ function extractPostbackTarget(input: HTMLElement): string | null {
       continue;
     }
 
-    const normalizedHandler = handler.replaceAll("\\'", "'").replaceAll('\\"', '"');
+    const normalizedHandler = handler.replaceAll(String.raw`\'`, "'").replaceAll(String.raw`\"`, '"');
     const match = /__doPostBack\(\s*['"]([^'"]+)['"]\s*,\s*['"]([^'"]*)['"]/u.exec(normalizedHandler);
 
     if (match?.[1]) {
