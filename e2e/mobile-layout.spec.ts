@@ -115,7 +115,6 @@ test('mobile sequence chips stay inside the data card and year controls use the 
       range.setStart(textNode, start);
       range.setEnd(textNode, end);
       const rect = range.getBoundingClientRect();
-      range.detach();
 
       return {
         left: rect.left,

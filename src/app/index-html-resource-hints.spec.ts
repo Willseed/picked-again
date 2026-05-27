@@ -1,4 +1,4 @@
-export {};
+import { describe, expect, it } from 'vitest';
 
 type NodeProcess = typeof globalThis & {
   readonly process?: {

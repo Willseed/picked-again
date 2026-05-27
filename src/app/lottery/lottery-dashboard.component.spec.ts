@@ -55,7 +55,7 @@ async function getStylesScssText(): Promise<string> {
 async function extractScssRule(selector: string): Promise<string> {
   const escapedSelector = selector.replaceAll(/[.*+?^${}()|[\]\\]/gu, '\\$&');
   const stylesText = await getStylesScssText();
-  const match = stylesText.match(new RegExp(`[^{}]*${escapedSelector}[^{}]*\\{([^}]*)\\}`, 'u'));
+  const match = new RegExp(`[^{}]*${escapedSelector}[^{}]*\\{([^}]*)\\}`, 'u').exec(stylesText);
 
   expect(stylesText.includes(selector)).toBe(true);
   expect(match !== null).toBe(true);
@@ -66,8 +66,8 @@ async function extractScssRule(selector: string): Promise<string> {
 async function extractExactScssRule(selector: string): Promise<string> {
   const escapedSelector = selector.replaceAll(/[.*+?^${}()|[\]\\]/gu, '\\$&');
   const stylesText = await getStylesScssText();
-  const match = stylesText.match(
-    new RegExp(`(?:^|\\})\\s*${escapedSelector}\\s*\\{([^}]*)\\}`, 'u'),
+  const match = new RegExp(`(?:^|\\})\\s*${escapedSelector}\\s*\\{([^}]*)\\}`, 'u').exec(
+    stylesText,
   );
 
   expect(stylesText.includes(selector)).toBe(true);
@@ -309,11 +309,11 @@ function expectSingleGuidanceTarget(host: HTMLElement, selector: string): HTMLEl
   expect(targets).toHaveLength(1);
   expect(targets[0]?.matches(selector)).toBe(true);
 
-  return targets[0] as HTMLElement;
+  return targets[0];
 }
 
 function extractZIndex(rule: string): number {
-  const match = rule.match(/z-index:\s*(\d+)/u);
+  const match = /z-index:\s*(\d+)/u.exec(rule);
 
   expect(match).not.toBeNull();
 
@@ -659,6 +659,37 @@ describe('LotteryDashboardComponent', () => {
     expect(host.querySelector('.identity-rate-card')).toBeNull();
   });
 
+  it('大龍峒無法估算班齡應顯示 115 學年', async () => {
+    const dalongdongSchools = buildSchoolLotteryRates({
+      臺北市大龍峒非營利幼兒園: {
+        搜尋關鍵字: ['大龍峒非營利幼兒園', '大龍峒'],
+        '5歲（115學年）': { 正取: 0, 備取: 0, 資料來源: '115學年 5歲' },
+        '2歲專班（114學年）': { 正取: 7, 備取: 40, 資料來源: '114學年 2歲專班' },
+      },
+    } satisfies RawLotteryData);
+    const fixture = await renderDashboard(() => of(dalongdongSchools));
+    const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
+
+    input.value = '大龍峒';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    const activeYearSection = host.querySelector('.year-section.is-active-year') as HTMLElement;
+    const activeYearHeader = host.querySelector('.year-section-header.is-active-year') as HTMLElement;
+
+    expect(activeYearHeader.querySelector('.year-tag')?.textContent?.trim()).toBe('115學年');
+    expect(activeYearSection.getAttribute('aria-label')).toBe(
+      '臺北市大龍峒非營利幼兒園 115學年資料',
+    );
+    expect(activeYearSection.textContent).toContain('無法估算');
+    expect(activeYearSection.textContent).toContain('5歲（115學年）');
+    expect(activeYearSection.textContent).toContain('沒有正取或備取資料');
+    expect(activeYearSection.textContent).not.toContain('5歲（114學年）沒有正取或備取資料');
+  });
+
   it('無法估算資訊面板應允許手機版卡片收縮不撐開滑動區', async () => {
     const stylesText = await getStylesScssText();
     const ageCardLayoutRule = await extractExactScssRule('.age-card-layout');
@@ -720,8 +751,8 @@ describe('LotteryDashboardComponent', () => {
     const yearNavControls = yearNavRow.querySelector('.year-nav-controls') as HTMLElement;
     const prevBtn = yearCarousel.querySelector('.year-nav-btn--prev') as HTMLElement;
     const nextBtn = yearCarousel.querySelector('.year-nav-btn--next') as HTMLElement;
-    const yearHeaders = Array.from(host.querySelectorAll('.year-section-header')) as HTMLElement[];
-    const yearSections = Array.from(host.querySelectorAll('.year-section')) as HTMLElement[];
+    const yearHeaders = Array.from(host.querySelectorAll<HTMLElement>('.year-section-header'));
+    const yearSections = Array.from(host.querySelectorAll<HTMLElement>('.year-section'));
     const yearKickers = Array.from(host.querySelectorAll('.year-kicker')).map((element) =>
       element.textContent?.trim(),
     );
@@ -735,8 +766,8 @@ describe('LotteryDashboardComponent', () => {
       (element) => element.textContent?.trim(),
     );
 
-    stubElementHeight(yearSections[0] as HTMLElement, 640);
-    stubElementHeight(yearSections[1] as HTMLElement, 280);
+    stubElementHeight(yearSections[0], 640);
+    stubElementHeight(yearSections[1], 280);
     await flushCarouselMeasurements(fixture);
 
     expect(yearNavRow).toBeTruthy();
@@ -787,8 +818,8 @@ describe('LotteryDashboardComponent', () => {
     expect(yearSections[1]?.hasAttribute('inert')).toBe(true);
 
     const initialActiveAgeCards = Array.from(
-      (yearSections[0] as HTMLElement).querySelectorAll('.age-card'),
-    ) as HTMLElement[];
+      yearSections[0].querySelectorAll<HTMLElement>('.age-card'),
+    );
 
     expect(initialActiveAgeCards).toHaveLength(2);
     expect(initialActiveAgeCards[0]?.textContent).toContain('5歲');
@@ -817,8 +848,8 @@ describe('LotteryDashboardComponent', () => {
     expect(yearSections[1]?.hasAttribute('inert')).toBe(false);
 
     const nextActiveAgeCards = Array.from(
-      (yearSections[1] as HTMLElement).querySelectorAll('.age-card'),
-    ) as HTMLElement[];
+      yearSections[1].querySelectorAll<HTMLElement>('.age-card'),
+    );
 
     expect(nextActiveAgeCards).toHaveLength(1);
     expect(nextActiveAgeCards[0]?.textContent).toContain('3歲');
@@ -1109,7 +1140,7 @@ describe('LotteryDashboardComponent', () => {
     ).toBe(true);
     expect(
       Array.from(sequenceGuidance.querySelectorAll('button')).every(
-        (button) => !(button as HTMLButtonElement).disabled,
+        (button) => !button.disabled,
       ),
     ).toBe(true);
 
@@ -1152,7 +1183,7 @@ describe('LotteryDashboardComponent', () => {
     expect(document.activeElement).toBe(finishButton);
     expect(
       Array.from(generalGuidance.querySelectorAll('button')).every(
-        (button) => !(button as HTMLButtonElement).disabled,
+        (button) => !button.disabled,
       ),
     ).toBe(true);
 
@@ -1442,7 +1473,7 @@ describe('LotteryDashboardComponent', () => {
     ) as HTMLElement;
     const selectedFillThresholdOption = selectedFillThresholdChip.querySelector(
       '[role="option"]',
-    ) as HTMLElement | null;
+    );
 
     expect(selectedFillThresholdChip).toBeTruthy();
     expect(selectedFillThresholdOption?.getAttribute('aria-selected')).toBe('true');
@@ -1726,8 +1757,8 @@ describe('LotteryDashboardComponent', () => {
     await flushCarouselMeasurements(fixture);
 
     const nextYearHeaders = Array.from(
-      host.querySelectorAll('.year-section-header'),
-    ) as HTMLElement[];
+      host.querySelectorAll<HTMLElement>('.year-section-header'),
+    );
 
     expect(nextYearHeaders[0]?.classList.contains('is-active-year')).toBe(false);
     expect(nextYearHeaders[1]?.classList.contains('is-active-year')).toBe(true);
@@ -2005,9 +2036,9 @@ describe('LotteryDashboardComponent', () => {
     fixture.detectChanges();
 
     const host = fixture.nativeElement as HTMLElement;
-    const ageCards = Array.from(host.querySelectorAll('.age-card')) as HTMLElement[];
-    const firstAgeCard = ageCards[0] as HTMLElement;
-    const secondAgeCard = ageCards[1] as HTMLElement;
+    const ageCards = Array.from(host.querySelectorAll<HTMLElement>('.age-card'));
+    const firstAgeCard = ageCards[0];
+    const secondAgeCard = ageCards[1];
     const sequenceTwoChip = Array.from(
       firstAgeCard.querySelectorAll('mat-chip-option.sequence-chip'),
     ).find((chip) => chip.textContent?.includes('順序2')) as HTMLElement;

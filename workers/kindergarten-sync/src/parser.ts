@@ -185,7 +185,7 @@ function rawValueToNumber(value: string | number | null): number | null {
     return null;
   }
 
-  const match = normalized.match(/\d+(?:\.\d+)?/u);
+  const match = /\d+(?:\.\d+)?/u.exec(normalized);
 
   if (!match) {
     return null;

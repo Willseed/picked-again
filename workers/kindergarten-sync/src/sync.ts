@@ -334,7 +334,7 @@ function extractPostbackTarget(input: HTMLElement): string | null {
     }
 
     const normalizedHandler = handler.replaceAll("\\'", "'").replaceAll('\\"', '"');
-    const match = normalizedHandler.match(/__doPostBack\(\s*['"]([^'"]+)['"]\s*,\s*['"]([^'"]*)['"]/u);
+    const match = /__doPostBack\(\s*['"]([^'"]+)['"]\s*,\s*['"]([^'"]*)['"]/u.exec(normalizedHandler);
 
     if (match?.[1]) {
       return match[1];
@@ -343,7 +343,7 @@ function extractPostbackTarget(input: HTMLElement): string | null {
 
   const inputName = getAttribute(input, "name");
   const inputId = getAttribute(input, "id");
-  const suffix = inputId?.match(/_(\d+)$/u)?.[1];
+  const suffix = inputId ? /_(\d+)$/u.exec(inputId)?.[1] : undefined;
 
   return inputName && suffix ? `${inputName}$${suffix}` : null;
 }

@@ -104,7 +104,7 @@ function readRawNumber(value: string | number | null | undefined): number | null
     .normalize("NFKC")
     .replaceAll(/[,，]/g, "")
     .replaceAll(/\s+/g, "");
-  const match = normalizedValue.match(/\d+(?:\.\d+)?/u);
+  const match = /\d+(?:\.\d+)?/u.exec(normalizedValue);
 
   if (!match) {
     return null;

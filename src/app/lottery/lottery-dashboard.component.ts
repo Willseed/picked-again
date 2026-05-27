@@ -883,7 +883,7 @@ function compareSchoolYearLabels(left: string, right: string): number {
 }
 
 function extractNumericYear(label: string): number | null {
-  const match = label.match(/\d+/u);
+  const match = /\d+/u.exec(label);
 
   return match ? Number(match[0]) : null;
 }

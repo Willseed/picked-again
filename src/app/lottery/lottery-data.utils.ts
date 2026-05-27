@@ -21,6 +21,7 @@ import {
 
 const ACCEPTED_FIELD: LotteryCountField = '正取';
 const WAITLISTED_FIELD: LotteryCountField = '備取';
+const LIVE_SYNC_SCHOOL_YEAR = '115學年';
 const PUBLIC_GENERAL_SEQUENCE_NUMBER = 8;
 const NONPROFIT_GENERAL_SEQUENCE_NUMBER = 9;
 
@@ -96,7 +97,7 @@ function addKindergartenItemToRawData(
   item: KindergartenItem,
 ): void {
   const schoolName = item.schoolName.trim();
-  const ageGroup = (item.className || classDataset.className).trim();
+  const ageGroup = buildKindergartenAgeGroupLabel(item, classDataset);
 
   if (schoolName.length === 0 || ageGroup.length === 0) {
     return;
@@ -115,6 +116,27 @@ function addKindergartenItemToRawData(
     source.type,
     item.sourceType,
   );
+}
+
+function buildKindergartenAgeGroupLabel(
+  item: KindergartenItem,
+  classDataset: KindergartenClassDataset,
+): string {
+  const ageLabel = normalizeLiveAgeLabel(item.className || classDataset.className);
+
+  if (ageLabel.length === 0 || ageLabel.includes('學年')) {
+    return ageLabel;
+  }
+
+  return `${ageLabel}（${LIVE_SYNC_SCHOOL_YEAR}）`;
+}
+
+function normalizeLiveAgeLabel(className: string): string {
+  const trimmedClassName = className.trim();
+
+  return trimmedClassName.endsWith('班') && !trimmedClassName.endsWith('專班')
+    ? trimmedClassName.slice(0, -1)
+    : trimmedClassName;
 }
 
 function getSearchAliasSet(

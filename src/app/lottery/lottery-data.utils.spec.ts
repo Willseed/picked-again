@@ -271,14 +271,14 @@ describe('抽籤資料工具', () => {
 
     const rawData = adaptKindergartenDatasetToRawLotteryData(workerData);
     expect(rawData['臺北市雲端幼兒園']?.['搜尋關鍵字']).toEqual(['大同區', '公立幼兒園', 'public']);
-    expect(rawData['臺北市雲端幼兒園']?.['5歲']).toMatchObject({
+    expect(rawData['臺北市雲端幼兒園']?.['5歲（115學年）']).toMatchObject({
       正取: 10,
       備取: 15,
       公告缺額: 10,
       總登記人數: 30,
       資料來源: '公立幼兒園 / public',
     });
-    expect(rawData['臺北市雲端幼兒園']?.['3歲']).toMatchObject({
+    expect(rawData['臺北市雲端幼兒園']?.['3歲（115學年）']).toMatchObject({
       正取: 8,
       備取: 12,
       公告缺額: 8,
@@ -290,13 +290,36 @@ describe('抽籤資料工具', () => {
     const ratesByAge = new Map(school?.ageGroups.map((group) => [group.ageGroup, group]));
 
     expect(school?.schoolName).toBe('臺北市雲端幼兒園');
-    expect(school?.ageGroups.map((group) => group.ageGroup)).toEqual(['5歲', '3歲']);
-    expect(ratesByAge.get('5歲')?.estimatedLotteryRatePercent).toBeCloseTo(40);
-    expect(ratesByAge.get('3歲')?.estimatedLotteryRatePercent).toBeCloseTo(40);
+    expect(school?.ageGroups.map((group) => group.ageGroup)).toEqual([
+      '5歲（115學年）',
+      '3歲（115學年）',
+    ]);
+    expect(ratesByAge.get('5歲（115學年）')?.schoolYear).toBe('115學年');
+    expect(ratesByAge.get('5歲（115學年）')?.estimatedLotteryRatePercent).toBeCloseTo(40);
+    expect(ratesByAge.get('3歲（115學年）')?.estimatedLotteryRatePercent).toBeCloseTo(40);
 
     const [match] = searchSchoolLotteryRates(schools, '大同區');
     expect(match?.schoolName).toBe('臺北市雲端幼兒園');
     expect(match?.matchScore).toBe(1);
+  });
+
+  it('應將大龍峒即時無法估算班齡標示為 115 學年', () => {
+    const schools = buildSchoolLotteryRates({
+      臺北市大龍峒非營利幼兒園: {
+        搜尋關鍵字: ['大龍峒非營利幼兒園', '大龍峒'],
+        '5歲（115學年）': { 正取: 0, 備取: 0, 資料來源: '115學年 5歲' },
+        '2歲專班（114學年）': { 正取: 7, 備取: 40, 資料來源: '114學年 2歲專班' },
+      },
+    } satisfies RawLotteryData);
+
+    const [match] = searchSchoolLotteryRates(schools, '大龍峒');
+    const noEstimateRecord = match?.ageGroups.find((group) => group.ageLabel === '5歲');
+
+    expect(match?.schoolName).toBe('臺北市大龍峒非營利幼兒園');
+    expect(match?.matchScore).toBe(1);
+    expect(noEstimateRecord?.schoolYear).toBe('115學年');
+    expect(noEstimateRecord?.estimatedLotteryRate).toBeNull();
+    expect(noEstimateRecord?.dataQualityIssues[0]?.message).toContain('5歲（115學年）');
   });
 
   it('應回傳多筆模糊符合結果且排除無關幼兒園', () => {
