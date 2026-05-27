@@ -136,7 +136,7 @@ function getContainsTokens(field: NormalizedField): readonly string[] {
   return CONTAINS_ALIASES[field].map(normalizeHeader);
 }
 
-function findRawValue(raw: RawRow, field: NormalizedField): string | number | null {
+function findRawValue(raw: RawRow, field: NormalizedField): RawRowValue {
   const aliasTokens = getAliasTokens(field);
 
   for (const [header, value] of Object.entries(raw)) {
