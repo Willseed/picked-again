@@ -412,13 +412,36 @@ function buildNormalizedSearchKeywords(
 
 function extractDistrictNames(searchAliases: readonly string[]): readonly string[] {
   const districtNames = searchAliases
-    .map(
-      (alias) =>
-        alias.match(/(?:臺北市|台北市)?(?<district>[^,\s，、]+區)$/u)?.groups?.['district'],
-    )
+    .map((alias) => extractDistrictName(alias))
     .filter((district): district is string => typeof district === 'string' && district.length > 0);
 
   return Array.from(new Set(districtNames));
+}
+
+function extractDistrictName(alias: string): string | null {
+  let segmentStart = 0;
+
+  for (let index = 0; index < alias.length; index += 1) {
+    if (isDistrictAliasSeparator(alias[index] ?? '')) {
+      segmentStart = index + 1;
+    }
+  }
+
+  const segment = alias.slice(segmentStart);
+
+  if (!segment.endsWith('區') || segment.length < 2) {
+    return null;
+  }
+
+  for (const prefix of ['臺北市', '台北市']) {
+    if (segment.startsWith(prefix)) {
+      const district = segment.slice(prefix.length);
+
+      return district.length >= 2 ? district : segment;
+    }
+  }
+
+  return segment;
 }
 
 function getBestFuzzyMatchScore(keyword: string, candidates: readonly string[]): number {
@@ -522,15 +545,31 @@ function splitAgeYearLabel(ageGroup: string): {
   readonly schoolYear: string | null;
 } {
   const normalizedAgeGroup = ageGroup.trim();
-  const match = normalizedAgeGroup.match(/^(?<age>.+?)\s*[（(](?<year>[^）)]+)[）)]$/u);
 
-  if (!match?.groups) {
+  if (!endsWithClosingParenthesis(normalizedAgeGroup)) {
+    return { ageLabel: normalizedAgeGroup, schoolYear: null };
+  }
+
+  const body = normalizedAgeGroup.slice(0, -1);
+  const lastClosingParenthesisIndex = findLastClosingParenthesisIndex(body);
+  const openingParenthesisIndex = findFirstOpeningParenthesisIndex(
+    body,
+    lastClosingParenthesisIndex + 1,
+  );
+
+  if (openingParenthesisIndex <= 0) {
+    return { ageLabel: normalizedAgeGroup, schoolYear: null };
+  }
+
+  const year = body.slice(openingParenthesisIndex + 1);
+
+  if (year.length === 0) {
     return { ageLabel: normalizedAgeGroup, schoolYear: null };
   }
 
   return {
-    ageLabel: match.groups['age']?.trim() || normalizedAgeGroup,
-    schoolYear: match.groups['year']?.trim() || null,
+    ageLabel: body.slice(0, openingParenthesisIndex).trim() || normalizedAgeGroup,
+    schoolYear: year.trim() || null,
   };
 }
 
@@ -681,13 +720,79 @@ function readCount(
 }
 
 function extractAge(label: string): number | null {
-  const match = label.normalize('NFKC').match(/(\d+)\s*歲/u);
+  const normalizedLabel = label.normalize('NFKC');
 
-  if (!match) {
-    return null;
+  for (let index = 0; index < normalizedLabel.length; index += 1) {
+    const character = normalizedLabel[index] ?? '';
+
+    if (!isAsciiDigit(character)) {
+      continue;
+    }
+
+    const digitStartIndex = index;
+
+    while (index < normalizedLabel.length && isAsciiDigit(normalizedLabel[index] ?? '')) {
+      index += 1;
+    }
+
+    const digitEndIndex = index;
+
+    while (index < normalizedLabel.length && isWhitespace(normalizedLabel[index] ?? '')) {
+      index += 1;
+    }
+
+    if (normalizedLabel[index] === '歲') {
+      return Number(normalizedLabel.slice(digitStartIndex, digitEndIndex));
+    }
+
+    index = digitEndIndex - 1;
   }
 
-  return Number(match[1]);
+  return null;
+}
+
+function isDistrictAliasSeparator(character: string): boolean {
+  return character === ',' || character === '，' || character === '、' || isWhitespace(character);
+}
+
+function endsWithClosingParenthesis(value: string): boolean {
+  const lastCharacter = value[value.length - 1];
+
+  return lastCharacter === ')' || lastCharacter === '）';
+}
+
+function findLastClosingParenthesisIndex(value: string): number {
+  for (let index = value.length - 1; index >= 0; index -= 1) {
+    const character = value[index];
+
+    if (character === ')' || character === '）') {
+      return index;
+    }
+  }
+
+  return -1;
+}
+
+function findFirstOpeningParenthesisIndex(value: string, startIndex: number): number {
+  for (let index = Math.max(startIndex, 0); index < value.length; index += 1) {
+    const character = value[index];
+
+    if (character === '(' || character === '（') {
+      return index;
+    }
+  }
+
+  return -1;
+}
+
+function isAsciiDigit(character: string): boolean {
+  const codePoint = character.codePointAt(0);
+
+  return codePoint !== undefined && codePoint >= 48 && codePoint <= 57;
+}
+
+function isWhitespace(character: string): boolean {
+  return character.trim().length === 0;
 }
 
 function isOrderedSubsequence(needle: string, haystack: string): boolean {

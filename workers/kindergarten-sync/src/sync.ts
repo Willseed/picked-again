@@ -85,8 +85,59 @@ function createRequestLimiter(maxConcurrent: number): RequestLimiter {
   };
 }
 
+function isAsciiWhitespace(character: string): boolean {
+  return character === " " || character === "\t" || character === "\n" || character === "\r" || character === "\f";
+}
+
+function hasCookiePairAfterComma(header: string, startIndex: number): boolean {
+  let index = startIndex;
+
+  while (index < header.length && isAsciiWhitespace(header[index])) {
+    index += 1;
+  }
+
+  const nameStartIndex = index;
+  while (index < header.length) {
+    const character = header[index];
+
+    if (character === "=") {
+      return index > nameStartIndex;
+    }
+
+    if (character === ";" || character === ",") {
+      return false;
+    }
+
+    index += 1;
+  }
+
+  return false;
+}
+
 function splitSetCookieHeader(header: string | null): string[] {
-  return header?.split(/,(?=\s*[^;,]+=)/u).map((cookie) => cookie.trim()).filter(Boolean) ?? [];
+  if (!header) {
+    return [];
+  }
+
+  const cookies: string[] = [];
+  let cookieStartIndex = 0;
+
+  for (let index = 0; index < header.length; index += 1) {
+    if (header[index] === "," && hasCookiePairAfterComma(header, index + 1)) {
+      const cookie = header.slice(cookieStartIndex, index).trim();
+      if (cookie) {
+        cookies.push(cookie);
+      }
+      cookieStartIndex = index + 1;
+    }
+  }
+
+  const lastCookie = header.slice(cookieStartIndex).trim();
+  if (lastCookie) {
+    cookies.push(lastCookie);
+  }
+
+  return cookies;
 }
 
 function getResponseSetCookies(headers: Headers): string[] {
@@ -396,9 +447,14 @@ function getSelectedClassName(root: HTMLElement): string | null {
 
   for (const heading of root.querySelectorAll("h1, h2, h3")) {
     const text = cleanText(heading.text);
-    const bracketMatch = text.match(/【([^】]+)】/u);
-    if (bracketMatch?.[1]) {
-      return bracketMatch[1];
+    const openingBracketIndex = text.indexOf("【");
+    if (openingBracketIndex < 0) {
+      continue;
+    }
+
+    const closingBracketIndex = text.indexOf("】", openingBracketIndex + 1);
+    if (closingBracketIndex > openingBracketIndex + 1) {
+      return text.slice(openingBracketIndex + 1, closingBracketIndex);
     }
   }
 

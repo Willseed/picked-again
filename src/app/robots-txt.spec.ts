@@ -117,7 +117,7 @@ describe('robots.txt', () => {
       (directive) => !allowedDirectiveKeys.has(directive.key),
     );
 
-    expect(robotsTxt).not.toMatch(/^\s*content-signal\s*:/imu);
+    expect(directives.some((directive) => directive.key === 'content-signal')).toBe(false);
     expect(invalidDirectives).toEqual([]);
   });
 

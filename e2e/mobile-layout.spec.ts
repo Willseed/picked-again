@@ -26,12 +26,32 @@ test('mobile sequence chips stay inside the data card and year controls use the 
   expect(await sequenceChips.count()).toBeGreaterThan(0);
 
   const overflowingChips = await sequencePanel.evaluate((panel) => {
+    const collapseWhitespace = (text: string) => {
+      let collapsed = '';
+      let pendingSpace = false;
+
+      for (const character of text) {
+        if (character.trim() === '') {
+          pendingSpace = collapsed.length > 0;
+          continue;
+        }
+
+        if (pendingSpace) {
+          collapsed += ' ';
+          pendingSpace = false;
+        }
+
+        collapsed += character;
+      }
+
+      return collapsed;
+    };
     const panelRect = panel.getBoundingClientRect();
     return Array.from(panel.querySelectorAll<HTMLElement>('.sequence-chip'))
       .map((chip) => {
         const rect = chip.getBoundingClientRect();
         return {
-          text: chip.textContent?.replace(/\s+/g, ' ').trim(),
+          text: collapseWhitespace(chip.textContent ?? ''),
           left: rect.left,
           right: rect.right,
           panelLeft: panelRect.left,
@@ -50,6 +70,40 @@ test('mobile sequence chips stay inside the data card and year controls use the 
   await expect(fillThresholdChip.locator('.sequence-hit-badge')).toHaveText('收滿點');
 
   const sequenceAlignment = await sequencePanel.evaluate((panel) => {
+    const collapseWhitespace = (text: string) => {
+      let collapsed = '';
+      let pendingSpace = false;
+
+      for (const character of text) {
+        if (character.trim() === '') {
+          pendingSpace = collapsed.length > 0;
+          continue;
+        }
+
+        if (pendingSpace) {
+          collapsed += ' ';
+          pendingSpace = false;
+        }
+
+        collapsed += character;
+      }
+
+      return collapsed;
+    };
+    const trimmedTextBounds = (text: string) => {
+      let start = 0;
+      let end = text.length;
+
+      while (start < end && text.charAt(start).trim() === '') {
+        start += 1;
+      }
+
+      while (end > start && text.charAt(end - 1).trim() === '') {
+        end -= 1;
+      }
+
+      return { start, end };
+    };
     const textRect = (element: HTMLElement) => {
       const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, {
         acceptNode(node) {
@@ -65,8 +119,7 @@ test('mobile sequence chips stay inside the data card and year controls use the 
       }
 
       const text = textNode.textContent ?? '';
-      const start = text.search(/\S/u);
-      const end = text.length - (text.match(/\s*$/u)?.[0].length ?? 0);
+      const { start, end } = trimmedTextBounds(text);
 
       if (start < 0 || end <= start) {
         throw new Error(`Expected non-empty text content in ${element.className}`);
@@ -108,7 +161,7 @@ test('mobile sequence chips stay inside the data card and year controls use the 
         const countTextRect = textRect(count);
 
         return {
-          text: chip.textContent?.replace(/\s+/g, ' ').trim(),
+          text: collapseWhitespace(chip.textContent ?? ''),
           isFillThreshold: chip.classList.contains('is-fill-threshold'),
           labelTextStartOffset: labelTextRect.left - actionRect.left,
           labelTextWidth: labelTextRect.width,
@@ -154,6 +207,26 @@ test('mobile sequence chips stay inside the data card and year controls use the 
   expect(sequenceAlignment.maxTrailingElementEndDelta).toBeLessThanOrEqual(2);
 
   const fillThresholdMetrics = await fillThresholdChip.evaluate((chip) => {
+    const collapseWhitespace = (text: string) => {
+      let collapsed = '';
+      let pendingSpace = false;
+
+      for (const character of text) {
+        if (character.trim() === '') {
+          pendingSpace = collapsed.length > 0;
+          continue;
+        }
+
+        if (pendingSpace) {
+          collapsed += ' ';
+          pendingSpace = false;
+        }
+
+        collapsed += character;
+      }
+
+      return collapsed;
+    };
     const label = chip.querySelector<HTMLElement>('.sequence-chip-label');
     const count = chip.querySelector<HTMLElement>('.sequence-chip-count');
     const badge = chip.querySelector<HTMLElement>('.sequence-hit-badge');
@@ -170,7 +243,7 @@ test('mobile sequence chips stay inside the data card and year controls use the 
     const badgeRect = badge.getBoundingClientRect();
 
     return {
-      text: chip.textContent?.replace(/\s+/g, ' ').trim(),
+      text: collapseWhitespace(chip.textContent ?? ''),
       chipWidth: chipRect.width,
       labelClientWidth: label.clientWidth,
       labelScrollWidth: label.scrollWidth,
@@ -220,7 +293,11 @@ test('mobile sequence chips stay inside the data card and year controls use the 
   const yearControls = schoolCard.locator('.year-nav-controls').first();
   await expect(yearControls).toBeVisible();
   await expect(yearControls).toHaveCSS('justify-content', 'space-between');
-  await expect(yearControls).toHaveCSS('width', /.+px/);
+  const yearControlsWidth = await yearControls.evaluate(
+    (controls) => getComputedStyle(controls).width,
+  );
+  expect(yearControlsWidth.endsWith('px')).toBe(true);
+  expect(Number.parseFloat(yearControlsWidth)).toBeGreaterThan(0);
 
   await expect(schoolCard.locator('.year-nav-btn__label')).toHaveCount(0);
 });
