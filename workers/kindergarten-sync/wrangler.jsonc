@@ -13,7 +13,8 @@
 
   "kv_namespaces": [
     {
-      "binding": "KINDERGARTEN_KV"
+      "binding": "KINDERGARTEN_KV",
+      "id": "baaaa77ec97c4999b74342436d734640"
     }
   ]
 }

@@ -207,11 +207,6 @@ const worker: ExportedHandler<Env> = {
   },
 
   async scheduled(_controller, env, ctx): Promise<void> {
-    if (!env.SYNC_SECRET) {
-      console.error("Scheduled kindergarten sync skipped: SYNC_SECRET is not configured");
-      return;
-    }
-
     ctx.waitUntil(
       syncAndStore(env).catch((error: unknown) => {
         console.error("Scheduled kindergarten sync failed", error);
