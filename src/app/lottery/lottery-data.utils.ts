@@ -65,26 +65,13 @@ export function adaptKindergartenDatasetToRawLotteryData(
     for (const district of source.districts) {
       for (const classDataset of district.classes) {
         for (const item of classDataset.items) {
-          const schoolName = item.schoolName.trim();
-          const ageGroup = (item.className || classDataset.className).trim();
-
-          if (schoolName.length === 0 || ageGroup.length === 0) {
-            continue;
-          }
-
-          const schoolData = rawData[schoolName] ?? {};
-          rawData[schoolName] = schoolData;
-          schoolData[ageGroup] = buildKindergartenRawCounts(source, item);
-
-          const aliases = searchAliasesBySchool.get(schoolName) ?? new Set<string>();
-          searchAliasesBySchool.set(schoolName, aliases);
-          addUniqueText(
-            aliases,
-            district.districtName,
-            item.districtName,
-            source.name,
-            source.type,
-            item.sourceType,
+          addKindergartenItemToRawData(
+            rawData,
+            searchAliasesBySchool,
+            source,
+            district,
+            classDataset,
+            item,
           );
         }
       }
@@ -98,6 +85,51 @@ export function adaptKindergartenDatasetToRawLotteryData(
   }
 
   return rawData;
+}
+
+function addKindergartenItemToRawData(
+  rawData: RawLotteryData,
+  searchAliasesBySchool: Map<string, Set<string>>,
+  source: KindergartenSourceDataset,
+  district: KindergartenDistrictDataset,
+  classDataset: KindergartenClassDataset,
+  item: KindergartenItem,
+): void {
+  const schoolName = item.schoolName.trim();
+  const ageGroup = (item.className || classDataset.className).trim();
+
+  if (schoolName.length === 0 || ageGroup.length === 0) {
+    return;
+  }
+
+  const schoolData = rawData[schoolName] ?? {};
+  rawData[schoolName] = schoolData;
+  schoolData[ageGroup] = buildKindergartenRawCounts(source, item);
+
+  const aliases = getSearchAliasSet(searchAliasesBySchool, schoolName);
+  addUniqueText(
+    aliases,
+    district.districtName,
+    item.districtName,
+    source.name,
+    source.type,
+    item.sourceType,
+  );
+}
+
+function getSearchAliasSet(
+  searchAliasesBySchool: Map<string, Set<string>>,
+  schoolName: string,
+): Set<string> {
+  const existingAliases = searchAliasesBySchool.get(schoolName);
+
+  if (existingAliases) {
+    return existingAliases;
+  }
+
+  const aliases = new Set<string>();
+  searchAliasesBySchool.set(schoolName, aliases);
+  return aliases;
 }
 
 export function groupLotteryRateRecords(

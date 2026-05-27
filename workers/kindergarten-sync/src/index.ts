@@ -104,6 +104,46 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function normalizeSearchText(value: string): string {
+  return value
+    .normalize("NFKC")
+    .trim()
+    .toLocaleLowerCase("zh-Hant")
+    .replace(/臺/g, "台")
+    .replace(/[\s\p{P}\p{S}]+/gu, "");
+}
+
+function readStringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((entry): entry is string => typeof entry === "string")
+    : [];
+}
+
+function cloneSchoolLotteryEntry(
+  key: string,
+  value: unknown,
+): RawLotteryCounts | string[] | null {
+  if (key === SEARCH_KEYWORDS_FIELD) {
+    return readStringArray(value);
+  }
+
+  return isRecord(value) ? { ...value } as RawLotteryCounts : null;
+}
+
+function cloneSchoolLotteryData(schoolData: Record<string, unknown>): RawSchoolLotteryData {
+  const clonedSchoolData: RawSchoolLotteryData = {};
+
+  for (const [key, value] of Object.entries(schoolData)) {
+    const clonedEntry = cloneSchoolLotteryEntry(key, value);
+
+    if (clonedEntry !== null) {
+      clonedSchoolData[key] = clonedEntry;
+    }
+  }
+
+  return clonedSchoolData;
+}
+
 function cloneHistoricalLotteryData(data: unknown): RawLotteryData {
   if (!isRecord(data)) {
     return {};
@@ -116,22 +156,7 @@ function cloneHistoricalLotteryData(data: unknown): RawLotteryData {
       continue;
     }
 
-    const clonedSchoolData: RawSchoolLotteryData = {};
-
-    for (const [key, value] of Object.entries(schoolData)) {
-      if (key === SEARCH_KEYWORDS_FIELD) {
-        clonedSchoolData[key] = Array.isArray(value)
-          ? value.filter((entry): entry is string => typeof entry === "string")
-          : [];
-        continue;
-      }
-
-      if (isRecord(value)) {
-        clonedSchoolData[key] = { ...value } as RawLotteryCounts;
-      }
-    }
-
-    clonedData[schoolName] = clonedSchoolData;
+    clonedData[schoolName] = cloneSchoolLotteryData(schoolData);
   }
 
   return clonedData;
@@ -206,11 +231,72 @@ function buildLiveRawCounts(
   };
 }
 
-function mergeLiveSyncData(
+function buildCanonicalSchoolLookup(data: RawLotteryData): ReadonlyMap<string, string> {
+  const lookup = new Map<string, string>();
+
+  for (const [schoolName, schoolData] of Object.entries(data)) {
+    for (const keyword of [schoolName, ...readStringArray(schoolData[SEARCH_KEYWORDS_FIELD])]) {
+      const normalizedKeyword = normalizeSearchText(keyword);
+
+      if (normalizedKeyword.length > 0 && !lookup.has(normalizedKeyword)) {
+        lookup.set(normalizedKeyword, schoolName);
+      }
+    }
+  }
+
+  return lookup;
+}
+
+function resolveCanonicalSchoolName(
+  schoolName: string,
+  canonicalSchoolLookup: ReadonlyMap<string, string>,
+): string {
+  return canonicalSchoolLookup.get(normalizeSearchText(schoolName)) ?? schoolName;
+}
+
+function getLiveItemClassName(
+  item: KindergartenItem,
+  classDatasetClassName: string,
+): string {
+  return (item.className || classDatasetClassName).trim();
+}
+
+function mergeLiveItem(
+  mergedData: RawLotteryData,
+  canonicalSchoolLookup: ReadonlyMap<string, string>,
+  source: KindergartenSourceDataset,
+  districtName: string,
+  className: string,
+  item: KindergartenItem,
+): void {
+  const rawSchoolName = item.schoolName.trim();
+  const rawClassName = getLiveItemClassName(item, className);
+
+  if (rawSchoolName.length === 0 || rawClassName.length === 0) {
+    return;
+  }
+
+  const schoolName = resolveCanonicalSchoolName(rawSchoolName, canonicalSchoolLookup);
+  const schoolData = mergedData[schoolName] ?? {};
+  mergedData[schoolName] = schoolData;
+
+  const ageLabel = normalizeLiveAgeLabel(rawClassName);
+  schoolData[`${ageLabel}（${LIVE_SYNC_SCHOOL_YEAR}）`] = buildLiveRawCounts(
+    source,
+    item,
+  );
+  appendSearchKeywords(
+    schoolData,
+    collectKeywords(rawSchoolName, districtName, item.districtName, source.name, source.type),
+  );
+}
+
+export function mergeLiveSyncData(
   historicalData: unknown,
   latestDataset: KindergartenDataset | null,
 ): RawLotteryData {
   const mergedData = cloneHistoricalLotteryData(historicalData);
+  const canonicalSchoolLookup = buildCanonicalSchoolLookup(mergedData);
 
   if (!latestDataset) {
     return mergedData;
@@ -220,24 +306,13 @@ function mergeLiveSyncData(
     for (const district of source.districts) {
       for (const classDataset of district.classes) {
         for (const item of classDataset.items) {
-          const schoolName = item.schoolName.trim();
-          const className = (item.className || classDataset.className).trim();
-
-          if (schoolName.length === 0 || className.length === 0) {
-            continue;
-          }
-
-          const schoolData = mergedData[schoolName] ?? {};
-          mergedData[schoolName] = schoolData;
-
-          const ageLabel = normalizeLiveAgeLabel(className);
-          schoolData[`${ageLabel}（${LIVE_SYNC_SCHOOL_YEAR}）`] = buildLiveRawCounts(
+          mergeLiveItem(
+            mergedData,
+            canonicalSchoolLookup,
             source,
+            district.districtName,
+            classDataset.className,
             item,
-          );
-          appendSearchKeywords(
-            schoolData,
-            collectKeywords(district.districtName, item.districtName, source.name, source.type),
           );
         }
       }
@@ -285,6 +360,103 @@ async function getRequiredHistoricalLotteryData(
   };
 }
 
+function healthResponse(request: Request, env: Env): Response {
+  return jsonResponse(request, env, {
+    ok: true,
+    service: SERVICE_NAME,
+    time: new Date().toISOString(),
+  });
+}
+
+async function latestDatasetResponse(request: Request, env: Env): Promise<Response> {
+  const { dataset, response } = await getRequiredDataset(request, env);
+  if (response) {
+    return response;
+  }
+
+  return jsonResponse(request, env, dataset, {
+    headers: {
+      "cache-control": "public, max-age=60",
+    },
+  });
+}
+
+async function lotteryDataResponse(request: Request, env: Env): Promise<Response> {
+  const { data, response } = await getRequiredHistoricalLotteryData(request, env);
+  if (response) {
+    return response;
+  }
+
+  const latestDataset = await getLatestDataset(env);
+
+  return jsonResponse(request, env, mergeLiveSyncData(data, latestDataset), {
+    headers: {
+      "cache-control": "public, max-age=60",
+    },
+  });
+}
+
+async function sourceDatasetResponse(
+  request: Request,
+  env: Env,
+  sourceType: "public" | "nonProfit",
+): Promise<Response> {
+  const { dataset, response } = await getRequiredDataset(request, env);
+  if (response) {
+    return response;
+  }
+
+  return jsonResponse(request, env, dataset[sourceType]);
+}
+
+async function syncResponse(request: Request, env: Env): Promise<Response> {
+  const unauthorized = assertSyncAuthorized(request, env);
+  if (unauthorized) {
+    return unauthorized;
+  }
+
+  const result = await syncAndStore(env);
+
+  return jsonResponse(request, env, {
+    ok: true,
+    ...result,
+  });
+}
+
+type RouteHandler = (request: Request, env: Env) => Promise<Response> | Response;
+
+interface Route {
+  readonly method: "GET" | "POST";
+  readonly handler: RouteHandler;
+}
+
+const ROUTES: Readonly<Record<string, Route>> = {
+  "/health": {
+    method: "GET",
+    handler: healthResponse,
+  },
+  "/kindergarten/latest": {
+    method: "GET",
+    handler: latestDatasetResponse,
+  },
+  "/kindergarten/lottery-data": {
+    method: "GET",
+    handler: lotteryDataResponse,
+  },
+  "/kindergarten/public": {
+    method: "GET",
+    handler: (request, env) => sourceDatasetResponse(request, env, "public"),
+  },
+  "/kindergarten/non-profit": {
+    method: "GET",
+    handler: (request, env) => sourceDatasetResponse(request, env, "nonProfit"),
+  },
+  "/kindergarten/sync": {
+    method: "POST",
+    handler: syncResponse,
+  },
+};
+
 async function handleRequest(request: Request, env: Env): Promise<Response> {
   if (request.method === "OPTIONS") {
     return handleOptions(request, env);
@@ -295,97 +467,12 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
   }
 
   const url = new URL(request.url);
+  const route = ROUTES[url.pathname];
 
-  if (url.pathname === "/health") {
-    if (request.method !== "GET") {
-      return methodNotAllowed(request, env, "GET");
-    }
-
-    return jsonResponse(request, env, {
-      ok: true,
-      service: SERVICE_NAME,
-      time: new Date().toISOString(),
-    });
-  }
-
-  if (url.pathname === "/kindergarten/latest") {
-    if (request.method !== "GET") {
-      return methodNotAllowed(request, env, "GET");
-    }
-
-    const { dataset, response } = await getRequiredDataset(request, env);
-    if (response) {
-      return response;
-    }
-
-    return jsonResponse(request, env, dataset, {
-      headers: {
-        "cache-control": "public, max-age=60",
-      },
-    });
-  }
-
-  if (url.pathname === "/kindergarten/lottery-data") {
-    if (request.method !== "GET") {
-      return methodNotAllowed(request, env, "GET");
-    }
-
-    const { data, response } = await getRequiredHistoricalLotteryData(request, env);
-    if (response) {
-      return response;
-    }
-
-    const latestDataset = await getLatestDataset(env);
-
-    return jsonResponse(request, env, mergeLiveSyncData(data, latestDataset), {
-      headers: {
-        "cache-control": "public, max-age=60",
-      },
-    });
-  }
-
-  if (url.pathname === "/kindergarten/public") {
-    if (request.method !== "GET") {
-      return methodNotAllowed(request, env, "GET");
-    }
-
-    const { dataset, response } = await getRequiredDataset(request, env);
-    if (response) {
-      return response;
-    }
-
-    return jsonResponse(request, env, dataset.public);
-  }
-
-  if (url.pathname === "/kindergarten/non-profit") {
-    if (request.method !== "GET") {
-      return methodNotAllowed(request, env, "GET");
-    }
-
-    const { dataset, response } = await getRequiredDataset(request, env);
-    if (response) {
-      return response;
-    }
-
-    return jsonResponse(request, env, dataset.nonProfit);
-  }
-
-  if (url.pathname === "/kindergarten/sync") {
-    if (request.method !== "POST") {
-      return methodNotAllowed(request, env, "POST");
-    }
-
-    const unauthorized = assertSyncAuthorized(request, env);
-    if (unauthorized) {
-      return unauthorized;
-    }
-
-    const result = await syncAndStore(env);
-
-    return jsonResponse(request, env, {
-      ok: true,
-      ...result,
-    });
+  if (route) {
+    return request.method === route.method
+      ? route.handler(request, env)
+      : methodNotAllowed(request, env, route.method);
   }
 
   return jsonError(request, env, "Not found", 404);

@@ -343,44 +343,51 @@ function getInputValue(input: HTMLElement): string {
   return getAttribute(input, "value") ?? "";
 }
 
+function appendCheckedInput(body: URLSearchParams, input: HTMLElement, name: string): void {
+  if (input.hasAttribute("checked")) {
+    body.append(name, getInputValue(input));
+  }
+}
+
+function appendPostbackInput(
+  body: URLSearchParams,
+  input: HTMLElement,
+  classInputName: string | null,
+): void {
+  const name = getAttribute(input, "name");
+
+  if (!name) {
+    return;
+  }
+
+  const type = (getAttribute(input, "type") ?? "text").toLowerCase();
+
+  if (type === "radio") {
+    if (name !== classInputName) {
+      appendCheckedInput(body, input, name);
+    }
+
+    return;
+  }
+
+  if (type === "checkbox") {
+    appendCheckedInput(body, input, name);
+    return;
+  }
+
+  if (type === "submit" || type === "button" || type === "image") {
+    return;
+  }
+
+  body.append(name, getInputValue(input));
+}
+
 function buildPostbackBody(form: HTMLElement, classInput: HTMLElement, eventTarget: string): URLSearchParams {
   const body = new URLSearchParams();
   const classInputName = getAttribute(classInput, "name");
 
   for (const input of form.querySelectorAll("input")) {
-    const name = getAttribute(input, "name");
-
-    if (!name) {
-      continue;
-    }
-
-    const type = (getAttribute(input, "type") ?? "text").toLowerCase();
-
-    if (type === "radio") {
-      if (name === classInputName) {
-        continue;
-      }
-
-      if (input.hasAttribute("checked")) {
-        body.append(name, getInputValue(input));
-      }
-
-      continue;
-    }
-
-    if (type === "checkbox") {
-      if (input.hasAttribute("checked")) {
-        body.append(name, getInputValue(input));
-      }
-
-      continue;
-    }
-
-    if (type === "submit" || type === "button" || type === "image") {
-      continue;
-    }
-
-    body.append(name, getInputValue(input));
+    appendPostbackInput(body, input, classInputName);
   }
 
   if (classInputName) {

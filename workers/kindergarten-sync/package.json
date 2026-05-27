@@ -5,12 +5,14 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "kv:init": "wrangler kv key put kindergarten:lottery-history --path ../../public/assets/data.json --binding KINDERGARTEN_KV --remote"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "latest",
     "typescript": "latest",
+    "vitest": "^4.1.7",
     "wrangler": "latest"
   },
   "dependencies": {

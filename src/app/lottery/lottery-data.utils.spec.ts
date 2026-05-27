@@ -73,6 +73,32 @@ describe('抽籤資料工具', () => {
     ]);
   });
 
+  it('搜尋歷史校名別名時應顯示同一幼兒園的三個學年度資料', () => {
+    const schools = buildSchoolLotteryRates({
+      臺北市蘭州非營利幼兒園: {
+        搜尋關鍵字: ['蘭州非營利幼兒園', '蘭州', '大同區'],
+        '2歲專班（113學年）': { 正取: 0, 備取: 68 },
+        '5歲（114學年）': { 正取: 0, 備取: 2 },
+        '5歲（115學年）': { 正取: 4, 備取: 6 },
+      },
+    } satisfies RawLotteryData);
+
+    const matches = searchSchoolLotteryRates(schools, '蘭州非營利幼兒園');
+    const [match] = matches;
+    const schoolYears = Array.from(
+      new Set(
+        match?.ageGroups
+          .map((group) => group.schoolYear)
+          .filter((schoolYear): schoolYear is string => schoolYear !== null) ?? [],
+      ),
+    ).sort((left, right) => left.localeCompare(right, 'zh-Hant'));
+
+    expect(matches).toHaveLength(1);
+    expect(match?.schoolName).toBe('臺北市蘭州非營利幼兒園');
+    expect(match?.matchScore).toBe(1);
+    expect(schoolYears).toEqual(['113學年', '114學年', '115學年']);
+  });
+
   it('同一行政區關鍵字應可找出多間幼兒園並保留原始資料順序', () => {
     const schools = buildSchoolLotteryRates({
       臺北市蘭州非營利幼兒園: {

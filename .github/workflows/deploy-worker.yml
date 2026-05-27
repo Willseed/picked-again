@@ -38,6 +38,9 @@ jobs:
       - name: Run typecheck
         run: npm run typecheck
 
+      - name: Run Worker tests
+        run: npm test
+
       - name: Verify Cloudflare token
         run: test -n "$CLOUDFLARE_API_TOKEN"
         env:
