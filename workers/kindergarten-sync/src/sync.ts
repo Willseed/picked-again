@@ -1,6 +1,6 @@
 import { parse, type HTMLElement, type Node as HtmlNode } from "node-html-parser";
 import { DISTRICT_NAMES, DISTRICTS, SOURCES, TIMEZONE } from "./constants";
-import { putLatestDataset } from "./kv";
+import { getLatestDataset, getSyncState, putLatestDataset, putSyncState } from "./kv";
 import { parseKindergartenItems, type ParseContext } from "./parser";
 import type {
   Env,
@@ -9,8 +9,10 @@ import type {
   KindergartenDistrictDataset,
   KindergartenSourceDataset,
   SourceConfig,
+  SourceType,
   SyncError,
   SyncResult,
+  SyncState,
 } from "./types";
 
 const MAX_CONCURRENT_REQUESTS = 3;
@@ -573,6 +575,16 @@ function emptyClassDataset(className: string, sourceUrl: string): KindergartenCl
   };
 }
 
+function emptySourceDataset(source: SourceConfig, updatedAt: string): KindergartenSourceDataset {
+  return {
+    type: source.type,
+    name: source.name,
+    baseUrl: source.baseUrl,
+    updatedAt,
+    districts: [],
+  };
+}
+
 async function syncClass(
   source: SourceConfig,
   districtCode: string,
@@ -684,44 +696,109 @@ async function syncSource(
   };
 }
 
-export async function syncAndStore(env: Env): Promise<SyncResult> {
-  const updatedAt = new Date().toISOString();
-  const fetchHtml = createFetchHtml(createRequestLimiter(MAX_CONCURRENT_REQUESTS));
-  const sourceResults = await Promise.all(
-    SOURCES.map((source) => syncSource(source, updatedAt, fetchHtml)),
+function findSourceConfig(sourceType: SourceType): SourceConfig | null {
+  return SOURCES.find((source) => source.type === sourceType) ?? null;
+}
+
+function getNextSourceConfig(syncState: SyncState | null): SourceConfig {
+  return findSourceConfig(syncState?.nextSourceType ?? "nonProfit") ?? SOURCES[0];
+}
+
+function getFollowingSourceType(sourceType: SourceType): SourceType {
+  const sourceIndex = SOURCES.findIndex((source) => source.type === sourceType);
+  const nextSource = SOURCES[(sourceIndex + 1) % SOURCES.length] ?? SOURCES[0];
+
+  return nextSource.type;
+}
+
+function countSourceItems(source: KindergartenSourceDataset): number {
+  return source.districts.reduce(
+    (sourceCount, district) =>
+      sourceCount +
+      district.classes.reduce(
+        (districtCount, classDataset) => districtCount + classDataset.items.length,
+        0,
+      ),
+    0,
   );
-  const publicResult = sourceResults.find((result) => result.dataset.type === "public");
-  const nonProfitResult = sourceResults.find((result) => result.dataset.type === "nonProfit");
+}
 
-  if (!publicResult || !nonProfitResult) {
-    throw new Error("Kindergarten source configuration is incomplete");
-  }
+function mergeSourceErrors(
+  existingErrors: readonly SyncError[],
+  syncedSourceType: SourceType,
+  sourceErrors: readonly SyncError[],
+): SyncError[] {
+  return [
+    ...existingErrors.filter((error) => error.sourceType !== syncedSourceType),
+    ...sourceErrors,
+  ];
+}
 
-  const errors = sourceResults.flatMap((result) => result.errors);
-  const totalCount = publicResult.count + nonProfitResult.count;
+function mergeSourceDataset(
+  existingDataset: KindergartenDataset | null,
+  syncedSource: SourceConfig,
+  syncedResult: SourceSyncResult,
+  updatedAt: string,
+): KindergartenDataset {
+  const publicSource = findSourceConfig("public") ?? SOURCES[0];
+  const nonProfitSource = findSourceConfig("nonProfit") ?? SOURCES[1] ?? SOURCES[0];
 
-  if (totalCount === 0) {
-    const failureSuffix =
-      errors.length > 0 ? `; ${errors.length} class(es) failed` : "";
-    throw new Error(`Kindergarten sync produced no items${failureSuffix}`);
-  }
-
-  const dataset: KindergartenDataset = {
+  return {
     schemaVersion: 2,
     source: "cloudflare-worker",
     updatedAt,
     timezone: TIMEZONE,
-    public: publicResult.dataset,
-    nonProfit: nonProfitResult.dataset,
-    errors,
+    public:
+      syncedSource.type === "public"
+        ? syncedResult.dataset
+        : existingDataset?.public ?? emptySourceDataset(publicSource, updatedAt),
+    nonProfit:
+      syncedSource.type === "nonProfit"
+        ? syncedResult.dataset
+        : existingDataset?.nonProfit ?? emptySourceDataset(nonProfitSource, updatedAt),
+    errors: mergeSourceErrors(
+      existingDataset?.errors ?? [],
+      syncedSource.type,
+      syncedResult.errors,
+    ),
   };
+}
+
+export async function syncAndStore(env: Env): Promise<SyncResult> {
+  const updatedAt = new Date().toISOString();
+  const fetchHtml = createFetchHtml(createRequestLimiter(MAX_CONCURRENT_REQUESTS));
+  const existingDataset = await getLatestDataset(env);
+  const syncState = await getSyncState(env);
+  const syncedSource = getNextSourceConfig(syncState);
+  const sourceResult = await syncSource(syncedSource, updatedAt, fetchHtml);
+  const dataset = mergeSourceDataset(existingDataset, syncedSource, sourceResult, updatedAt);
+  const publicCount = countSourceItems(dataset.public);
+  const nonProfitCount = countSourceItems(dataset.nonProfit);
+  const totalCount = publicCount + nonProfitCount;
+
+  if (totalCount === 0) {
+    const failureSuffix =
+      dataset.errors && dataset.errors.length > 0
+        ? `; ${dataset.errors.length} class(es) failed`
+        : "";
+    throw new Error(`Kindergarten sync produced no items${failureSuffix}`);
+  }
+
+  const nextSourceType = getFollowingSourceType(syncedSource.type);
 
   await putLatestDataset(env, dataset);
+  await putSyncState(env, {
+    nextSourceType,
+    lastSyncedSourceType: syncedSource.type,
+    updatedAt,
+  });
 
   return {
     updatedAt,
-    publicCount: publicResult.count,
-    nonProfitCount: nonProfitResult.count,
-    errors,
+    publicCount,
+    nonProfitCount,
+    errors: dataset.errors ?? [],
+    syncedSourceType: syncedSource.type,
+    nextSourceType,
   };
 }

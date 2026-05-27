@@ -66,6 +66,8 @@ export interface SyncResult {
   publicCount: number;
   nonProfitCount: number;
   errors: SyncError[];
+  syncedSourceType?: SourceType;
+  nextSourceType?: SourceType;
 }
 
 export interface SourceConfig {
@@ -73,4 +75,10 @@ export interface SourceConfig {
   readonly name: string;
   readonly baseUrl: string;
   readonly classes: readonly string[];
+}
+
+export interface SyncState {
+  nextSourceType?: SourceType;
+  lastSyncedSourceType?: SourceType;
+  updatedAt?: string;
 }
