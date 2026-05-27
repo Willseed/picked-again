@@ -53,7 +53,7 @@ async function getStylesScssText(): Promise<string> {
 }
 
 async function extractScssRule(selector: string): Promise<string> {
-  const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+  const escapedSelector = selector.replaceAll(/[.*+?^${}()|[\]\\]/gu, '\\$&');
   const stylesText = await getStylesScssText();
   const match = stylesText.match(new RegExp(`[^{}]*${escapedSelector}[^{}]*\\{([^}]*)\\}`, 'u'));
 
@@ -64,7 +64,7 @@ async function extractScssRule(selector: string): Promise<string> {
 }
 
 async function extractExactScssRule(selector: string): Promise<string> {
-  const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+  const escapedSelector = selector.replaceAll(/[.*+?^${}()|[\]\\]/gu, '\\$&');
   const stylesText = await getStylesScssText();
   const match = stylesText.match(
     new RegExp(`(?:^|\\})\\s*${escapedSelector}\\s*\\{([^}]*)\\}`, 'u'),

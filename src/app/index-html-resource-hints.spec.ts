@@ -10,17 +10,21 @@ type NodeFsPromises = {
   readFile(path: string | URL, encoding: string): Promise<string>;
 };
 
-async function readIndexHtml(): Promise<string> {
+async function readRepoFile(path: string): Promise<string> {
   const nodeProcess = globalThis as NodeProcess;
 
   if (typeof nodeProcess.process?.cwd !== 'function') {
-    throw new Error('process.cwd is required to read src/index.html in this test');
+    throw new Error(`process.cwd is required to read ${path} in this test`);
   }
 
   // @ts-expect-error Node built-in types are intentionally not included in browser app config.
   const { readFile } = (await import('node:fs/promises')) as NodeFsPromises;
 
-  return readFile(`${nodeProcess.process.cwd()}/src/index.html`, 'utf-8');
+  return readFile(`${nodeProcess.process.cwd()}/${path}`, 'utf-8');
+}
+
+async function readIndexHtml(): Promise<string> {
+  return readRepoFile('src/index.html');
 }
 
 function getLinkElements(indexHtml: string): readonly HTMLLinkElement[] {
@@ -29,26 +33,36 @@ function getLinkElements(indexHtml: string): readonly HTMLLinkElement[] {
   return Array.from(document.querySelectorAll('link'));
 }
 
-describe('index HTML resource hints', () => {
-  it('connects early to the Material Icons font origin only', async () => {
+describe('index HTML resources', () => {
+  it('does not load Material Icons from Google font origins', async () => {
     const links = getLinkElements(await readIndexHtml());
 
-    const gstaticPreconnect = links.find(
+    const googleFontLinks = links.filter(
       (link) =>
-        link.rel === 'preconnect' && link.href === 'https://fonts.gstatic.com/',
-    );
-    const gstaticDnsPrefetch = links.find(
-      (link) =>
-        link.rel === 'dns-prefetch' && link.href === 'https://fonts.gstatic.com/',
-    );
-    const googleApisPreconnect = links.find(
-      (link) =>
-        link.rel === 'preconnect' &&
-        link.href.startsWith('https://fonts.googleapis.com/'),
+        link.href.startsWith('https://fonts.googleapis.com/') ||
+        link.href.startsWith('https://fonts.gstatic.com/'),
     );
 
-    expect(gstaticPreconnect?.crossOrigin).toBe('');
-    expect(gstaticDnsPrefetch).toBeDefined();
-    expect(googleApisPreconnect).toBeUndefined();
+    expect(googleFontLinks).toEqual([]);
+  });
+
+  it('bundles Material Icons from the local npm package', async () => {
+    const angularConfig = JSON.parse(await readRepoFile('angular.json')) as {
+      projects?: {
+        'picked-again'?: {
+          architect?: {
+            build?: {
+              options?: {
+                styles?: readonly string[];
+              };
+            };
+          };
+        };
+      };
+    };
+
+    expect(
+      angularConfig.projects?.['picked-again']?.architect?.build?.options?.styles,
+    ).toContain('node_modules/material-icons/iconfont/filled.css');
   });
 });

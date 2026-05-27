@@ -22,8 +22,8 @@ function normalizeSearchText(value: string): string {
     .normalize("NFKC")
     .trim()
     .toLocaleLowerCase("zh-Hant")
-    .replace(/臺/g, "台")
-    .replace(/[\s\p{P}\p{S}]+/gu, "");
+    .replaceAll("臺", "台")
+    .replaceAll(/[\s\p{P}\p{S}]+/gu, "");
 }
 
 function readStringArray(value: unknown): string[] {
@@ -102,8 +102,8 @@ function readRawNumber(value: string | number | null | undefined): number | null
 
   const normalizedValue = value
     .normalize("NFKC")
-    .replace(/[,，]/g, "")
-    .replace(/\s+/g, "");
+    .replaceAll(/[,，]/g, "")
+    .replaceAll(/\s+/g, "");
   const match = normalizedValue.match(/\d+(?:\.\d+)?/u);
 
   if (!match) {

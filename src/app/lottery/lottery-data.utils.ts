@@ -194,8 +194,8 @@ export function normalizeSearchText(value: string): string {
     .normalize('NFKC')
     .trim()
     .toLocaleLowerCase('zh-Hant')
-    .replace(/臺/g, '台')
-    .replace(/[\s\p{P}\p{S}]+/gu, '');
+    .replaceAll('臺', '台')
+    .replaceAll(/[\s\p{P}\p{S}]+/gu, '');
 }
 
 export function getFuzzyMatchScore(keyword: string, candidate: string): number {
@@ -606,7 +606,7 @@ function splitAgeYearLabel(ageGroup: string): {
 }
 
 function normalizeSequenceLabel(label: string): string {
-  return label.normalize('NFKC').replace(/\s+/gu, '');
+  return label.normalize('NFKC').replaceAll(/\s+/gu, '');
 }
 
 function normalizeSequenceCount(count: number): number {

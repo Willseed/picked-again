@@ -258,16 +258,16 @@ function getAttribute(element: HTMLElement, name: string): string | null {
 function cleanText(value: string): string {
   return value
     .normalize("NFKC")
-    .replace(/\u00a0/g, " ")
-    .replace(/[\u200b-\u200f\uFEFF]/g, "")
-    .replace(/\s+/g, " ")
+    .replaceAll("\u00a0", " ")
+    .replaceAll(/[\u200b-\u200f\uFEFF]/g, "")
+    .replaceAll(/\s+/g, " ")
     .trim();
 }
 
 function normalizeClassText(value: string): string {
   return cleanText(value)
-    .replace(/臺/g, "台")
-    .replace(/[\s\p{P}\p{S}]+/gu, "");
+    .replaceAll("臺", "台")
+    .replaceAll(/[\s\p{P}\p{S}]+/gu, "");
 }
 
 function classTextMatches(value: string, className: string): boolean {
@@ -333,7 +333,7 @@ function extractPostbackTarget(input: HTMLElement): string | null {
       continue;
     }
 
-    const normalizedHandler = handler.replace(/\\'/g, "'").replace(/\\"/g, '"');
+    const normalizedHandler = handler.replaceAll("\\'", "'").replaceAll('\\"', '"');
     const match = normalizedHandler.match(/__doPostBack\(\s*['"]([^'"]+)['"]\s*,\s*['"]([^'"]*)['"]/u);
 
     if (match?.[1]) {

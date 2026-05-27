@@ -56,17 +56,17 @@ function isHtmlElement(node: HtmlNode): node is HTMLElement {
 function cleanText(value: string): string {
   return value
     .normalize("NFKC")
-    .replace(/\u00a0/g, " ")
-    .replace(/[\u200b-\u200f\uFEFF]/g, "")
-    .replace(/\s+/g, " ")
+    .replaceAll("\u00a0", " ")
+    .replaceAll(/[\u200b-\u200f\uFEFF]/g, "")
+    .replaceAll(/\s+/g, " ")
     .trim();
 }
 
 function normalizeHeader(value: string): string {
   return cleanText(value)
     .toLocaleLowerCase("zh-Hant")
-    .replace(/臺/g, "台")
-    .replace(/[\s\p{P}\p{S}]+/gu, "");
+    .replaceAll("臺", "台")
+    .replaceAll(/[\s\p{P}\p{S}]+/gu, "");
 }
 
 function getDirectCells(row: HTMLElement): HTMLElement[] {
@@ -178,8 +178,8 @@ function rawValueToNumber(value: string | number | null): number | null {
   }
 
   const normalized = cleanText(value)
-    .replace(/[,，]/g, "")
-    .replace(/\s+/g, "");
+    .replaceAll(/[,，]/g, "")
+    .replaceAll(/\s+/g, "");
 
   if (/[-−]\d/u.test(normalized)) {
     return null;
