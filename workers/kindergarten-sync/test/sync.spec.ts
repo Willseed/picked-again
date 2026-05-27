@@ -67,12 +67,24 @@ function classPageHtml(className: string): string {
             <tr>
               <th>幼兒園名稱</th>
               <th>公告缺額</th>
+              <th>順序1-4</th>
+              <th>順序5</th>
+              <th>順序6</th>
+              <th>順序7</th>
+              <th>順序8</th>
+              <th>順序9</th>
               <th>總登記人數</th>
               <th>備取人數</th>
             </tr>
             <tr>
               <td>${className}測試非營利幼兒園</td>
-              <td>4</td>
+              <td>8</td>
+              <td>1</td>
+              <td>0</td>
+              <td>1</td>
+              <td>0</td>
+              <td>2</td>
+              <td>6</td>
               <td>10</td>
               <td>6</td>
             </tr>
@@ -123,9 +135,20 @@ describe("syncAndStore", () => {
     expect(syncStateJson).toContain("\n  ");
     expect(latestRaw["5歲測試非營利幼兒園"]?.["5歲（115學年）"]).toMatchObject({
       正取: 4,
-      備取: 6,
-      公告缺額: 4,
+      備取: 2,
+      公告缺額: 8,
       總登記人數: 10,
+      各序位: {
+        "順序1-4": 1,
+        順序5: 0,
+        順序6: 1,
+        順序7: 0,
+        順序8: 2,
+        順序9: 6,
+      },
+      優先順序: 4,
+      一般缺額: 4,
+      一般順序: 6,
       資料來源: "非營利幼兒園 / nonProfit",
     });
     expect(latestRaw["5歲測試非營利幼兒園"]?.["id"]).toBeUndefined();

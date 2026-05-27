@@ -423,6 +423,51 @@ describe('LotteryDashboardComponent', () => {
     expect(singleYearAriaLabel).not.toMatch(/左右滑動|水平滑動/u);
   });
 
+  it('115 學年度資料含各序位時應顯示序位選項', async () => {
+    const schools = buildSchoolLotteryRates({
+      臺北市蘭州非營利幼兒園: {
+        搜尋關鍵字: ['蘭州非營利幼兒園', '蘭州'],
+        '4歲（115學年）': {
+          正取: 4,
+          備取: 2,
+          公告缺額: 8,
+          總登記人數: 10,
+          各序位: {
+            '順序1-4': 1,
+            順序5: 0,
+            順序6: 1,
+            順序7: 0,
+            順序8: 2,
+            順序9: 6,
+          },
+          優先順序: 4,
+          一般缺額: 4,
+          一般順序: 6,
+        },
+      },
+    } satisfies RawLotteryData);
+    const fixture = await renderDashboard(() => of(schools));
+
+    await enterSearch(fixture, '蘭州');
+
+    const host = fixture.nativeElement as HTMLElement;
+    const sequencePanel = host.querySelector('.sequence-panel') as HTMLElement;
+    const sequenceChips = Array.from(host.querySelectorAll('mat-chip-option.sequence-chip'));
+
+    expect(sequencePanel.textContent).toContain('各序位登記人數');
+    expect(
+      sequenceChips.map((chip) => ({
+        label: chip.querySelector('.sequence-chip-label')?.textContent?.trim(),
+        count: chip.querySelector('.sequence-chip-count')?.textContent?.trim(),
+      })),
+    ).toEqual([
+      { label: '順序1-4', count: '1' },
+      { label: '順序6', count: '1' },
+      { label: '順序8', count: '2' },
+      { label: '順序9', count: '6' },
+    ]);
+  });
+
   it('應分開顯示優先序位與一般序位登記資訊和中籤率', async () => {
     const announcedCountSchools = buildSchoolLotteryRates({
       臺北市公告資訊測試幼兒園: {

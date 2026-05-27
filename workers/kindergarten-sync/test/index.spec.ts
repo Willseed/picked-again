@@ -45,9 +45,19 @@ describe("mergeLiveSyncData", () => {
                     districtName: "大同區",
                     sourceType: "nonProfit",
                     className: "5歲",
-                    availableQuota: 4,
+                    availableQuota: 8,
                     waitingCount: 6,
                     registeredCount: 10,
+                    raw: {
+                      公告缺額: "8",
+                      "順序1-4": "1",
+                      順序5: "0",
+                      順序6: "1",
+                      順序7: "0",
+                      順序8: "2",
+                      順序9: "6",
+                      總登記人數: "10",
+                    },
                   },
                 ],
               },
@@ -79,8 +89,20 @@ describe("mergeLiveSyncData", () => {
     expect(Object.keys(mergedData)).toEqual(["臺北市蘭州非營利幼兒園"]);
     expect(mergedData["臺北市蘭州非營利幼兒園"]?.["5歲（115學年）"]).toMatchObject({
       正取: 4,
-      備取: 6,
+      備取: 2,
+      公告缺額: 8,
       總登記人數: 10,
+      各序位: {
+        "順序1-4": 1,
+        順序5: 0,
+        順序6: 1,
+        順序7: 0,
+        順序8: 2,
+        順序9: 6,
+      },
+      優先順序: 4,
+      一般缺額: 4,
+      一般順序: 6,
     });
     expect(mergedData["臺北市蘭州非營利幼兒園"]?.["2歲專班（115學年）"]).toMatchObject({
       正取: 2,

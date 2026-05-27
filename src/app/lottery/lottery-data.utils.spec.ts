@@ -99,6 +99,41 @@ describe('抽籤資料工具', () => {
     expect(schoolYears).toEqual(['113學年', '114學年', '115學年']);
   });
 
+  it('115 學年度即時資料含各序位時應顯示序位登記人數', () => {
+    const [school] = buildSchoolLotteryRates({
+      臺北市蘭州非營利幼兒園: {
+        搜尋關鍵字: ['蘭州非營利幼兒園', '蘭州'],
+        '4歲（115學年）': {
+          正取: 11,
+          備取: 9,
+          公告缺額: 11,
+          總登記人數: 9,
+          各序位: {
+            '順序1-4': 1,
+            順序5: 0,
+            順序6: 1,
+            順序7: 0,
+            順序8: 2,
+            順序9: 9,
+          },
+          優先順序: 4,
+          一般順序: 9,
+        },
+      },
+    } satisfies RawLotteryData);
+    const record = school?.ageGroups[0];
+
+    expect(record?.schoolYear).toBe('115學年');
+    expect(record?.sequenceCounts).toEqual([
+      { label: '順序1-4', count: 1 },
+      { label: '順序6', count: 1 },
+      { label: '順序8', count: 2 },
+      { label: '順序9', count: 9 },
+    ]);
+    expect(record?.priorityApplicantCount).toBe(4);
+    expect(record?.generalApplicantCount).toBe(9);
+  });
+
   it('同一行政區關鍵字應可找出多間幼兒園並保留原始資料順序', () => {
     const schools = buildSchoolLotteryRates({
       臺北市蘭州非營利幼兒園: {
