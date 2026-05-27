@@ -1,4 +1,5 @@
-export const REMOTE_DATA_URL = 'https://REPLACE_WITH_WORKER_DOMAIN/kindergarten/latest';
+export const REMOTE_DATA_URL =
+  'https://picked-again-kindergarten-sync.mwxbvvyq44.workers.dev/kindergarten/latest';
 export const FALLBACK_DATA_URL = 'assets/data.json';
 export const LOTTERY_DATA_URL = FALLBACK_DATA_URL;
 
