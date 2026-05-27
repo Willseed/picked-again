@@ -76,6 +76,52 @@ async function extractExactScssRule(selector: string): Promise<string> {
   return match?.[1] ?? '';
 }
 
+async function extractScssBlock(blockStart: string): Promise<string> {
+  const stylesText = await getStylesScssText();
+  const startIndex = stylesText.indexOf(blockStart);
+
+  expect(startIndex).toBeGreaterThanOrEqual(0);
+
+  const openingBraceIndex = stylesText.indexOf('{', startIndex);
+
+  expect(openingBraceIndex).toBeGreaterThanOrEqual(0);
+
+  let depth = 0;
+
+  for (let index = openingBraceIndex; index < stylesText.length; index += 1) {
+    if (stylesText[index] === '{') {
+      depth += 1;
+    }
+
+    if (stylesText[index] === '}') {
+      depth -= 1;
+
+      if (depth === 0) {
+        return stylesText.slice(openingBraceIndex + 1, index);
+      }
+    }
+  }
+
+  throw new Error(`Could not find closing brace for ${blockStart}`);
+}
+
+function normalizeScssWhitespace(text: string): string {
+  return text.replaceAll(/\s+/gu, ' ').trim();
+}
+
+function expectScssFragmentsInOrder(text: string, fragments: readonly string[]): void {
+  const normalizedText = normalizeScssWhitespace(text);
+  let searchFromIndex = 0;
+
+  for (const fragment of fragments) {
+    const normalizedFragment = normalizeScssWhitespace(fragment);
+    const fragmentIndex = normalizedText.indexOf(normalizedFragment, searchFromIndex);
+
+    expect(fragmentIndex).toBeGreaterThanOrEqual(0);
+    searchFromIndex = fragmentIndex + normalizedFragment.length;
+  }
+}
+
 function createServiceMock(loadSchoolRates: () => Observable<readonly SchoolLotteryRates[]>) {
   return {
     dataUrl: 'assets/data.json',
@@ -684,7 +730,10 @@ describe('LotteryDashboardComponent', () => {
     expect(yearNavControls.contains(nextBtn)).toBe(true);
     expect(stickyHeader.nextElementSibling).toBe(yearNavRow);
     expect(yearCarousel.querySelector('.guidance-card--year')).toBeNull();
-    expect(yearContainer.getAttribute('role')).toBe('list');
+    expect(yearNavControls.tagName).toBe('FIELDSET');
+    expect(yearNavControls.querySelector('legend')?.textContent?.trim()).toBe('學年度切換控制');
+    expect(yearContainer.tagName).toBe('UL');
+    expect(yearContainer.getAttribute('role')).toBeNull();
     expect(yearContainer.getAttribute('tabindex')).toBe('0');
     expect(yearContainer.getAttribute('aria-describedby')).toBeNull();
     expect(yearContainer.getAttribute('aria-label')).toContain('可水平滑動查看');
@@ -694,10 +743,8 @@ describe('LotteryDashboardComponent', () => {
     expect(yearContainer.contains(stickyHeader)).toBe(false);
     expect(yearSections).toHaveLength(2);
     expect(yearContainer.style.height).toBe('640px');
-    expect(yearSections.map((section) => section.getAttribute('role'))).toEqual([
-      'listitem',
-      'listitem',
-    ]);
+    expect(yearSections.map((section) => section.tagName)).toEqual(['LI', 'LI']);
+    expect(yearSections.map((section) => section.getAttribute('role'))).toEqual([null, null]);
     expect(yearSections.map((section) => section.getAttribute('aria-label'))).toEqual([
       '臺北市測試非營利幼兒園 114學年資料',
       '臺北市測試非營利幼兒園 113學年資料',
@@ -899,7 +946,8 @@ describe('LotteryDashboardComponent', () => {
     expect(shell.classList.contains('is-guidance-transitioning')).toBe(true);
     expect(cue).toBeTruthy();
     expect(cue.classList.contains('guidance-transition-cue')).toBe(true);
-    expect(cue.getAttribute('role')).toBe('status');
+    expect(cue.tagName).toBe('OUTPUT');
+    expect(cue.getAttribute('role')).toBeNull();
     expect(cue.getAttribute('aria-live')).toBe('polite');
     expect(cue.getAttribute('aria-atomic')).toBe('true');
     expect(cue.textContent).toContain('正在前往教學重點');
@@ -1181,7 +1229,8 @@ describe('LotteryDashboardComponent', () => {
         behavior: 'auto',
       });
       expect(shell.classList.contains('is-guidance-transitioning')).toBe(true);
-      expect(cue.getAttribute('role')).toBe('status');
+      expect(cue.tagName).toBe('OUTPUT');
+      expect(cue.getAttribute('role')).toBeNull();
     } finally {
       reducedMotionPreference.restore();
       scrollIntoViewSpy.restore();
@@ -1196,6 +1245,9 @@ describe('LotteryDashboardComponent', () => {
     const cardRule = await extractExactScssRule('.guidance-card');
     const cardConnectorRule = await extractExactScssRule('.guidance-card::before');
     const stylesText = await getStylesScssText();
+    const cardEnterKeyframes = await extractScssBlock('@keyframes guidance-card-enter');
+    const transitionCueKeyframes = await extractScssBlock('@keyframes guidance-transition-cue');
+    const reducedMotionMedia = await extractScssBlock('@media (prefers-reduced-motion: reduce)');
     const scrimZIndex = extractZIndex(scrimRule);
     const transitionCueZIndex = extractZIndex(transitionCueRule);
 
@@ -1225,17 +1277,30 @@ describe('LotteryDashboardComponent', () => {
       /animation:\s*guidance-target-pulse\s+\d+ms\s+ease-in-out\s+infinite/u,
     );
     expect(stylesText).toMatch(/@keyframes\s+guidance-card-enter/u);
-    expect(stylesText).toMatch(
-      /@keyframes\s+guidance-card-enter\s*\{[\s\S]*opacity:\s*0;[\s\S]*transform:\s*translateY\(8px\)\s+scale\(0\.985\);[\s\S]*opacity:\s*1;[\s\S]*transform:\s*translateY\(0\)\s+scale\(1\);/u,
-    );
+    expectScssFragmentsInOrder(cardEnterKeyframes, [
+      'opacity: 0;',
+      'transform: translateY(8px) scale(0.985);',
+      'opacity: 1;',
+      'transform: translateY(0) scale(1);',
+    ]);
     expect(stylesText).toMatch(/@keyframes\s+guidance-target-pulse/u);
     expect(stylesText).toMatch(/@keyframes\s+guidance-transition-cue/u);
-    expect(stylesText).toMatch(
-      /@keyframes\s+guidance-transition-cue\s*\{[\s\S]*opacity:\s*0;[\s\S]*transform:\s*translateY\(10px\)\s+scale\(0\.98\);[\s\S]*opacity:\s*1;[\s\S]*transform:\s*translateY\(0\)\s+scale\(1\);[\s\S]*opacity:\s*0;[\s\S]*transform:\s*translateY\(-6px\)\s+scale\(0\.99\);/u,
-    );
-    expect(stylesText).toMatch(
-      /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*\.guidance-card,[\s\S]*\.guidance-transition-cue,[\s\S]*\.is-guidance-target::after\s*\{[\s\S]*animation:\s*none;[\s\S]*transition:\s*none;[\s\S]*transform:\s*none;/u,
-    );
+    expectScssFragmentsInOrder(transitionCueKeyframes, [
+      'opacity: 0;',
+      'transform: translateY(10px) scale(0.98);',
+      'opacity: 1;',
+      'transform: translateY(0) scale(1);',
+      'opacity: 0;',
+      'transform: translateY(-6px) scale(0.99);',
+    ]);
+    expectScssFragmentsInOrder(reducedMotionMedia, [
+      '.guidance-card,',
+      '.guidance-transition-cue,',
+      '.is-guidance-target::after {',
+      'animation: none;',
+      'transition: none;',
+      'transform: none;',
+    ]);
     expect(transitionCueRule).not.toMatch(/box-shadow/u);
     expect(targetRule).not.toMatch(/box-shadow/u);
     expect(cardRule).not.toMatch(/box-shadow/u);

@@ -2,7 +2,35 @@ import { expect, test } from '@playwright/test';
 
 const GUIDANCE_DISMISSED_STORAGE_KEY = 'picked-again.lottery-dashboard.guidance-dismissed';
 
+declare global {
+  interface Window {
+    __pickedAgainCollapseWhitespace: (text: string) => Promise<string>;
+  }
+}
+
+const collapseWhitespace = (text: string) => {
+  let collapsed = '';
+  let pendingSpace = false;
+
+  for (const character of text) {
+    if (character.trim() === '') {
+      pendingSpace = collapsed.length > 0;
+      continue;
+    }
+
+    if (pendingSpace) {
+      collapsed += ' ';
+      pendingSpace = false;
+    }
+
+    collapsed += character;
+  }
+
+  return collapsed;
+};
+
 test.beforeEach(async ({ page }) => {
+  await page.exposeFunction('__pickedAgainCollapseWhitespace', collapseWhitespace);
   await page.addInitScript((storageKey) => {
     window.localStorage.setItem(storageKey, 'true');
   }, GUIDANCE_DISMISSED_STORAGE_KEY);
@@ -25,42 +53,22 @@ test('mobile sequence chips stay inside the data card and year controls use the 
   await expect(sequenceChips.first()).toBeVisible();
   expect(await sequenceChips.count()).toBeGreaterThan(0);
 
-  const overflowingChips = await sequencePanel.evaluate((panel) => {
-    const collapseWhitespace = (text: string) => {
-      let collapsed = '';
-      let pendingSpace = false;
-
-      for (const character of text) {
-        if (character.trim() === '') {
-          pendingSpace = collapsed.length > 0;
-          continue;
-        }
-
-        if (pendingSpace) {
-          collapsed += ' ';
-          pendingSpace = false;
-        }
-
-        collapsed += character;
-      }
-
-      return collapsed;
-    };
+  const overflowingChips = await sequencePanel.evaluate(async (panel) => {
     const panelRect = panel.getBoundingClientRect();
-    return Array.from(panel.querySelectorAll<HTMLElement>('.sequence-chip'))
-      .map((chip) => {
-        const rect = chip.getBoundingClientRect();
-        return {
-          text: collapseWhitespace(chip.textContent ?? ''),
-          left: rect.left,
-          right: rect.right,
-          panelLeft: panelRect.left,
-          panelRight: panelRect.right,
-        };
-      })
-      .filter(
-        (chip) => chip.left < panelRect.left - 0.5 || chip.right > panelRect.right + 0.5,
-      );
+    return (
+      await Promise.all(
+        Array.from(panel.querySelectorAll<HTMLElement>('.sequence-chip')).map(async (chip) => {
+          const rect = chip.getBoundingClientRect();
+          return {
+            text: await window.__pickedAgainCollapseWhitespace(chip.textContent ?? ''),
+            left: rect.left,
+            right: rect.right,
+            panelLeft: panelRect.left,
+            panelRight: panelRect.right,
+          };
+        }),
+      )
+    ).filter((chip) => chip.left < panelRect.left - 0.5 || chip.right > panelRect.right + 0.5);
   });
 
   expect(overflowingChips).toEqual([]);
@@ -69,27 +77,7 @@ test('mobile sequence chips stay inside the data card and year controls use the 
   await expect(fillThresholdChip).toBeVisible();
   await expect(fillThresholdChip.locator('.sequence-hit-badge')).toHaveText('收滿點');
 
-  const sequenceAlignment = await sequencePanel.evaluate((panel) => {
-    const collapseWhitespace = (text: string) => {
-      let collapsed = '';
-      let pendingSpace = false;
-
-      for (const character of text) {
-        if (character.trim() === '') {
-          pendingSpace = collapsed.length > 0;
-          continue;
-        }
-
-        if (pendingSpace) {
-          collapsed += ' ';
-          pendingSpace = false;
-        }
-
-        collapsed += character;
-      }
-
-      return collapsed;
-    };
+  const sequenceAlignment = await sequencePanel.evaluate(async (panel) => {
     const trimmedTextBounds = (text: string) => {
       let start = 0;
       let end = text.length;
@@ -107,9 +95,7 @@ test('mobile sequence chips stay inside the data card and year controls use the 
     const textRect = (element: HTMLElement) => {
       const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, {
         acceptNode(node) {
-          return node.textContent?.trim()
-            ? NodeFilter.FILTER_ACCEPT
-            : NodeFilter.FILTER_REJECT;
+          return node.textContent?.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
         },
       });
       const textNode = walker.nextNode();
@@ -142,36 +128,38 @@ test('mobile sequence chips stay inside the data card and year controls use the 
       const [firstValue = 0] = values;
       return Math.max(0, ...values.map((value) => Math.abs(value - firstValue)));
     };
-    const measurements = Array.from(panel.querySelectorAll<HTMLElement>('.sequence-chip'))
-      .filter((chip) => chip.getBoundingClientRect().width > 0)
-      .map((chip) => {
-        const action = chip.querySelector<HTMLElement>('.mdc-evolution-chip__action--primary');
-        const actionLabel = chip.querySelector<HTMLElement>('.mat-mdc-chip-action-label');
-        const label = chip.querySelector<HTMLElement>('.sequence-chip-label');
-        const count = chip.querySelector<HTMLElement>('.sequence-chip-count');
-        const badge = chip.querySelector<HTMLElement>('.sequence-hit-badge');
+    const measurements = await Promise.all(
+      Array.from(panel.querySelectorAll<HTMLElement>('.sequence-chip'))
+        .filter((chip) => chip.getBoundingClientRect().width > 0)
+        .map(async (chip) => {
+          const action = chip.querySelector<HTMLElement>('.mdc-evolution-chip__action--primary');
+          const actionLabel = chip.querySelector<HTMLElement>('.mat-mdc-chip-action-label');
+          const label = chip.querySelector<HTMLElement>('.sequence-chip-label');
+          const count = chip.querySelector<HTMLElement>('.sequence-chip-count');
+          const badge = chip.querySelector<HTMLElement>('.sequence-hit-badge');
 
-        if (!action || !actionLabel || !label || !count) {
-          throw new Error('Expected sequence chip internals to be present');
-        }
+          if (!action || !actionLabel || !label || !count) {
+            throw new Error('Expected sequence chip internals to be present');
+          }
 
-        const actionRect = action.getBoundingClientRect();
-        const trailingElementRect = (badge ?? count).getBoundingClientRect();
-        const labelTextRect = textRect(label);
-        const countTextRect = textRect(count);
+          const actionRect = action.getBoundingClientRect();
+          const trailingElementRect = (badge ?? count).getBoundingClientRect();
+          const labelTextRect = textRect(label);
+          const countTextRect = textRect(count);
 
-        return {
-          text: collapseWhitespace(chip.textContent ?? ''),
-          isFillThreshold: chip.classList.contains('is-fill-threshold'),
-          labelTextStartOffset: labelTextRect.left - actionRect.left,
-          labelTextWidth: labelTextRect.width,
-          labelTextHeight: labelTextRect.height,
-          countTextEndOffset: actionRect.right - countTextRect.right,
-          countTextWidth: countTextRect.width,
-          trailingElementEndOffset: actionRect.right - trailingElementRect.right,
-          actionLabelWidth: actionLabel.getBoundingClientRect().width,
-        };
-      });
+          return {
+            text: await window.__pickedAgainCollapseWhitespace(chip.textContent ?? ''),
+            isFillThreshold: chip.classList.contains('is-fill-threshold'),
+            labelTextStartOffset: labelTextRect.left - actionRect.left,
+            labelTextWidth: labelTextRect.width,
+            labelTextHeight: labelTextRect.height,
+            countTextEndOffset: actionRect.right - countTextRect.right,
+            countTextWidth: countTextRect.width,
+            trailingElementEndOffset: actionRect.right - trailingElementRect.right,
+            actionLabelWidth: actionLabel.getBoundingClientRect().width,
+          };
+        }),
+    );
     const normalMeasurements = measurements.filter((measurement) => !measurement.isFillThreshold);
 
     return {
@@ -193,9 +181,9 @@ test('mobile sequence chips stay inside the data card and year controls use the 
   expect(sequenceAlignment.measurements.length).toBeGreaterThan(1);
   expect(sequenceAlignment.normalChipCount).toBeGreaterThan(0);
   expect(sequenceAlignment.hasFillThreshold).toBe(true);
-  expect(sequenceAlignment.measurements.every((measurement) => measurement.labelTextWidth > 0)).toBe(
-    true,
-  );
+  expect(
+    sequenceAlignment.measurements.every((measurement) => measurement.labelTextWidth > 0),
+  ).toBe(true);
   expect(
     sequenceAlignment.measurements.every((measurement) => measurement.labelTextHeight > 0),
   ).toBe(true);
@@ -206,27 +194,7 @@ test('mobile sequence chips stay inside the data card and year controls use the 
   expect(sequenceAlignment.maxNormalCountTextEndDelta).toBeLessThanOrEqual(2);
   expect(sequenceAlignment.maxTrailingElementEndDelta).toBeLessThanOrEqual(2);
 
-  const fillThresholdMetrics = await fillThresholdChip.evaluate((chip) => {
-    const collapseWhitespace = (text: string) => {
-      let collapsed = '';
-      let pendingSpace = false;
-
-      for (const character of text) {
-        if (character.trim() === '') {
-          pendingSpace = collapsed.length > 0;
-          continue;
-        }
-
-        if (pendingSpace) {
-          collapsed += ' ';
-          pendingSpace = false;
-        }
-
-        collapsed += character;
-      }
-
-      return collapsed;
-    };
+  const fillThresholdMetrics = await fillThresholdChip.evaluate(async (chip) => {
     const label = chip.querySelector<HTMLElement>('.sequence-chip-label');
     const count = chip.querySelector<HTMLElement>('.sequence-chip-count');
     const badge = chip.querySelector<HTMLElement>('.sequence-hit-badge');
@@ -243,7 +211,7 @@ test('mobile sequence chips stay inside the data card and year controls use the 
     const badgeRect = badge.getBoundingClientRect();
 
     return {
-      text: collapseWhitespace(chip.textContent ?? ''),
+      text: await window.__pickedAgainCollapseWhitespace(chip.textContent ?? ''),
       chipWidth: chipRect.width,
       labelClientWidth: label.clientWidth,
       labelScrollWidth: label.scrollWidth,

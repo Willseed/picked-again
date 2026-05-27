@@ -659,10 +659,7 @@ export class LotteryDashboardComponent implements AfterViewInit {
     const containers = this.yearSectionContainers?.toArray() ?? [];
 
     if (containers.length === 0) {
-      if (this.yearSectionHeightsBySchoolName().size > 0) {
-        this.yearSectionHeightsBySchoolName.set(new Map());
-      }
-
+      this.clearYearSectionHeights();
       return;
     }
 
@@ -670,28 +667,11 @@ export class LotteryDashboardComponent implements AfterViewInit {
     const visibleSchoolNames = new Set<string>();
     let hasChanged = false;
 
-    for (const { nativeElement: container } of containers) {
-      const schoolName = container.dataset['schoolName'];
-
-      if (!schoolName) {
-        continue;
-      }
-
+    for (const { nativeElement } of containers) {
+      const measurement = this.measureVisibleYearSection(nativeElement);
+      if (measurement === null) continue;
+      const [schoolName, measuredHeight] = measurement;
       visibleSchoolNames.add(schoolName);
-
-      const activeSection =
-        container.querySelector<HTMLElement>('.year-section[data-active-year="true"]') ??
-        container.querySelector<HTMLElement>('.year-section');
-
-      if (!activeSection) {
-        continue;
-      }
-
-      const measuredHeight = measureElementHeight(activeSection);
-
-      if (measuredHeight <= 0) {
-        continue;
-      }
 
       if (nextHeights.get(schoolName) !== measuredHeight) {
         nextHeights.set(schoolName, measuredHeight);
@@ -699,16 +679,45 @@ export class LotteryDashboardComponent implements AfterViewInit {
       }
     }
 
-    for (const schoolName of nextHeights.keys()) {
-      if (!visibleSchoolNames.has(schoolName)) {
-        nextHeights.delete(schoolName);
-        hasChanged = true;
-      }
-    }
+    hasChanged = this.removeHiddenYearSectionHeights(nextHeights, visibleSchoolNames) || hasChanged;
 
     if (hasChanged) {
       this.yearSectionHeightsBySchoolName.set(nextHeights);
     }
+  }
+
+  private clearYearSectionHeights(): void {
+    if (this.yearSectionHeightsBySchoolName().size > 0) {
+      this.yearSectionHeightsBySchoolName.set(new Map());
+    }
+  }
+
+  private measureVisibleYearSection(container: HTMLElement): readonly [string, number] | null {
+    const schoolName = container.dataset['schoolName'];
+    if (!schoolName) return null;
+
+    const activeSection =
+      container.querySelector<HTMLElement>('.year-section[data-active-year="true"]') ??
+      container.querySelector<HTMLElement>('.year-section');
+    if (!activeSection) return null;
+
+    const measuredHeight = measureElementHeight(activeSection);
+    return measuredHeight > 0 ? [schoolName, measuredHeight] : null;
+  }
+
+  private removeHiddenYearSectionHeights(
+    nextHeights: Map<string, number>,
+    visibleSchoolNames: ReadonlySet<string>,
+  ): boolean {
+    let hasChanged = false;
+
+    for (const schoolName of nextHeights.keys()) {
+      if (visibleSchoolNames.has(schoolName)) continue;
+      nextHeights.delete(schoolName);
+      hasChanged = true;
+    }
+
+    return hasChanged;
   }
 
   private observeYearSectionsForResize(): void {

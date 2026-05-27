@@ -661,6 +661,19 @@ app-lottery-dashboard {
     justify-content: space-between;
     width: 100%;
     min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .year-nav-controls__legend {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
   }
 
   .year-nav-btn {
@@ -729,6 +742,8 @@ app-lottery-dashboard {
     width: 100%;
     max-width: 100%;
     min-width: 0;
+    margin: 0;
+    list-style: none;
     overflow-x: auto;
     overflow-y: hidden;
     overscroll-behavior-inline: contain;

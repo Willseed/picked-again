@@ -8,17 +8,16 @@
     <div class="guidance-scrim" aria-hidden="true"></div>
   }
   @if (guidanceTransitioning()) {
-    <div
+    <output
       class="guidance-transition-cue"
       data-guidance-transition="search-to-target"
-      role="status"
       aria-live="polite"
       aria-atomic="true"
       (animationend)="finishGuidanceTransition()"
     >
       <span class="guidance-transition-cue__marker" aria-hidden="true"></span>
       <span>正在前往教學重點</span>
-    </div>
+    </output>
   }
 
   <mat-card appearance="outlined" class="hero-card">
@@ -221,7 +220,8 @@
                   </mat-card>
                 }
                 @if (yearGroups.length > 1) {
-                  <div class="year-nav-controls" role="group" aria-label="學年度切換控制">
+                  <fieldset class="year-nav-controls">
+                    <legend class="year-nav-controls__legend">學年度切換控制</legend>
                     <button
                       class="year-nav-btn year-nav-btn--prev"
                       type="button"
@@ -252,14 +252,13 @@
                     >
                       <mat-icon aria-hidden="true">chevron_right</mat-icon>
                     </button>
-                  </div>
+                  </fieldset>
                 }
 
-                <div
+                <ul
                   #yearSections
                   class="year-sections"
                   [class.is-guidance-locked]="guidanceInteractionLocked()"
-                  role="list"
                   [attr.tabindex]="guidanceInteractionLocked() ? null : 0"
                   [attr.aria-disabled]="guidanceInteractionLocked() ? 'true' : null"
                   [style.height]="yearSectionsHeight(result.schoolName)"
@@ -279,10 +278,9 @@
                   (scroll)="updateActiveYearIndex(result.schoolName, yearGroups.length, $event)"
                 >
                 @for (yearGroup of yearGroups; track yearGroup.schoolYear; let yearIndex = $index) {
-                  <section
+                  <li
                     #yearSection
                     class="year-section"
-                    role="listitem"
                     [class.is-active-year]="
                       isActiveYear(result.schoolName, yearGroups.length, yearIndex)
                     "
@@ -622,9 +620,9 @@
                         </mat-card>
                       }
                     </div>
-                  </section>
+                  </li>
                 }
-              </div>
+              </ul>
               </div>
             </div>
           </mat-card-content>
