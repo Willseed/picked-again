@@ -148,11 +148,13 @@ export class LotteryDashboardComponent implements AfterViewInit {
   protected readonly totalAgeGroups = computed(() =>
     this.schools().reduce((total, school) => total + school.ageGroups.length, 0),
   );
-  @ViewChild('searchInput') private searchInput?: ElementRef<HTMLInputElement>;
-  @ViewChildren('yearSections') private yearSectionContainers?: QueryList<
+  @ViewChild('searchInput') private readonly searchInput?: ElementRef<HTMLInputElement>;
+  @ViewChildren('yearSections') private readonly yearSectionContainers?: QueryList<
     ElementRef<HTMLElement>
   >;
-  @ViewChildren('yearSection') private yearSectionElements?: QueryList<ElementRef<HTMLElement>>;
+  @ViewChildren('yearSection') private readonly yearSectionElements?: QueryList<
+    ElementRef<HTMLElement>
+  >;
   private guidanceTransitionTimeoutId: number | null = null;
   private guidanceInitialTransitionCompleted = false;
 
